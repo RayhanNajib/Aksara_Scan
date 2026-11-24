@@ -1,0 +1,2 @@
+Aditya Firman Ihsan, 'Indonesian Local Script Characters', Mendeley Data v1, doi:10.17632/vfj32bpjsf.1, license CC BY 4.0. Downloaded from https://data.mendeley.com/datasets/vfj32bpjsf - Jawa.zip (Javanese script subset) used for robustness experiments only.
+Jawa.zip intentionally NOT committed (136 MB > GitHub 100 MB limit). Download from the Mendeley DOI above; place it in this folder if you want to rerun the sandhangan robustness experiments.
