@@ -1,4 +1,4 @@
-# AksaraScan 📜✨
+# AksaraScan
 
 **Pemeriksa aksara Jawa (hanacaraka nglegena) langsung dari kamera / gambar — 100% di browser, tanpa server.**
 
@@ -6,16 +6,16 @@ Web app client-only: foto/unggah tulisan tangan → pipeline Computer Vision (gr
 
 > Tugas Akhir — Muhammad Rayhan Najib (240533600012), Teknik Informasi, Universitas Negeri Malang.
 
-## ✨ Fitur
+##  Fitur
 
-- 📷 Kamera web/ponsel (HTML5 MediaDevices) + auto-rata 6 frame biar hasil konsisten
-- 🖱️ **Auto-deteksi**: upload / tempel **Ctrl+V** / **seret gambar** ke halaman → langsung dipindai
-- 🔎 **Seleksi area ala Google Lens**: seret kotak pada satu aksara → *Pindai Area Pilihan* (ambang lokal lebih akurat untuk glif kecil)
-- 🧑‍⚖️ **Koreksi manual (human-in-the-loop)**: klik kotak deteksi → ganti aksara, akurasi akhir milik pengguna
-- 🧪 **Lab Pipeline 8 tahap**: histogram Otsu, biner, median, morfologi, segmentasi, normalisasi, montase SVM — semua bisa diaudit visual
-- 📖 Kamus aksara Jawa lengkap + ekspor hasil JSON
+- Kamera web/ponsel (HTML5 MediaDevices) + auto-rata 6 frame biar hasil konsisten
+-  **Auto-deteksi**: upload / tempel **Ctrl+V** / **seret gambar** ke halaman → langsung dipindai
+- **Seleksi area ala Google Lens**: seret kotak pada satu aksara → *Pindai Area Pilihan* (ambang lokal lebih akurat untuk glif kecil)
+-  **Koreksi manual (human-in-the-loop)**: klik kotak deteksi → ganti aksara, akurasi akhir milik pengguna
+-  **Lab Pipeline 8 tahap**: histogram Otsu, biner, median, morfologi, segmentasi, normalisasi, montase SVM — semua bisa diaudit visual
+-  Kamus aksara Jawa lengkap + ekspor hasil JSON
 
-## 🚀 Menjalankan
+##  Menjalankan
 
 ```bash
 # pilih salah satu
@@ -25,7 +25,7 @@ python -m http.server 8899      # lalu buka http://127.0.0.1:8899/app/web_camsca
 
 Butuh: browser modern. Tanpa Node, tanpa backend, tanpa instalasi lain.
 
-## 📁 Struktur
+##  Struktur
 
 ```
 app/web_camscanner/   # aplikasi web (index.html, app.js, styles.css, model.json, PWA)
@@ -39,7 +39,7 @@ dataset/
 docs/                 # PRD, arsitektur, spesifikasi dataset/model, rencana uji
 ```
 
-## 🧬 Model
+##  Model
 
 | | |
 |---|---|
@@ -48,7 +48,7 @@ docs/                 # PRD, arsitektur, spesifikasi dataset/model, rencana uji
 | Data latih | 1.100 citra train × 10 varian augmentasi, holdout uji 239 citra asli **tidak pernah dilihat model** |
 | Akurasi | **68.4%** bersih · **53.2%** simulasi foto |
 
-## ⚖️ Lisensi & Kredit dataset (PENTING)
+##  Lisensi & Kredit dataset (PENTING)
 
 Kode & model repo ini: **MIT** (Muhammad Rayhan Najib). **Dataset BUKAN milik proyek ini** dan tetap di bawah lisensi pembuatnya:
 
