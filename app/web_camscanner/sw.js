@@ -1,12 +1,15 @@
 // Service Worker for AksaraScan PWA Offline Support
-const CACHE_NAME = 'aksarascan-v8';
+const CACHE_NAME = 'aksarascan-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
+  './javanese_lm_data.js',
   './javanese_lexicon.js',
+  './javanese_lm_engine.js',
   './orthography.js',
   './app.js',
+  './v3_ui_enhancer.js',
   './favicon.svg',
   './favicon.png',
   './favicon.ico',

@@ -1,0 +1,275 @@
+# AksaraScan v3.0 — Registri Sumber Dataset & Korpus Resmi (Fase 1)
+# Status:
+#   OK               -> Lisensi terverifikasi & dapat diunduh otomatis tanpa login
+#   PERLU_LOGIN      -> Membutuhkan API key / login akun (lihat tools/datasets/MANUAL.md)
+#   PERLU_KONFIRMASI -> Lisensi tidak jelas / perlu verifikasi ketentuan koleksinya
+
+sources:
+  - id: hanacaraka_vzrenggamani
+    name: "Aksara Jawa / Hanacaraka (Digital Handwriting)"
+    author: "R. P. Nugroho (vzrenggamani) & kontributor"
+    url: "https://github.com/vzrenggamani/aksarajawa-hanacaraka"
+    task: "glyph_classification_20_nglegena"
+    format: "imagefolder_png"
+    license: "CC0-1.0"
+    license_verified: true
+    size: "1,579 gambar (~9.2 MB)"
+    status: "OK"
+    local_dir: "dataset/hanacaraka"
+    method: "local_repo"
+
+  - id: mendeley_indonesian_scripts_jawa
+    name: "Indonesian Local Script Characters (Subset Jawa / Jawa.zip)"
+    author: "Aditya Firman Ihsan (Telkom University)"
+    url: "https://doi.org/10.17632/vfj32bpjsf.1"
+    task: "glyph_handwriting_nglegena_sandhangan_variants"
+    format: "zip_imagefolder"
+    license: "CC BY 4.0"
+    license_verified: true
+    size: "13,256 gambar (135.3 MB)"
+    status: "OK"
+    local_dir: "dataset/external/jawa_mendeley"
+    local_mirror_candidates:
+      - "../Projek_Akhir/dataset/Jawa.zip"
+      - "dataset/indonesian-scripts/Jawa.zip"
+    method: "local_zip_or_manual"
+
+  - id: hf_setilanaji_aksara_jawa_ocr
+    name: "Aksara Jawa OCR Multi-Line Dataset"
+    author: "setilanaji (Hugging Face)"
+    url: "https://huggingface.co/datasets/setilanaji/aksara-jawa-ocr"
+    task: "line_ocr_transcription_and_detection"
+    format: "ppocrlabel_jpg_jsonl"
+    license: "Apache-2.0"
+    license_verified: true
+    size: "1,158 berkas (~1,000 train + 150 eval)"
+    status: "OK"
+    local_dir: "dataset/external/setilanaji_aksara_jawa_ocr"
+    hf_repo: "setilanaji/aksara-jawa-ocr"
+    method: "hf_snapshot"
+
+  - id: noto_sans_javanese_ofl
+    name: "Noto Sans Javanese Font"
+    author: "The Noto Project Authors (Google)"
+    url: "https://github.com/notofonts/javanese"
+    task: "synthetic_rendering_font"
+    format: "ttf_opentype"
+    license: "SIL OFL 1.1"
+    license_verified: true
+    size: "~253 KB"
+    status: "OK"
+    local_dir: "dataset/external/fonts"
+    local_mirror_candidates:
+      - "../Projek_Akhir/fonts/NotoSansJavanese.ttf"
+    urls:
+      - "https://raw.githubusercontent.com/notofonts/javanese/main/fonts/NotoSansJavanese/unhinted/ttf/NotoSansJavanese-Regular.ttf"
+    method: "http_or_mirror"
+
+  - id: tuladha_jejeg_ot_ofl
+    name: "Tuladha Jejeg OT Font"
+    author: "R.S. Wihananto & Fadhl Haqq (akufadhl)"
+    url: "https://github.com/akufadhl/Tuladha-Jejeg-OT"
+    task: "synthetic_rendering_font"
+    format: "ttf_otf_opentype"
+    license: "SIL OFL 1.1"
+    license_verified: true
+    size: "~121 KB"
+    status: "OK"
+    local_dir: "dataset/external/fonts"
+    local_mirror_candidates:
+      - "../Projek_Akhir/fonts/TuladhaJejegOT-Regular.ttf"
+      - "../Projek_Akhir/fonts/TuladhaJejegOT-Regular.otf"
+    urls:
+      - "https://raw.githubusercontent.com/akufadhl/Tuladha-Jejeg-OT/main/OFL.txt"
+    method: "http_or_mirror"
+
+  - id: nusax_mt_lexicon
+    name: "NusaX Parallel Corpus & Bilingual Javanese Lexicon"
+    author: "IndoNLP"
+    url: "https://github.com/IndoNLP/nusax"
+    task: "corpus_lexicon_and_translation"
+    format: "csv"
+    license: "CC-BY-SA-4.0 (data) / Apache-2.0 (code)"
+    license_verified: true
+    size: "~1 MB"
+    status: "OK"
+    local_dir: "dataset/external/nusax"
+    urls:
+      - "https://raw.githubusercontent.com/IndoNLP/nusax/main/datasets/lexicon/javanese.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusax/main/datasets/mt/train.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusax/main/datasets/mt/valid.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusax/main/datasets/mt/test.csv"
+    method: "http_files"
+
+  - id: nusawrites_jav
+    name: "NusaWrites (NusaTranslation & NusaParagraph Javanese)"
+    author: "IndoNLP"
+    url: "https://github.com/IndoNLP/nusa-writes"
+    task: "corpus_language_model_and_translation"
+    format: "csv"
+    license: "Apache-2.0"
+    license_verified: true
+    size: "~8 MB"
+    status: "OK"
+    local_dir: "dataset/external/nusa_writes"
+    urls:
+      - "https://raw.githubusercontent.com/IndoNLP/nusa-writes/main/data/nusa_kalimat-mt-jav-train.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusa-writes/main/data/nusa_kalimat-mt-jav-valid.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusa-writes/main/data/nusa_kalimat-mt-jav-test.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusa-writes/main/data/nusa_alinea-paragraph-jav-train.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusa-writes/main/data/nusa_alinea-paragraph-jav-valid.csv"
+      - "https://raw.githubusercontent.com/IndoNLP/nusa-writes/main/data/nusa_alinea-paragraph-jav-test.csv"
+    method: "http_files"
+
+  - id: sastra_jawa_csv
+    name: "Sastra Jawa CSV Dictionary & Dasanama"
+    author: "nsulistiyawan"
+    url: "https://github.com/nsulistiyawan/sastra-jawa"
+    task: "lexicon_and_synonyms"
+    format: "csv"
+    license: "MIT"
+    license_verified: true
+    size: "~1 MB"
+    status: "OK"
+    local_dir: "dataset/external/sastra_jawa"
+    urls:
+      - "https://raw.githubusercontent.com/nsulistiyawan/sastra-jawa/master/csv/dictionary.csv"
+      - "https://raw.githubusercontent.com/nsulistiyawan/sastra-jawa/master/csv/dasanama.csv"
+    method: "http_files"
+
+  - id: gatra1_javanese
+    name: "Gatra-1 Javanese Krama Dataset"
+    author: "afrizalha (Hugging Face)"
+    url: "https://huggingface.co/datasets/afrizalha/Gatra-1-Javanese"
+    task: "corpus_krama_vocabulary"
+    format: "parquet"
+    license: "CC-BY-SA-4.0"
+    license_verified: true
+    size: "~384 KB (560 examples)"
+    status: "OK"
+    local_dir: "dataset/external/gatra1_javanese"
+    hf_repo: "afrizalha/Gatra-1-Javanese"
+    method: "hf_snapshot"
+
+  - id: jv_wikipedia_dump
+    name: "Wikipedia Bahasa Jawa (jvwiki Dump Resmi)"
+    author: "Wikimedia Foundation & Kontributor"
+    url: "https://dumps.wikimedia.org/jvwiki/latest/"
+    task: "language_model_char_and_word"
+    format: "xml_bz2"
+    license: "CC BY-SA 4.0"
+    license_verified: true
+    size: "58.1 MB compressed"
+    status: "OK"
+    local_dir: "dataset/external/jvwiki"
+    urls:
+      - "https://dumps.wikimedia.org/jvwiki/latest/jvwiki-latest-pages-articles.xml.bz2"
+    method: "http_files"
+
+  # --- Sumber Membutuhkan Login / API Key (lihat MANUAL.md) ---
+  - id: rf_fawwaz_aksara_jawa
+    name: "Javanese Handwriting Object Detection - Aksara Jawa"
+    author: "Fawwaz Zaini Ahmad"
+    url: "https://universe.roboflow.com/"
+    task: "object_detection_20_nglegena"
+    format: "yolo_v8"
+    license: "CC BY 4.0"
+    license_verified: true
+    size: "1,464 gambar (1,014 train / 284 val / 166 test)"
+    status: "PERLU_LOGIN"
+    local_dir: "dataset/external/rf_fawwaz"
+    method: "manual_roboflow"
+
+  - id: rf_fasel_aksarajawasandangan2
+    name: "aksarajawasandangan-2"
+    author: "fasel (Roboflow Universe)"
+    url: "https://universe.roboflow.com/"
+    task: "object_detection_pasangan_sandhangan"
+    format: "yolo_v8"
+    license: "CC BY 4.0"
+    license_verified: true
+    size: "4,137 gambar"
+    status: "PERLU_LOGIN"
+    local_dir: "dataset/external/rf_fasel_sandhangan"
+    method: "manual_roboflow"
+
+  - id: kg_hermansugiharto_yolo
+    name: "Aksara Jawa YOLO v5 Dataset"
+    author: "hermansugiharto (Kaggle)"
+    url: "https://www.kaggle.com/datasets/hermansugiharto/aksara-jawa-yolo-v5-dataset"
+    task: "object_detection_nglegena"
+    format: "yolo_v5"
+    license: "Unverified (butuh cek kartu Kaggle)"
+    license_verified: false
+    size: "Belum diunduh"
+    status: "PERLU_LOGIN"
+    local_dir: "dataset/external/kg_hermansugiharto"
+    method: "manual_kaggle"
+
+  - id: kg_phiard_paper_aug
+    name: "Aksara Jawa Custom / Handwriting on Paper"
+    author: "Phiard / kontributor Kaggle"
+    url: "https://www.kaggle.com/datasets"
+    task: "glyph_classification_and_stroke_textures"
+    format: "imagefolder"
+    license: "Unverified (butuh cek kartu Kaggle)"
+    license_verified: false
+    size: "~2,634 + ~12,000 citra"
+    status: "PERLU_LOGIN"
+    local_dir: "dataset/external/kg_phiard"
+    method: "manual_kaggle"
+
+  # --- Sumber Membutuhkan Konfirmasi Lisensi (DITOLAK otomatis kecuali --force-review) ---
+  - id: hf_nusaaksara
+    name: "NusaAksara (ACL 2025)"
+    author: "NusaAksara Team"
+    url: "https://huggingface.co/datasets/NusaAksara/NusaAksara"
+    task: "ocr_segmentation_transliteration_translation"
+    format: "parquet"
+    license: "Unspecified on HF card/README"
+    license_verified: false
+    size: "~100 halaman Jawa + transkripsi OCR"
+    status: "PERLU_KONFIRMASI"
+    local_dir: "dataset/external/nusaaksara"
+    hf_repo: "NusaAksara/NusaAksara"
+    method: "hf_snapshot"
+
+  - id: mendeley_old_indonesian_docs
+    name: "Digitization of Old Indonesian Documents using YOLO and OCR"
+    author: "Pradah Suherli et al. (BINUS)"
+    url: "https://doi.org/10.17632/ms6sjjpzwr.1"
+    task: "historical_document_detection_and_trocr"
+    format: "yolov8_trocr"
+    license: "CC BY 4.0 (mengandung subset British Library EAP)"
+    license_verified: false
+    size: "Belum diunduh"
+    status: "PERLU_KONFIRMASI"
+    local_dir: "dataset/external/mendeley_old_docs"
+    method: "manual_mendeley"
+
+  - id: seacrowd_korpus_nusantara
+    name: "Korpus Nusantara"
+    author: "Herry Sujaini (SEACrowd)"
+    url: "https://huggingface.co/datasets/SEACrowd/korpus_nusantara"
+    task: "parallel_corpus_translation"
+    format: "text"
+    license: "Unknown (tertera di kartu dataset)"
+    license_verified: false
+    size: "Belum diunduh"
+    status: "PERLU_KONFIRMASI"
+    local_dir: "dataset/external/korpus_nusantara"
+    method: "hf_snapshot"
+
+  - id: hf_rayfox_murda
+    name: "Aksara Jawa Carakan + Murda"
+    author: "RayFox52 (Hugging Face)"
+    url: "https://huggingface.co/datasets/RayFox52/Aksara-jawa-carakan-murda"
+    task: "glyph_classification_27_classes_murda"
+    format: "parquet"
+    license: "Unspecified on HF card"
+    license_verified: false
+    size: "~1K-10K citra"
+    status: "PERLU_KONFIRMASI"
+    local_dir: "dataset/external/rayfox_murda"
+    hf_repo: "RayFox52/Aksara-jawa-carakan-murda"
+    method: "hf_snapshot"

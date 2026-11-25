@@ -1,0 +1,93 @@
+{
+  "configs": [
+    {
+      "variant": "yolox-nano",
+      "use_p2": true,
+      "imgsz": 640,
+      "license": "Apache-2.0 (Custom PyTorch YOLOX)",
+      "params_M": 0.95,
+      "anchors": 34000,
+      "onnx_fp32_mb": 3.95,
+      "est_fp16_mb": 1.98,
+      "fits_20mb_fp32": true,
+      "fits_20mb_fp16": true,
+      "pt_ort_max_diff": 1e-06,
+      "cpu_ort_ms": 72.7
+    },
+    {
+      "variant": "yolox-nano",
+      "use_p2": true,
+      "imgsz": 960,
+      "license": "Apache-2.0 (Custom PyTorch YOLOX)",
+      "params_M": 0.95,
+      "anchors": 76500,
+      "onnx_fp32_mb": 4.28,
+      "est_fp16_mb": 2.14,
+      "fits_20mb_fp32": true,
+      "fits_20mb_fp16": true,
+      "pt_ort_max_diff": 0.0,
+      "cpu_ort_ms": 216.2
+    },
+    {
+      "variant": "yolox-tiny",
+      "use_p2": false,
+      "imgsz": 960,
+      "license": "Apache-2.0 (Custom PyTorch YOLOX)",
+      "params_M": 5.05,
+      "anchors": 18900,
+      "onnx_fp32_mb": 19.41,
+      "est_fp16_mb": 9.71,
+      "fits_20mb_fp32": true,
+      "fits_20mb_fp16": true,
+      "pt_ort_max_diff": 0.0,
+      "cpu_ort_ms": 197.5
+    },
+    {
+      "variant": "yolox-tiny",
+      "use_p2": true,
+      "imgsz": 960,
+      "license": "Apache-2.0 (Custom PyTorch YOLOX)",
+      "params_M": 5.48,
+      "anchors": 76500,
+      "onnx_fp32_mb": 21.5,
+      "est_fp16_mb": 10.75,
+      "fits_20mb_fp32": false,
+      "fits_20mb_fp16": true,
+      "pt_ort_max_diff": 5e-07,
+      "cpu_ort_ms": 490.4
+    },
+    {
+      "variant": "yolox-tiny",
+      "use_p2": true,
+      "imgsz": 1280,
+      "license": "Apache-2.0 (Custom PyTorch YOLOX)",
+      "params_M": 5.48,
+      "anchors": 136000,
+      "onnx_fp32_mb": 21.95,
+      "est_fp16_mb": 10.98,
+      "fits_20mb_fp32": false,
+      "fits_20mb_fp16": true,
+      "pt_ort_max_diff": 0.0,
+      "cpu_ort_ms": 886.7
+    },
+    {
+      "variant": "yolox-s",
+      "use_p2": true,
+      "imgsz": 960,
+      "license": "Apache-2.0 (Custom PyTorch YOLOX)",
+      "params_M": 9.72,
+      "anchors": 76500,
+      "onnx_fp32_mb": 37.64,
+      "est_fp16_mb": 18.82,
+      "fits_20mb_fp32": false,
+      "fits_20mb_fp16": true,
+      "pt_ort_max_diff": 0.0,
+      "cpu_ort_ms": 764.1
+    }
+  ],
+  "reference_alt": {
+    "name": "rtdetr_v2_r18vd",
+    "license": "Apache-2.0",
+    "note": "Transformer detector bebas-NMS (referensi Fase 3a untuk eksperimen GPU Colab; bobot ~79MB FP32 perlu INT8/distilasi agar <20MB)"
+  }
+}

@@ -1,0 +1,98 @@
+<View>
+  <Header value="AksaraScan v3.0 — Anotasi 55 Kelas Atomik & Transkripsi Aksara Jawa"/>
+  <Image name="image" value="$image" zoom="true" zoomControl="true" rotateControl="true"/>
+
+  <Header value="1. Kotak Pembatas Atomik (55 Kelas YOLO)"/>
+  <RectangleLabels name="bbox" toName="image" strokeWidth="2" opacity="0.25">
+    <!-- 20 Aksara Nglegena (Emas #c8963e) -->
+    <Label value="ha" background="#c8963e"/>
+    <Label value="na" background="#c8963e"/>
+    <Label value="ca" background="#c8963e"/>
+    <Label value="ra" background="#c8963e"/>
+    <Label value="ka" background="#c8963e"/>
+    <Label value="da" background="#c8963e"/>
+    <Label value="ta" background="#c8963e"/>
+    <Label value="sa" background="#c8963e"/>
+    <Label value="wa" background="#c8963e"/>
+    <Label value="la" background="#c8963e"/>
+    <Label value="pa" background="#c8963e"/>
+    <Label value="dha" background="#c8963e"/>
+    <Label value="ja" background="#c8963e"/>
+    <Label value="ya" background="#c8963e"/>
+    <Label value="nya" background="#c8963e"/>
+    <Label value="ma" background="#c8963e"/>
+    <Label value="ga" background="#c8963e"/>
+    <Label value="ba" background="#c8963e"/>
+    <Label value="tha" background="#c8963e"/>
+    <Label value="nga" background="#c8963e"/>
+
+    <!-- 20 Aksara Pasangan (Biru #5c8df6) -->
+    <Label value="p_ha" background="#5c8df6"/>
+    <Label value="p_na" background="#5c8df6"/>
+    <Label value="p_ca" background="#5c8df6"/>
+    <Label value="p_ra" background="#5c8df6"/>
+    <Label value="p_ka" background="#5c8df6"/>
+    <Label value="p_da" background="#5c8df6"/>
+    <Label value="p_ta" background="#5c8df6"/>
+    <Label value="p_sa" background="#5c8df6"/>
+    <Label value="p_wa" background="#5c8df6"/>
+    <Label value="p_la" background="#5c8df6"/>
+    <Label value="p_pa" background="#5c8df6"/>
+    <Label value="p_dha" background="#5c8df6"/>
+    <Label value="p_ja" background="#5c8df6"/>
+    <Label value="p_ya" background="#5c8df6"/>
+    <Label value="p_nya" background="#5c8df6"/>
+    <Label value="p_ma" background="#5c8df6"/>
+    <Label value="p_ga" background="#5c8df6"/>
+    <Label value="p_ba" background="#5c8df6"/>
+    <Label value="p_tha" background="#5c8df6"/>
+    <Label value="p_nga" background="#5c8df6"/>
+
+    <!-- 12 Sandhangan & Pangkon (Oranye #e88c30) -->
+    <Label value="wulu" background="#e88c30"/>
+    <Label value="suku" background="#e88c30"/>
+    <Label value="pepet" background="#e88c30"/>
+    <Label value="taling" background="#e88c30"/>
+    <Label value="tarung" background="#e88c30"/>
+    <Label value="layar" background="#e88c30"/>
+    <Label value="cecak" background="#e88c30"/>
+    <Label value="wignyan" background="#e88c30"/>
+    <Label value="pangkon" background="#e88c30"/>
+    <Label value="cakra" background="#e88c30"/>
+    <Label value="keret" background="#e88c30"/>
+    <Label value="pengkal" background="#e88c30"/>
+
+    <!-- 3 Tanda Baca Pada (Hijau #3fa97a) -->
+    <Label value="pada_adeg" background="#3fa97a"/>
+    <Label value="pada_lingsa" background="#3fa97a"/>
+    <Label value="pada_lungsi" background="#3fa97a"/>
+  </RectangleLabels>
+
+  <Header value="2. Transkripsi Ground Truth Manual (WAJIB DIKETIK, BUKAN SALIN MODEL)"/>
+  <TextArea name="unicode_gt" toName="image" rows="2" placeholder="Contoh: ꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉" required="true"/>
+  <TextArea name="latin_gt" toName="image" rows="2" placeholder="Contoh: Wédang bubuk tanpa gula, aja ngamuk mundhak tuwa." required="true"/>
+  <TextArea name="writer_id" toName="image" rows="1" maxSubmissions="1" placeholder="ID Penulis Anonim (mis. W01)" required="true"/>
+  <TextArea name="session_id" toName="image" rows="1" maxSubmissions="1" placeholder="ID Sesi Foto (mis. W01_S01)" required="true"/>
+
+  <Header value="3. Kondisi Pemotretan & Kategori Teks"/>
+  <Choices name="content_type" toName="image" choice="single" showInline="true" required="true">
+    <Choice value="kalimat_lengkap"/>
+    <Choice value="kata_sulit"/>
+    <Choice value="scriptio_continua_panjang"/>
+  </Choices>
+  <Choices name="paper_type" toName="image" choice="single" showInline="true" required="true">
+    <Choice value="polos"/>
+    <Choice value="bergaris"/>
+    <Choice value="berpetak"/>
+  </Choices>
+  <Choices name="pen_type" toName="image" choice="single" showInline="true" required="true">
+    <Choice value="pulpen_hitam"/>
+    <Choice value="pulpen_biru"/>
+    <Choice value="pensil"/>
+  </Choices>
+  <Choices name="lighting" toName="image" choice="single" showInline="true" required="true">
+    <Choice value="siang"/>
+    <Choice value="lampu_kuning"/>
+    <Choice value="bayangan"/>
+  </Choices>
+</View>

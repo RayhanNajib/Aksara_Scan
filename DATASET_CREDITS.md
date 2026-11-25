@@ -37,11 +37,25 @@ people who drew 1,500+ glyphs by hand is the decent thing to do.
 | DOI | https://doi.org/10.17632/vfj32bpjsf (Mendeley Data, v1, 2024) |
 | License | **CC BY 4.0** — attribution is legally required |
 | Contents | ~13,400 images incl. Javanese with sandhangan (subsets) |
-| Location here | `dataset/indonesian-scripts/` (Jawa.zip, DOI.txt, LICENSE) |
-| Used for | Robustness experiments (sandhangan variants); NOT part of the shipped MVP model |
+| Location here | `dataset/indonesian-scripts/` (`DOI.txt` & `Jawa.zip` lokal 13.256 citra) |
+| Used for | Eksperimen ketahanan & data latih tambahan (11.060 Nglegena atomik `Vokal A` + `variations` terpisah split; 2.196 citra suku kata ber-sandhangan untuk pengenalan gabungan/Track B) |
 
 Citation:
 > Ihsan, Aditya Firman (2024), 'Indonesian Local Script Characters', Mendeley Data, v1, doi:10.17632/vfj32bpjsf.1
+
+## 2b. Additional Verified Open Datasets & Corpora (v3.0 Expansion)
+
+Seluruh sumber berikut diverifikasi lisensinya pada **25 November 2026** (daftar mesin di `tools/datasets/datasets.yaml`, tanda terima di `dataset/external/_download_receipts.json`):
+
+| Sumber | Penulis / Pemilik | URL | Lisensi | Tanggal Unduh | Jumlah & Perubahan |
+|---|---|---|---|---|---|
+| **Aksara Jawa OCR Multi-Line** | `setilanaji` | https://huggingface.co/datasets/setilanaji/aksara-jawa-ocr | **Apache-2.0** | 2026-11-25 | 1.158 berkas asal → dipotong & dide-duplikasi menjadi **2.205 baris gambar** (2.059 train / 150 val) beranotasi Unicode |
+| **NusaX & NusaX-MT** | IndoNLP | https://github.com/IndoNLP/nusax | **CC-BY-SA-4.0** (data) / **Apache-2.0** (kode) | 2026-11-25 | `datasets/lexicon/javanese.csv` + MT parallel train/valid/test; difilter ke kalimat & kamus Jawa bersih |
+| **NusaWrites (`nusa_kalimat` & `nusa_alinea`)** | IndoNLP | https://github.com/IndoNLP/nusa-writes | **Apache-2.0** | 2026-11-25 | 6 berkas CSV bahasa Jawa (`jav`); dipecah menjadi kalimat tervalidasi blok Unicode |
+| **Sastra Jawa Dictionary & Dasanama** | `nsulistiyawan` | https://github.com/nsulistiyawan/sastra-jawa | **MIT** | 2026-11-25 | `dictionary.csv` + `dasanama.csv`; digabungkan menjadi **10.588 entri** leksikon dwibahasa |
+| **Gatra-1 Javanese** | `afrizalha` | https://huggingface.co/datasets/afrizalha/Gatra-1-Javanese | **CC-BY-SA-4.0** | 2026-11-25 | 560 contoh ragam Jawa Krama (Parquet) |
+| **Wikipedia Bahasa Jawa (`jvwiki`)** | Wikimedia & Kontributor | https://dumps.wikimedia.org/jvwiki/latest/ | **CC BY-SA 4.0** | 2026-11-25 | Dump XML 58,1 MB; disaring markup wiki & angka hingga menghasilkan bagian dari **71.228 kalimat** Jawa tervalidasi |
+| **Noto Sans Javanese & Tuladha Jejeg OT** | Google Noto / R.S. Wihananto & Fadhl Haqq | https://github.com/notofonts/javanese & https://github.com/akufadhl/Tuladha-Jejeg-OT | **SIL OFL 1.1** | 2026-11-25 | Font OpenType untuk generator sintetis v2 (`OFL.txt` terverifikasi; `javatext.ttf` tidak dipakai pada data publik v3.0) |
 
 ## 3. Segmentation of the data (lecturer requirement)
 

@@ -1,0 +1,3866 @@
+{
+  "timestamp": "2026-11-25 16:00:11 +0700",
+  "commit_hash": "492b7bc",
+  "seed": 108,
+  "onnx_model": "app\\web_camscanner\\aksara_yolo.onnx",
+  "onnx_size_mb": 12.11,
+  "parity_20": {
+    "n_images": 20,
+    "onnx_engine_exact_tensor_parity_same_input_max_abs_diff": 0.009124755859375,
+    "onnx_engine_exact_coord_px_max_abs_diff": 0.009124755859375,
+    "onnx_engine_exact_cls_prob_max_abs_diff": 5.0067901611328125e-06,
+    "preprocess_cv2_vs_sharp_max_abs_diff": 0.5490195751190186,
+    "raw_416_onnx_output_max_abs_diff_cv2_vs_sharp": 242.10504150390625,
+    "raw_416_box_class_agreement_iou085": "423/476",
+    "raw_416_max_conf_diff": 0.666393518447876,
+    "browser_e2e_unicode_exact_matches": "11/20",
+    "browser_e2e_mean_cer_delta": 0.07324,
+    "browser_e2e_box_agreement_iou070": "540/555",
+    "browser_console_errors": [],
+    "browser_external_requests_during_inference": [],
+    "per_item": [
+      {
+        "id": "p01",
+        "same_input_tensor_max_abs_diff": 0.000457763671875,
+        "preprocess_input_max_abs_diff": 0.3019607663154602,
+        "raw_box_match": "13/17 (py=14)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.0541,
+        "browser_js_ms": 1091.34
+      },
+      {
+        "id": "p02",
+        "same_input_tensor_max_abs_diff": 0.0005950927734375,
+        "preprocess_input_max_abs_diff": 0.3019607961177826,
+        "raw_box_match": "8/12 (py=10)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.0541,
+        "browser_js_ms": 980.12
+      },
+      {
+        "id": "p03",
+        "same_input_tensor_max_abs_diff": 0.0008392333984375,
+        "preprocess_input_max_abs_diff": 0.3529411852359772,
+        "raw_box_match": "20/20 (py=20)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 768.65
+      },
+      {
+        "id": "p04",
+        "same_input_tensor_max_abs_diff": 0.000640869140625,
+        "preprocess_input_max_abs_diff": 0.3333333432674408,
+        "raw_box_match": "2/5 (py=7)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.3333,
+        "browser_js_ms": 2108.83
+      },
+      {
+        "id": "p05",
+        "same_input_tensor_max_abs_diff": 0.00042724609375,
+        "preprocess_input_max_abs_diff": 0.3803921639919281,
+        "raw_box_match": "2/9 (py=7)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.1111,
+        "browser_js_ms": 2222.07
+      },
+      {
+        "id": "p06",
+        "same_input_tensor_max_abs_diff": 0.00042724609375,
+        "preprocess_input_max_abs_diff": 0.13725489377975464,
+        "raw_box_match": "8/9 (py=8)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.2222,
+        "browser_js_ms": 488.56
+      },
+      {
+        "id": "p07",
+        "same_input_tensor_max_abs_diff": 0.000457763671875,
+        "preprocess_input_max_abs_diff": 0.3607843220233917,
+        "raw_box_match": "3/13 (py=9)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.0909,
+        "browser_js_ms": 2535.41
+      },
+      {
+        "id": "p08",
+        "same_input_tensor_max_abs_diff": 0.00030517578125,
+        "preprocess_input_max_abs_diff": 0.5490195751190186,
+        "raw_box_match": "15/23 (py=21)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.2381,
+        "browser_js_ms": 1862.15
+      },
+      {
+        "id": "p09",
+        "same_input_tensor_max_abs_diff": 0.0004119873046875,
+        "preprocess_input_max_abs_diff": 0.37254899740219116,
+        "raw_box_match": "0/9 (py=8)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.25,
+        "browser_js_ms": 2472.18
+      },
+      {
+        "id": "p10",
+        "same_input_tensor_max_abs_diff": 0.000335693359375,
+        "preprocess_input_max_abs_diff": 0.3803921639919281,
+        "raw_box_match": "2/9 (py=7)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.1111,
+        "browser_js_ms": 2013.5
+      },
+      {
+        "id": "p11",
+        "same_input_tensor_max_abs_diff": 0.0009765625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "23/23 (py=23)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 430.36
+      },
+      {
+        "id": "p12",
+        "same_input_tensor_max_abs_diff": 0.00018310546875,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "40/40 (py=40)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 458.54
+      },
+      {
+        "id": "p13",
+        "same_input_tensor_max_abs_diff": 0.000518798828125,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "44/44 (py=44)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 475.8
+      },
+      {
+        "id": "p14",
+        "same_input_tensor_max_abs_diff": 0.000152587890625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "52/52 (py=52)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 460.07
+      },
+      {
+        "id": "p15",
+        "same_input_tensor_max_abs_diff": 0.000244140625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "19/19 (py=19)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 405.79
+      },
+      {
+        "id": "p16",
+        "same_input_tensor_max_abs_diff": 0.00030517578125,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "29/29 (py=29)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 411.01
+      },
+      {
+        "id": "p17",
+        "same_input_tensor_max_abs_diff": 0.0015869140625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "27/27 (py=27)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 504.84
+      },
+      {
+        "id": "p18",
+        "same_input_tensor_max_abs_diff": 0.000213623046875,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "32/32 (py=32)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 527.57
+      },
+      {
+        "id": "p19",
+        "same_input_tensor_max_abs_diff": 0.009124755859375,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "38/38 (py=38)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 479.79
+      },
+      {
+        "id": "p20",
+        "same_input_tensor_max_abs_diff": 0.0006256103515625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "46/46 (py=46)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 457.86
+      }
+    ]
+  },
+  "diagnostic_failures": {
+    "warning": "SET DIAGNOSTIK KECIL (n=8) — BUKAN real_test untuk klaim performa akhir!",
+    "n_images": 8,
+    "mean_cer_pct": 60.14,
+    "mean_grapheme_f1_pct": 58.13,
+    "mean_word_acc_pct": 35.42,
+    "items": [
+      {
+        "id": "diag_01",
+        "image": "eval/failures/01_wedang_bubuk_full.png",
+        "domain": "printed_lowres_with_latin_caption",
+        "notes": "Gambar laporan user 761x131 px; taling terbaca pepet dan cecak terlewat pada kata pertama",
+        "unicode_gt": "꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉",
+        "unicode_pred": "꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉",
+        "latin_gt": "Wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.",
+        "latin_pred": "wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.",
+        "indonesian_pred": "Kopi/minuman bubuk hangat tanpa gula, jangan mengamuk semakin cepat tua.",
+        "oracle_dp_latin": "Wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.",
+        "oracle_dp_indonesian": "Minuman seduh bubuk tanpa gula, jangan marah-marah nanti makin tua.",
+        "oracle_dp_word_acc_pct": 100.0,
+        "gt_lexicon_oov_words": [],
+        "cer_pct": 0.0,
+        "grapheme_f1_pct": 100.0,
+        "word_acc_pct": 100.0,
+        "pred_box_count": 31,
+        "oov_words": [],
+        "elapsed_ms": 1094.26,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "sandhangan",
+            "label": "pepet",
+            "unicode": "ꦼ",
+            "confidence": 0.9300240278244019,
+            "ragu": false,
+            "kotak": [
+              42,
+              56,
+              68,
+              74
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "pada",
+            "label": "pada_adeg",
+            "unicode": "꧋",
+            "confidence": 0.7564342021942139,
+            "ragu": false,
+            "kotak": [
+              17,
+              75,
+              34,
+              121
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "la",
+            "unicode": "ꦭ",
+            "confidence": 0.9282345175743103,
+            "ragu": false,
+            "kotak": [
+              347,
+              75,
+              383,
+              92
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.9642908573150635,
+            "ragu": false,
+            "kotak": [
+              453,
+              75,
+              482,
+              93
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "pada",
+            "label": "pada_lungsi",
+            "unicode": "꧉",
+            "confidence": 0.8160848617553711,
+            "ragu": false,
+            "kotak": [
+              701,
+              75,
+              729,
+              93
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.815601110458374,
+            "ragu": false,
+            "kotak": [
+              43,
+              76,
+              70,
+              92
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "nglegena",
+            "label": "da",
+            "unicode": "ꦢ",
+            "confidence": 0.9627445340156555,
+            "ragu": false,
+            "kotak": [
+              78,
+              76,
+              104,
+              92
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "ba",
+            "unicode": "ꦧ",
+            "confidence": 0.9858630299568176,
+            "ragu": false,
+            "kotak": [
+              111,
+              76,
+              144,
+              92
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "ba",
+            "unicode": "ꦧ",
+            "confidence": 0.9713643789291382,
+            "ragu": false,
+            "kotak": [
+              152,
+              76,
+              185,
+              92
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9806537628173828,
+            "ragu": false,
+            "kotak": [
+              193,
+              76,
+              227,
+              92
+            ]
+          },
+          {
+            "index": 11,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.9644773006439209,
+            "ragu": false,
+            "kotak": [
+              242,
+              76,
+              266,
+              92
+            ]
+          },
+          {
+            "index": 12,
+            "kategori": "pasangan",
+            "label": "p_pa",
+            "unicode": "꧀ꦥ",
+            "confidence": 0.8959156274795532,
+            "ragu": false,
+            "kotak": [
+              273,
+              76,
+              296,
+              92
+            ]
+          },
+          {
+            "index": 13,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.9174507260322571,
+            "ragu": false,
+            "kotak": [
+              303,
+              76,
+              338,
+              92
+            ]
+          },
+          {
+            "index": 14,
+            "kategori": "pada",
+            "label": "pada_lingsa",
+            "unicode": "꧈",
+            "confidence": 0.8002802133560181,
+            "ragu": false,
+            "kotak": [
+              386,
+              76,
+              404,
+              93
+            ]
+          },
+          {
+            "index": 15,
+            "kategori": "nglegena",
+            "label": "ha",
+            "unicode": "ꦲ",
+            "confidence": 0.9214447736740112,
+            "ragu": false,
+            "kotak": [
+              411,
+              76,
+              446,
+              92
+            ]
+          },
+          {
+            "index": 16,
+            "kategori": "nglegena",
+            "label": "nga",
+            "unicode": "ꦔ",
+            "confidence": 0.9934951066970825,
+            "ragu": false,
+            "kotak": [
+              489,
+              76,
+              514,
+              92
+            ]
+          },
+          {
+            "index": 17,
+            "kategori": "nglegena",
+            "label": "ma",
+            "unicode": "ꦩ",
+            "confidence": 0.9941903352737427,
+            "ragu": false,
+            "kotak": [
+              522,
+              76,
+              547,
+              92
+            ]
+          },
+          {
+            "index": 18,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9861856698989868,
+            "ragu": false,
+            "kotak": [
+              553,
+              76,
+              587,
+              92
+            ]
+          },
+          {
+            "index": 19,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.9438585638999939,
+            "ragu": false,
+            "kotak": [
+              594,
+              76,
+              619,
+              92
+            ]
+          },
+          {
+            "index": 20,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9929359555244446,
+            "ragu": false,
+            "kotak": [
+              627,
+              76,
+              661,
+              92
+            ]
+          },
+          {
+            "index": 21,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.5320554375648499,
+            "ragu": false,
+            "kotak": [
+              670,
+              76,
+              698,
+              93
+            ]
+          },
+          {
+            "index": 22,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.7673580646514893,
+            "ragu": false,
+            "kotak": [
+              129,
+              91,
+              150,
+              119
+            ]
+          },
+          {
+            "index": 23,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.7271934747695923,
+            "ragu": false,
+            "kotak": [
+              170,
+              91,
+              191,
+              119
+            ]
+          },
+          {
+            "index": 24,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.7030652761459351,
+            "ragu": false,
+            "kotak": [
+              324,
+              91,
+              345,
+              119
+            ]
+          },
+          {
+            "index": 25,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.674121081829071,
+            "ragu": false,
+            "kotak": [
+              530,
+              91,
+              551,
+              119
+            ]
+          },
+          {
+            "index": 26,
+            "kategori": "pasangan",
+            "label": "p_ta",
+            "unicode": "꧀ꦠ",
+            "confidence": 0.9705953598022461,
+            "ragu": false,
+            "kotak": [
+              199,
+              94,
+              234,
+              117
+            ]
+          },
+          {
+            "index": 27,
+            "kategori": "pasangan",
+            "label": "p_ma",
+            "unicode": "꧀ꦩ",
+            "confidence": 0.7381435036659241,
+            "ragu": false,
+            "kotak": [
+              565,
+              94,
+              586,
+              114
+            ]
+          },
+          {
+            "index": 28,
+            "kategori": "pasangan",
+            "label": "p_dha",
+            "unicode": "꧀ꦝ",
+            "confidence": 0.8925965428352356,
+            "ragu": false,
+            "kotak": [
+              593,
+              94,
+              619,
+              114
+            ]
+          },
+          {
+            "index": 29,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.906296968460083,
+            "ragu": false,
+            "kotak": [
+              648,
+              94,
+              667,
+              122
+            ]
+          },
+          {
+            "index": 30,
+            "kategori": "pasangan",
+            "label": "p_ta",
+            "unicode": "꧀ꦠ",
+            "confidence": 0.9535840153694153,
+            "ragu": false,
+            "kotak": [
+              629,
+              95,
+              661,
+              116
+            ]
+          },
+          {
+            "index": 31,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.6519724726676941,
+            "ragu": false,
+            "kotak": [
+              572,
+              98,
+              591,
+              122
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_02",
+        "image": "eval/failures/02_wedang_bubuk_crop.png",
+        "domain": "printed_lowres_cropped_line",
+        "notes": "Potongan baris aksara tanpa teks Latin di atasnya",
+        "unicode_gt": "꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉",
+        "unicode_pred": "꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉",
+        "latin_gt": "Wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.",
+        "latin_pred": "wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.",
+        "indonesian_pred": "Kopi/minuman bubuk hangat tanpa gula, jangan mengamuk semakin cepat tua.",
+        "oracle_dp_latin": "Wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.",
+        "oracle_dp_indonesian": "Minuman seduh bubuk tanpa gula, jangan marah-marah nanti makin tua.",
+        "oracle_dp_word_acc_pct": 100.0,
+        "gt_lexicon_oov_words": [],
+        "cer_pct": 0.0,
+        "grapheme_f1_pct": 100.0,
+        "word_acc_pct": 100.0,
+        "pred_box_count": 31,
+        "oov_words": [],
+        "elapsed_ms": 928.8,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "sandhangan",
+            "label": "pepet",
+            "unicode": "ꦼ",
+            "confidence": 0.9300240278244019,
+            "ragu": false,
+            "kotak": [
+              42,
+              17,
+              68,
+              35
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "pada",
+            "label": "pada_adeg",
+            "unicode": "꧋",
+            "confidence": 0.7564342021942139,
+            "ragu": false,
+            "kotak": [
+              17,
+              36,
+              34,
+              82
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "la",
+            "unicode": "ꦭ",
+            "confidence": 0.9282345175743103,
+            "ragu": false,
+            "kotak": [
+              347,
+              36,
+              383,
+              53
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.9642908573150635,
+            "ragu": false,
+            "kotak": [
+              453,
+              36,
+              482,
+              54
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "pada",
+            "label": "pada_lungsi",
+            "unicode": "꧉",
+            "confidence": 0.8160848617553711,
+            "ragu": false,
+            "kotak": [
+              701,
+              36,
+              729,
+              54
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.815601110458374,
+            "ragu": false,
+            "kotak": [
+              43,
+              37,
+              70,
+              53
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "nglegena",
+            "label": "da",
+            "unicode": "ꦢ",
+            "confidence": 0.9627445340156555,
+            "ragu": false,
+            "kotak": [
+              78,
+              37,
+              104,
+              53
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "ba",
+            "unicode": "ꦧ",
+            "confidence": 0.9858630299568176,
+            "ragu": false,
+            "kotak": [
+              111,
+              37,
+              144,
+              53
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "ba",
+            "unicode": "ꦧ",
+            "confidence": 0.9713643789291382,
+            "ragu": false,
+            "kotak": [
+              152,
+              37,
+              185,
+              53
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9806537628173828,
+            "ragu": false,
+            "kotak": [
+              193,
+              37,
+              227,
+              53
+            ]
+          },
+          {
+            "index": 11,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.9644773006439209,
+            "ragu": false,
+            "kotak": [
+              242,
+              37,
+              266,
+              53
+            ]
+          },
+          {
+            "index": 12,
+            "kategori": "pasangan",
+            "label": "p_pa",
+            "unicode": "꧀ꦥ",
+            "confidence": 0.8959156274795532,
+            "ragu": false,
+            "kotak": [
+              273,
+              37,
+              296,
+              53
+            ]
+          },
+          {
+            "index": 13,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.9174507260322571,
+            "ragu": false,
+            "kotak": [
+              303,
+              37,
+              338,
+              53
+            ]
+          },
+          {
+            "index": 14,
+            "kategori": "pada",
+            "label": "pada_lingsa",
+            "unicode": "꧈",
+            "confidence": 0.8002802133560181,
+            "ragu": false,
+            "kotak": [
+              386,
+              37,
+              404,
+              54
+            ]
+          },
+          {
+            "index": 15,
+            "kategori": "nglegena",
+            "label": "ha",
+            "unicode": "ꦲ",
+            "confidence": 0.9214447736740112,
+            "ragu": false,
+            "kotak": [
+              411,
+              37,
+              446,
+              53
+            ]
+          },
+          {
+            "index": 16,
+            "kategori": "nglegena",
+            "label": "nga",
+            "unicode": "ꦔ",
+            "confidence": 0.9934951066970825,
+            "ragu": false,
+            "kotak": [
+              489,
+              37,
+              514,
+              53
+            ]
+          },
+          {
+            "index": 17,
+            "kategori": "nglegena",
+            "label": "ma",
+            "unicode": "ꦩ",
+            "confidence": 0.9941903352737427,
+            "ragu": false,
+            "kotak": [
+              522,
+              37,
+              547,
+              53
+            ]
+          },
+          {
+            "index": 18,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9861856698989868,
+            "ragu": false,
+            "kotak": [
+              553,
+              37,
+              587,
+              53
+            ]
+          },
+          {
+            "index": 19,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.9438585638999939,
+            "ragu": false,
+            "kotak": [
+              594,
+              37,
+              619,
+              53
+            ]
+          },
+          {
+            "index": 20,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9929359555244446,
+            "ragu": false,
+            "kotak": [
+              627,
+              37,
+              661,
+              53
+            ]
+          },
+          {
+            "index": 21,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.5320554375648499,
+            "ragu": false,
+            "kotak": [
+              670,
+              37,
+              698,
+              54
+            ]
+          },
+          {
+            "index": 22,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.7673580646514893,
+            "ragu": false,
+            "kotak": [
+              129,
+              52,
+              150,
+              80
+            ]
+          },
+          {
+            "index": 23,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.7271934747695923,
+            "ragu": false,
+            "kotak": [
+              170,
+              52,
+              191,
+              80
+            ]
+          },
+          {
+            "index": 24,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.7030652761459351,
+            "ragu": false,
+            "kotak": [
+              324,
+              52,
+              345,
+              80
+            ]
+          },
+          {
+            "index": 25,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.674121081829071,
+            "ragu": false,
+            "kotak": [
+              530,
+              52,
+              551,
+              80
+            ]
+          },
+          {
+            "index": 26,
+            "kategori": "pasangan",
+            "label": "p_ta",
+            "unicode": "꧀ꦠ",
+            "confidence": 0.9705953598022461,
+            "ragu": false,
+            "kotak": [
+              199,
+              55,
+              234,
+              78
+            ]
+          },
+          {
+            "index": 27,
+            "kategori": "pasangan",
+            "label": "p_ma",
+            "unicode": "꧀ꦩ",
+            "confidence": 0.7381435036659241,
+            "ragu": false,
+            "kotak": [
+              565,
+              55,
+              586,
+              75
+            ]
+          },
+          {
+            "index": 28,
+            "kategori": "pasangan",
+            "label": "p_dha",
+            "unicode": "꧀ꦝ",
+            "confidence": 0.8925965428352356,
+            "ragu": false,
+            "kotak": [
+              593,
+              55,
+              619,
+              75
+            ]
+          },
+          {
+            "index": 29,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.906296968460083,
+            "ragu": false,
+            "kotak": [
+              648,
+              55,
+              667,
+              83
+            ]
+          },
+          {
+            "index": 30,
+            "kategori": "pasangan",
+            "label": "p_ta",
+            "unicode": "꧀ꦠ",
+            "confidence": 0.9535840153694153,
+            "ragu": false,
+            "kotak": [
+              629,
+              56,
+              661,
+              77
+            ]
+          },
+          {
+            "index": 31,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.6519724726676941,
+            "ragu": false,
+            "kotak": [
+              572,
+              59,
+              591,
+              83
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_03",
+        "image": "eval/failures/03_sample_4_pasangan_sandhangan.png",
+        "domain": "synthetic_lined_paper",
+        "notes": "Sampel bawaan app sample_4.png dengan pasangan, pangkon, cakra, taling-tarung, wulu",
+        "unicode_gt": "ꦲꦏ꧀ꦱꦫꦗꦮ\nꦩꦔꦤ꧀ꦱꦼꦒ\nꦏꦿꦩꦏꦺꦴꦛꦶ",
+        "unicode_pred": "ꦲꦏ꧀ꦱꦫꦗꦮ\nꦩꦔꦤ꧀ꦱꦼꦒ\nꦏꦿꦩꦏꦺꦴꦛꦶ",
+        "latin_gt": "Aksara Jawa mangan sega krama kothi.",
+        "latin_pred": "aksara jawa mangan sêga krama kothi",
+        "indonesian_pred": "Aksara Jawa makan nasi krama kera",
+        "oracle_dp_latin": "Aksara Jawa mangan sega krama kothi.",
+        "oracle_dp_indonesian": "Aksara Jawa makan nasi krama/sopan kothi.",
+        "oracle_dp_word_acc_pct": 100.0,
+        "gt_lexicon_oov_words": [
+          "kothi"
+        ],
+        "cer_pct": 0.0,
+        "grapheme_f1_pct": 100.0,
+        "word_acc_pct": 83.33,
+        "pred_box_count": 21,
+        "oov_words": [
+          "kothi"
+        ],
+        "elapsed_ms": 471.2,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "nglegena",
+            "label": "ha",
+            "unicode": "ꦲ",
+            "confidence": 0.9616446495056152,
+            "ragu": false,
+            "kotak": [
+              86,
+              116,
+              161,
+              153
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.7531242370605469,
+            "ragu": false,
+            "kotak": [
+              438,
+              116,
+              499,
+              153
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9825992584228516,
+            "ragu": false,
+            "kotak": [
+              173,
+              117,
+              248,
+              154
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.9933285713195801,
+            "ragu": false,
+            "kotak": [
+              507,
+              117,
+              565,
+              153
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "pasangan",
+            "label": "p_sa",
+            "unicode": "꧀ꦱ",
+            "confidence": 0.742710292339325,
+            "ragu": false,
+            "kotak": [
+              254,
+              118,
+              328,
+              154
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9781640768051147,
+            "ragu": false,
+            "kotak": [
+              328,
+              118,
+              391,
+              155
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "sandhangan",
+            "label": "pepet",
+            "unicode": "ꦼ",
+            "confidence": 0.9562081694602966,
+            "ragu": false,
+            "kotak": [
+              340,
+              254,
+              417,
+              297
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "nga",
+            "unicode": "ꦔ",
+            "confidence": 0.992805540561676,
+            "ragu": false,
+            "kotak": [
+              153,
+              296,
+              211,
+              332
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "sandhangan",
+            "label": "pangkon",
+            "unicode": "꧀",
+            "confidence": 0.9825598001480103,
+            "ragu": false,
+            "kotak": [
+              238,
+              296,
+              314,
+              406
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "nglegena",
+            "label": "ma",
+            "unicode": "ꦩ",
+            "confidence": 0.94169020652771,
+            "ragu": false,
+            "kotak": [
+              85,
+              297,
+              143,
+              333
+            ]
+          },
+          {
+            "index": 11,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.9413341283798218,
+            "ragu": false,
+            "kotak": [
+              222,
+              297,
+              279,
+              333
+            ]
+          },
+          {
+            "index": 12,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.9902777671813965,
+            "ragu": false,
+            "kotak": [
+              423,
+              297,
+              500,
+              333
+            ]
+          },
+          {
+            "index": 13,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.9615345597267151,
+            "ragu": false,
+            "kotak": [
+              358,
+              298,
+              413,
+              334
+            ]
+          },
+          {
+            "index": 14,
+            "kategori": "sandhangan",
+            "label": "wulu",
+            "unicode": "ꦶ",
+            "confidence": 0.9407694339752197,
+            "ragu": false,
+            "kotak": [
+              466,
+              438,
+              507,
+              477
+            ]
+          },
+          {
+            "index": 15,
+            "kategori": "sandhangan",
+            "label": "cakra",
+            "unicode": "ꦿ",
+            "confidence": 0.9646596908569336,
+            "ragu": false,
+            "kotak": [
+              84,
+              446,
+              183,
+              551
+            ]
+          },
+          {
+            "index": 16,
+            "kategori": "sandhangan",
+            "label": "taling",
+            "unicode": "ꦺ",
+            "confidence": 0.972433865070343,
+            "ragu": false,
+            "kotak": [
+              292,
+              476,
+              338,
+              583
+            ]
+          },
+          {
+            "index": 17,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.8492485880851746,
+            "ragu": false,
+            "kotak": [
+              429,
+              476,
+              450,
+              514
+            ]
+          },
+          {
+            "index": 18,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.968170166015625,
+            "ragu": false,
+            "kotak": [
+              102,
+              477,
+              176,
+              513
+            ]
+          },
+          {
+            "index": 19,
+            "kategori": "nglegena",
+            "label": "ma",
+            "unicode": "ꦩ",
+            "confidence": 0.9958537817001343,
+            "ragu": false,
+            "kotak": [
+              188,
+              477,
+              246,
+              513
+            ]
+          },
+          {
+            "index": 20,
+            "kategori": "nglegena",
+            "label": "tha",
+            "unicode": "ꦛ",
+            "confidence": 0.9581170678138733,
+            "ragu": false,
+            "kotak": [
+              459,
+              477,
+              517,
+              523
+            ]
+          },
+          {
+            "index": 21,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9797946214675903,
+            "ragu": false,
+            "kotak": [
+              345,
+              478,
+              420,
+              513
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_04",
+        "image": "eval/failures/04_test_shadow.png",
+        "domain": "handwriting_shadow_stress",
+        "notes": "Tulisan tangan digital tipis dengan bayangan gradien gelap di tengah",
+        "unicode_gt": "ꦲꦤꦕꦫꦏ\nꦢꦱꦮꦭ",
+        "unicode_pred": "ꦫꦕꦫꦫꦫꦫ\nꦫꦫꦗ",
+        "latin_gt": "ha na ca ra ka da sa wa la",
+        "latin_pred": "rac ara rar ara rar aja",
+        "indonesian_pred": "Rac bngs. Wringin. Rar bngs. Wringin. Rar jangan",
+        "oracle_dp_latin": "Hanacaraka dasaw ala",
+        "oracle_dp_indonesian": "Hanacaraka dasaw buruk",
+        "oracle_dp_word_acc_pct": 0.0,
+        "gt_lexicon_oov_words": [
+          "ha",
+          "na",
+          "ca",
+          "ra",
+          "ka",
+          "da",
+          "sa",
+          "wa",
+          "la"
+        ],
+        "cer_pct": 88.89,
+        "grapheme_f1_pct": 22.22,
+        "word_acc_pct": 0.0,
+        "pred_box_count": 10,
+        "oov_words": [
+          "rac",
+          "ara",
+          "rar",
+          "ara",
+          "rar"
+        ],
+        "elapsed_ms": 1888.27,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.7583056092262268,
+            "ragu": false,
+            "kotak": [
+              811,
+              158,
+              852,
+              224
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "sandhangan",
+            "label": "pengkal",
+            "unicode": "ꦾ",
+            "confidence": 0.48932307958602905,
+            "ragu": false,
+            "kotak": [
+              766,
+              159,
+              850,
+              229
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "ca",
+            "unicode": "ꦕ",
+            "confidence": 0.9044197797775269,
+            "ragu": false,
+            "kotak": [
+              577,
+              168,
+              637,
+              208
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9505980014801025,
+            "ragu": false,
+            "kotak": [
+              985,
+              168,
+              1022,
+              232
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.3435363471508026,
+            "ragu": true,
+            "kotak": [
+              986,
+              172,
+              1067,
+              235
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9680463075637817,
+            "ragu": false,
+            "kotak": [
+              1087,
+              172,
+              1132,
+              230
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.7326233983039856,
+            "ragu": false,
+            "kotak": [
+              165,
+              188,
+              213,
+              256
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.30112719535827637,
+            "ragu": true,
+            "kotak": [
+              1039,
+              550,
+              1097,
+              600
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9002007246017456,
+            "ragu": false,
+            "kotak": [
+              643,
+              554,
+              681,
+              622
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.2523374557495117,
+            "ragu": true,
+            "kotak": [
+              156,
+              555,
+              198,
+              606
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_05",
+        "image": "eval/failures/05_test_walllines.png",
+        "domain": "handwriting_border_lines_stress",
+        "notes": "Tulisan tangan tipis dengan garis tepi tebal mengganggu segmentasi",
+        "unicode_gt": "ꦲꦤꦕꦫꦏ\nꦢꦱꦮꦭ",
+        "unicode_pred": "ꦫꦫꦕꦫꦫꦫꦫ\nꦫꦗ",
+        "latin_gt": "ha na ca ra ka da sa wa la",
+        "latin_pred": "rar acara rar ara raja",
+        "indonesian_pred": "Rar 1 prakara rar bngs. Wringin. Raja",
+        "oracle_dp_latin": "Hanacaraka dasaw ala",
+        "oracle_dp_indonesian": "Hanacaraka dasaw buruk",
+        "oracle_dp_word_acc_pct": 0.0,
+        "gt_lexicon_oov_words": [
+          "ha",
+          "na",
+          "ca",
+          "ra",
+          "ka",
+          "da",
+          "sa",
+          "wa",
+          "la"
+        ],
+        "cer_pct": 77.78,
+        "grapheme_f1_pct": 22.22,
+        "word_acc_pct": 0.0,
+        "pred_box_count": 10,
+        "oov_words": [
+          "rar",
+          "acara",
+          "rar",
+          "ara",
+          "raja"
+        ],
+        "elapsed_ms": 1930.18,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.8007802367210388,
+            "ragu": false,
+            "kotak": [
+              811,
+              158,
+              852,
+              224
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "sandhangan",
+            "label": "pengkal",
+            "unicode": "ꦾ",
+            "confidence": 0.509634256362915,
+            "ragu": false,
+            "kotak": [
+              766,
+              159,
+              842,
+              229
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9061875343322754,
+            "ragu": false,
+            "kotak": [
+              355,
+              164,
+              400,
+              233
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "nglegena",
+            "label": "ca",
+            "unicode": "ꦕ",
+            "confidence": 0.8879895210266113,
+            "ragu": false,
+            "kotak": [
+              577,
+              168,
+              637,
+              208
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9510030746459961,
+            "ragu": false,
+            "kotak": [
+              985,
+              168,
+              1022,
+              232
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.3469236493110657,
+            "ragu": true,
+            "kotak": [
+              986,
+              172,
+              1067,
+              235
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9679950475692749,
+            "ragu": false,
+            "kotak": [
+              1087,
+              172,
+              1132,
+              230
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.6488638520240784,
+            "ragu": false,
+            "kotak": [
+              164,
+              189,
+              213,
+              256
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.28087806701660156,
+            "ragu": true,
+            "kotak": [
+              1038,
+              551,
+              1097,
+              600
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.8704195022583008,
+            "ragu": false,
+            "kotak": [
+              644,
+              554,
+              682,
+              620
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_06",
+        "image": "eval/failures/06_test_small_600px.png",
+        "domain": "handwriting_lowres_600px",
+        "notes": "Versi resolusi rendah 600x385 px",
+        "unicode_gt": "ꦲꦤꦕꦫꦏ\nꦢꦱꦮꦭ",
+        "unicode_pred": "ꦲꦤꦩꦱꦏ\nꦢꦱꦮꦪ",
+        "latin_gt": "ha na ca ra ka da sa wa la",
+        "latin_pred": "ana masaka das awa ya",
+        "indonesian_pred": "Ada memasak ((andaikan jêdhot awa ya",
+        "oracle_dp_latin": "Hanacaraka dasaw ala",
+        "oracle_dp_indonesian": "Hanacaraka dasaw buruk",
+        "oracle_dp_word_acc_pct": 0.0,
+        "gt_lexicon_oov_words": [
+          "ha",
+          "na",
+          "ca",
+          "ra",
+          "ka",
+          "da",
+          "sa",
+          "wa",
+          "la"
+        ],
+        "cer_pct": 33.33,
+        "grapheme_f1_pct": 66.67,
+        "word_acc_pct": 0.0,
+        "pred_box_count": 9,
+        "oov_words": [
+          "masaka",
+          "das",
+          "awa",
+          "ya"
+        ],
+        "elapsed_ms": 424.28,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.31522688269615173,
+            "ragu": true,
+            "kotak": [
+              322,
+              66,
+              365,
+              100
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.9556278586387634,
+            "ragu": false,
+            "kotak": [
+              152,
+              70,
+              193,
+              101
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "ma",
+            "unicode": "ꦩ",
+            "confidence": 0.5667260885238647,
+            "ragu": false,
+            "kotak": [
+              246,
+              70,
+              274,
+              90
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "nglegena",
+            "label": "ka",
+            "unicode": "ꦏ",
+            "confidence": 0.9893625974655151,
+            "ragu": false,
+            "kotak": [
+              422,
+              71,
+              486,
+              102
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "nglegena",
+            "label": "ha",
+            "unicode": "ꦲ",
+            "confidence": 0.8679081797599792,
+            "ragu": false,
+            "kotak": [
+              45,
+              79,
+              91,
+              108
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "da",
+            "unicode": "ꦢ",
+            "confidence": 0.84648597240448,
+            "ragu": false,
+            "kotak": [
+              48,
+              235,
+              85,
+              260
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "nglegena",
+            "label": "ya",
+            "unicode": "ꦪ",
+            "confidence": 0.4690908193588257,
+            "ragu": false,
+            "kotak": [
+              443,
+              235,
+              491,
+              260
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.9667908549308777,
+            "ragu": false,
+            "kotak": [
+              250,
+              236,
+              293,
+              268
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.47133469581604004,
+            "ragu": false,
+            "kotak": [
+              338,
+              239,
+              388,
+              274
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_07",
+        "image": "eval/failures/07_sample_1_paper_distractor.png",
+        "domain": "handwriting_latin_distractor_border",
+        "notes": "Ada teks header Latin dan tepi gelap Scanner",
+        "unicode_gt": "ꦲꦤꦕꦫꦏ\nꦢꦱꦮꦭ",
+        "unicode_pred": "꧋ꦫꦒꦫ\nꦫꦫꦫꦕꦫꦫꦫ",
+        "latin_gt": "ha na ca ra ka da sa wa la",
+        "latin_pred": "rag ara rar ara cara rara",
+        "indonesian_pred": "Rag bngs. Wringin. Rar bngs. Wringin. Cara rara",
+        "oracle_dp_latin": "Hanacaraka dasaw ala",
+        "oracle_dp_indonesian": "Hanacaraka dasaw buruk",
+        "oracle_dp_word_acc_pct": 0.0,
+        "gt_lexicon_oov_words": [
+          "ha",
+          "na",
+          "ca",
+          "ra",
+          "ka",
+          "da",
+          "sa",
+          "wa",
+          "la"
+        ],
+        "cer_pct": 111.11,
+        "grapheme_f1_pct": 20.0,
+        "word_acc_pct": 0.0,
+        "pred_box_count": 17,
+        "oov_words": [
+          "rag",
+          "ara",
+          "rar",
+          "ara",
+          "cara",
+          "rara"
+        ],
+        "elapsed_ms": 2262.71,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "pada",
+            "label": "pada_adeg",
+            "unicode": "꧋",
+            "confidence": 0.3575296401977539,
+            "ragu": true,
+            "kotak": [
+              16,
+              4,
+              31,
+              44
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "sandhangan",
+            "label": "layar",
+            "unicode": "ꦂ",
+            "confidence": 0.5947011709213257,
+            "ragu": false,
+            "kotak": [
+              1,
+              13,
+              19,
+              46
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "sandhangan",
+            "label": "wulu",
+            "unicode": "ꦶ",
+            "confidence": 0.2949472665786743,
+            "ragu": true,
+            "kotak": [
+              381,
+              14,
+              389,
+              21
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "sandhangan",
+            "label": "pepet",
+            "unicode": "ꦼ",
+            "confidence": 0.7382915019989014,
+            "ragu": false,
+            "kotak": [
+              145,
+              15,
+              166,
+              31
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "sandhangan",
+            "label": "layar",
+            "unicode": "ꦂ",
+            "confidence": 0.4910028278827667,
+            "ragu": false,
+            "kotak": [
+              276,
+              18,
+              286,
+              29
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.7287971377372742,
+            "ragu": false,
+            "kotak": [
+              213,
+              26,
+              234,
+              47
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.6402912735939026,
+            "ragu": false,
+            "kotak": [
+              317,
+              26,
+              349,
+              47
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.933282196521759,
+            "ragu": false,
+            "kotak": [
+              465,
+              27,
+              489,
+              49
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.44343096017837524,
+            "ragu": true,
+            "kotak": [
+              841,
+              157,
+              881,
+              225
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "sandhangan",
+            "label": "pengkal",
+            "unicode": "ꦾ",
+            "confidence": 0.5005035400390625,
+            "ragu": false,
+            "kotak": [
+              796,
+              160,
+              858,
+              229
+            ]
+          },
+          {
+            "index": 11,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.8947325944900513,
+            "ragu": false,
+            "kotak": [
+              384,
+              165,
+              425,
+              232
+            ]
+          },
+          {
+            "index": 12,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.6239872574806213,
+            "ragu": false,
+            "kotak": [
+              424,
+              166,
+              482,
+              230
+            ]
+          },
+          {
+            "index": 13,
+            "kategori": "sandhangan",
+            "label": "pepet",
+            "unicode": "ꦼ",
+            "confidence": 0.279091477394104,
+            "ragu": true,
+            "kotak": [
+              789,
+              167,
+              838,
+              191
+            ]
+          },
+          {
+            "index": 14,
+            "kategori": "nglegena",
+            "label": "ca",
+            "unicode": "ꦕ",
+            "confidence": 0.5324151515960693,
+            "ragu": false,
+            "kotak": [
+              608,
+              168,
+              668,
+              207
+            ]
+          },
+          {
+            "index": 15,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9337465167045593,
+            "ragu": false,
+            "kotak": [
+              1013,
+              168,
+              1052,
+              231
+            ]
+          },
+          {
+            "index": 16,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.9533557891845703,
+            "ragu": false,
+            "kotak": [
+              1120,
+              173,
+              1163,
+              231
+            ]
+          },
+          {
+            "index": 17,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.5472636818885803,
+            "ragu": false,
+            "kotak": [
+              196,
+              190,
+              243,
+              256
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diag_08",
+        "image": "eval/failures/08_sample_3_gelpen_labels.png",
+        "domain": "handwriting_chart_with_latin_labels",
+        "notes": "20 Nglegena tulisan tangan berlabel Latin di atas tiap aksara",
+        "unicode_gt": "ꦲꦤꦕꦫꦏ\nꦢꦠꦱꦮꦭ\nꦥꦝꦗꦪꦚ\nꦩꦒꦧꦛꦔ",
+        "unicode_pred": "ꦒꦱꦱꦒꦤꦱꦗꦱꦝ꧀ꦱ\nꦤꦤ\nꦲꦝꦫꦠ\nꦕꦤꦤ\nꦫꦢꦫꦫꦫꦮꦥ\nꦤ\nꦥꦝꦱꦗꦁ꧈ꦗꦥꦒ\nꦒꦤ\nꦩꦫꦒ",
+        "latin_gt": "ha na ca ra ka da ta sa wa la pa dha ja ya nya ma ga ba tha nga",
+        "latin_pred": "gasa saganasa jasad sa nana adha rata can ana rada rar ara wapa na padha saj ang, jap aga gana maraga",
+        "indonesian_pred": "Gas. ((andaikan se-galak ((andaikan jasad sa nana adha i 1 can ada agak rar bngs. Wringin. Uwap. ((andaikan na sama saj ang, wis ditunggalake dadi siji beraga: umuk gana me-paraga",
+        "oracle_dp_latin": "Hanacaraka datasawal apa d aja yanyamagabathanga",
+        "oracle_dp_indonesian": "Hanacaraka datasawal apa d jangan yanyamagabathanga",
+        "oracle_dp_word_acc_pct": 0.0,
+        "gt_lexicon_oov_words": [
+          "ha",
+          "na",
+          "ca",
+          "ra",
+          "ka",
+          "da",
+          "ta",
+          "sa",
+          "wa",
+          "la",
+          "pa",
+          "dha",
+          "ja",
+          "ya",
+          "nya",
+          "ma",
+          "ga",
+          "ba",
+          "tha",
+          "nga"
+        ],
+        "cer_pct": 170.0,
+        "grapheme_f1_pct": 33.9,
+        "word_acc_pct": 0.0,
+        "pred_box_count": 53,
+        "oov_words": [
+          "gasa",
+          "saganasa",
+          "jasad",
+          "sa",
+          "nana",
+          "adha",
+          "rata",
+          "can",
+          "rada",
+          "rar",
+          "ara",
+          "wapa",
+          "na",
+          "padha",
+          "saj",
+          "ang",
+          "jap",
+          "aga",
+          "gana",
+          "maraga"
+        ],
+        "elapsed_ms": 1744.34,
+        "detections": [
+          {
+            "index": 1,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.8959248065948486,
+            "ragu": false,
+            "kotak": [
+              355,
+              16,
+              389,
+              35
+            ]
+          },
+          {
+            "index": 2,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.48025229573249817,
+            "ragu": false,
+            "kotak": [
+              944,
+              16,
+              960,
+              35
+            ]
+          },
+          {
+            "index": 3,
+            "kategori": "nglegena",
+            "label": "dha",
+            "unicode": "ꦝ",
+            "confidence": 0.2597482204437256,
+            "ragu": true,
+            "kotak": [
+              711,
+              17,
+              728,
+              36
+            ]
+          },
+          {
+            "index": 4,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.6474267244338989,
+            "ragu": false,
+            "kotak": [
+              804,
+              17,
+              815,
+              32
+            ]
+          },
+          {
+            "index": 5,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.6164899468421936,
+            "ragu": false,
+            "kotak": [
+              418,
+              19,
+              442,
+              35
+            ]
+          },
+          {
+            "index": 6,
+            "kategori": "pasangan",
+            "label": "p_sa",
+            "unicode": "꧀ꦱ",
+            "confidence": 0.5155313014984131,
+            "ragu": false,
+            "kotak": [
+              795,
+              19,
+              813,
+              35
+            ]
+          },
+          {
+            "index": 7,
+            "kategori": "pasangan",
+            "label": "p_sa",
+            "unicode": "꧀ꦱ",
+            "confidence": 0.34099721908569336,
+            "ragu": true,
+            "kotak": [
+              826,
+              19,
+              864,
+              34
+            ]
+          },
+          {
+            "index": 8,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.38430383801460266,
+            "ragu": true,
+            "kotak": [
+              36,
+              20,
+              75,
+              35
+            ]
+          },
+          {
+            "index": 9,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.4269314110279083,
+            "ragu": true,
+            "kotak": [
+              79,
+              20,
+              101,
+              34
+            ]
+          },
+          {
+            "index": 10,
+            "kategori": "sandhangan",
+            "label": "wulu",
+            "unicode": "ꦶ",
+            "confidence": 0.4281708300113678,
+            "ragu": true,
+            "kotak": [
+              397,
+              20,
+              413,
+              36
+            ]
+          },
+          {
+            "index": 11,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.43589121103286743,
+            "ragu": true,
+            "kotak": [
+              539,
+              20,
+              557,
+              35
+            ]
+          },
+          {
+            "index": 12,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.4152311086654663,
+            "ragu": true,
+            "kotak": [
+              627,
+              20,
+              642,
+              38
+            ]
+          },
+          {
+            "index": 13,
+            "kategori": "pasangan",
+            "label": "p_sa",
+            "unicode": "꧀ꦱ",
+            "confidence": 0.2721182703971863,
+            "ragu": true,
+            "kotak": [
+              746,
+              20,
+              770,
+              34
+            ]
+          },
+          {
+            "index": 14,
+            "kategori": "pasangan",
+            "label": "p_sa",
+            "unicode": "꧀ꦱ",
+            "confidence": 0.894007682800293,
+            "ragu": false,
+            "kotak": [
+              771,
+              20,
+              802,
+              34
+            ]
+          },
+          {
+            "index": 15,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.3666083514690399,
+            "ragu": true,
+            "kotak": [
+              91,
+              21,
+              119,
+              35
+            ]
+          },
+          {
+            "index": 16,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.5197524428367615,
+            "ragu": false,
+            "kotak": [
+              197,
+              21,
+              222,
+              35
+            ]
+          },
+          {
+            "index": 17,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.2653014063835144,
+            "ragu": true,
+            "kotak": [
+              272,
+              21,
+              292,
+              36
+            ]
+          },
+          {
+            "index": 18,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.7623862028121948,
+            "ragu": false,
+            "kotak": [
+              676,
+              21,
+              692,
+              36
+            ]
+          },
+          {
+            "index": 19,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.30521804094314575,
+            "ragu": true,
+            "kotak": [
+              730,
+              21,
+              743,
+              35
+            ]
+          },
+          {
+            "index": 20,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.4160045385360718,
+            "ragu": true,
+            "kotak": [
+              118,
+              121,
+              138,
+              137
+            ]
+          },
+          {
+            "index": 21,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.5775900483131409,
+            "ragu": false,
+            "kotak": [
+              330,
+              121,
+              351,
+              137
+            ]
+          },
+          {
+            "index": 22,
+            "kategori": "nglegena",
+            "label": "ha",
+            "unicode": "ꦲ",
+            "confidence": 0.36894285678863525,
+            "ragu": true,
+            "kotak": [
+              70,
+              171,
+              181,
+              238
+            ]
+          },
+          {
+            "index": 23,
+            "kategori": "nglegena",
+            "label": "ta",
+            "unicode": "ꦠ",
+            "confidence": 0.9791786074638367,
+            "ragu": false,
+            "kotak": [
+              936,
+              174,
+              1038,
+              240
+            ]
+          },
+          {
+            "index": 24,
+            "kategori": "nglegena",
+            "label": "dha",
+            "unicode": "ꦝ",
+            "confidence": 0.3726951777935028,
+            "ragu": true,
+            "kotak": [
+              501,
+              176,
+              592,
+              245
+            ]
+          },
+          {
+            "index": 25,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.8790128231048584,
+            "ragu": false,
+            "kotak": [
+              716,
+              187,
+              773,
+              246
+            ]
+          },
+          {
+            "index": 26,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.33259737491607666,
+            "ragu": true,
+            "kotak": [
+              956,
+              361,
+              981,
+              380
+            ]
+          },
+          {
+            "index": 27,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.6057457327842712,
+            "ragu": false,
+            "kotak": [
+              735,
+              363,
+              777,
+              381
+            ]
+          },
+          {
+            "index": 28,
+            "kategori": "nglegena",
+            "label": "ca",
+            "unicode": "ꦕ",
+            "confidence": 0.4228302240371704,
+            "ragu": true,
+            "kotak": [
+              529,
+              364,
+              560,
+              380
+            ]
+          },
+          {
+            "index": 29,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.6297939419746399,
+            "ragu": false,
+            "kotak": [
+              124,
+              413,
+              182,
+              479
+            ]
+          },
+          {
+            "index": 30,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.6240890622138977,
+            "ragu": false,
+            "kotak": [
+              339,
+              418,
+              399,
+              479
+            ]
+          },
+          {
+            "index": 31,
+            "kategori": "nglegena",
+            "label": "da",
+            "unicode": "ꦢ",
+            "confidence": 0.2794014811515808,
+            "ragu": true,
+            "kotak": [
+              295,
+              421,
+              376,
+              488
+            ]
+          },
+          {
+            "index": 32,
+            "kategori": "nglegena",
+            "label": "pa",
+            "unicode": "ꦥ",
+            "confidence": 0.6234601736068726,
+            "ragu": false,
+            "kotak": [
+              922,
+              422,
+              1025,
+              486
+            ]
+          },
+          {
+            "index": 33,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.3256784677505493,
+            "ragu": true,
+            "kotak": [
+              509,
+              425,
+              609,
+              480
+            ]
+          },
+          {
+            "index": 34,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.6418583393096924,
+            "ragu": false,
+            "kotak": [
+              572,
+              425,
+              609,
+              479
+            ]
+          },
+          {
+            "index": 35,
+            "kategori": "nglegena",
+            "label": "wa",
+            "unicode": "ꦮ",
+            "confidence": 0.9597779512405396,
+            "ragu": false,
+            "kotak": [
+              725,
+              430,
+              811,
+              485
+            ]
+          },
+          {
+            "index": 36,
+            "kategori": "sandhangan",
+            "label": "cecak",
+            "unicode": "ꦁ",
+            "confidence": 0.2742443084716797,
+            "ragu": true,
+            "kotak": [
+              532,
+              599,
+              543,
+              605
+            ]
+          },
+          {
+            "index": 37,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.31550031900405884,
+            "ragu": true,
+            "kotak": [
+              105,
+              607,
+              138,
+              628
+            ]
+          },
+          {
+            "index": 38,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.5265940427780151,
+            "ragu": false,
+            "kotak": [
+              343,
+              607,
+              360,
+              623
+            ]
+          },
+          {
+            "index": 39,
+            "kategori": "sandhangan",
+            "label": "suku",
+            "unicode": "ꦸ",
+            "confidence": 0.31715214252471924,
+            "ragu": true,
+            "kotak": [
+              959,
+              607,
+              994,
+              630
+            ]
+          },
+          {
+            "index": 40,
+            "kategori": "nglegena",
+            "label": "dha",
+            "unicode": "ꦝ",
+            "confidence": 0.831423282623291,
+            "ragu": false,
+            "kotak": [
+              298,
+              665,
+              386,
+              723
+            ]
+          },
+          {
+            "index": 41,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.9084707498550415,
+            "ragu": false,
+            "kotak": [
+              981,
+              667,
+              1052,
+              732
+            ]
+          },
+          {
+            "index": 42,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.987206757068634,
+            "ragu": false,
+            "kotak": [
+              503,
+              668,
+              594,
+              729
+            ]
+          },
+          {
+            "index": 43,
+            "kategori": "nglegena",
+            "label": "ja",
+            "unicode": "ꦗ",
+            "confidence": 0.47850194573402405,
+            "ragu": false,
+            "kotak": [
+              710,
+              669,
+              819,
+              720
+            ]
+          },
+          {
+            "index": 44,
+            "kategori": "nglegena",
+            "label": "pa",
+            "unicode": "ꦥ",
+            "confidence": 0.8085393905639648,
+            "ragu": false,
+            "kotak": [
+              76,
+              676,
+              167,
+              740
+            ]
+          },
+          {
+            "index": 45,
+            "kategori": "nglegena",
+            "label": "pa",
+            "unicode": "ꦥ",
+            "confidence": 0.3139355182647705,
+            "ragu": true,
+            "kotak": [
+              782,
+              692,
+              816,
+              720
+            ]
+          },
+          {
+            "index": 46,
+            "kategori": "nglegena",
+            "label": "sa",
+            "unicode": "ꦱ",
+            "confidence": 0.4486520290374756,
+            "ragu": true,
+            "kotak": [
+              299,
+              693,
+              366,
+              721
+            ]
+          },
+          {
+            "index": 47,
+            "kategori": "pada",
+            "label": "pada_lingsa",
+            "unicode": "꧈",
+            "confidence": 0.2567886710166931,
+            "ragu": true,
+            "kotak": [
+              561,
+              694,
+              598,
+              722
+            ]
+          },
+          {
+            "index": 48,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.3818705976009369,
+            "ragu": true,
+            "kotak": [
+              100,
+              851,
+              125,
+              867
+            ]
+          },
+          {
+            "index": 49,
+            "kategori": "nglegena",
+            "label": "na",
+            "unicode": "ꦤ",
+            "confidence": 0.33623185753822327,
+            "ragu": true,
+            "kotak": [
+              111,
+              851,
+              144,
+              867
+            ]
+          },
+          {
+            "index": 50,
+            "kategori": "sandhangan",
+            "label": "tarung",
+            "unicode": "ꦴ",
+            "confidence": 0.5057659149169922,
+            "ragu": false,
+            "kotak": [
+              763,
+              852,
+              780,
+              867
+            ]
+          },
+          {
+            "index": 51,
+            "kategori": "nglegena",
+            "label": "ra",
+            "unicode": "ꦫ",
+            "confidence": 0.3338848948478699,
+            "ragu": true,
+            "kotak": [
+              291,
+              895,
+              384,
+              986
+            ]
+          },
+          {
+            "index": 52,
+            "kategori": "nglegena",
+            "label": "ma",
+            "unicode": "ꦩ",
+            "confidence": 0.28501948714256287,
+            "ragu": true,
+            "kotak": [
+              78,
+              898,
+              183,
+              981
+            ]
+          },
+          {
+            "index": 53,
+            "kategori": "nglegena",
+            "label": "ga",
+            "unicode": "ꦒ",
+            "confidence": 0.5094988942146301,
+            "ragu": false,
+            "kotak": [
+              555,
+              901,
+              615,
+              965
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "synthetic_val": {
+    "n_images": 240,
+    "imgsz": 416,
+    "conf_thresh": 0.25,
+    "group_metrics": {
+      "overall": {
+        "num_classes": 55,
+        "gt_boxes": 8494,
+        "mAP50_pct": 98.88,
+        "mAP50_95_pct": 87.84
+      },
+      "nglegena": {
+        "num_classes": 20,
+        "gt_boxes": 3758,
+        "mAP50_pct": 98.96,
+        "mAP50_95_pct": 90.92
+      },
+      "pasangan": {
+        "num_classes": 20,
+        "gt_boxes": 1547,
+        "mAP50_pct": 99.11,
+        "mAP50_95_pct": 86.12
+      },
+      "sandhangan": {
+        "num_classes": 12,
+        "gt_boxes": 2901,
+        "mAP50_pct": 98.21,
+        "mAP50_95_pct": 86.09
+      },
+      "pada": {
+        "num_classes": 3,
+        "gt_boxes": 288,
+        "mAP50_pct": 99.5,
+        "mAP50_95_pct": 85.83
+      }
+    },
+    "per_class_ap": {
+      "ha": {
+        "category": "nglegena",
+        "gt_boxes": 212,
+        "ap50_pct": 99.28,
+        "ap50_95_pct": 92.31
+      },
+      "na": {
+        "category": "nglegena",
+        "gt_boxes": 198,
+        "ap50_pct": 98.87,
+        "ap50_95_pct": 91.79
+      },
+      "ca": {
+        "category": "nglegena",
+        "gt_boxes": 206,
+        "ap50_pct": 99.08,
+        "ap50_95_pct": 90.9
+      },
+      "ra": {
+        "category": "nglegena",
+        "gt_boxes": 196,
+        "ap50_pct": 98.4,
+        "ap50_95_pct": 87.97
+      },
+      "ka": {
+        "category": "nglegena",
+        "gt_boxes": 161,
+        "ap50_pct": 99.16,
+        "ap50_95_pct": 89.38
+      },
+      "da": {
+        "category": "nglegena",
+        "gt_boxes": 172,
+        "ap50_pct": 98.14,
+        "ap50_95_pct": 89.52
+      },
+      "ta": {
+        "category": "nglegena",
+        "gt_boxes": 167,
+        "ap50_pct": 98.87,
+        "ap50_95_pct": 91.69
+      },
+      "sa": {
+        "category": "nglegena",
+        "gt_boxes": 167,
+        "ap50_pct": 99.4,
+        "ap50_95_pct": 91.92
+      },
+      "wa": {
+        "category": "nglegena",
+        "gt_boxes": 209,
+        "ap50_pct": 99.12,
+        "ap50_95_pct": 91.4
+      },
+      "la": {
+        "category": "nglegena",
+        "gt_boxes": 188,
+        "ap50_pct": 99.38,
+        "ap50_95_pct": 92.17
+      },
+      "pa": {
+        "category": "nglegena",
+        "gt_boxes": 175,
+        "ap50_pct": 98.59,
+        "ap50_95_pct": 91.88
+      },
+      "dha": {
+        "category": "nglegena",
+        "gt_boxes": 179,
+        "ap50_pct": 98.62,
+        "ap50_95_pct": 91.06
+      },
+      "ja": {
+        "category": "nglegena",
+        "gt_boxes": 186,
+        "ap50_pct": 99.48,
+        "ap50_95_pct": 90.71
+      },
+      "ya": {
+        "category": "nglegena",
+        "gt_boxes": 194,
+        "ap50_pct": 98.52,
+        "ap50_95_pct": 90.34
+      },
+      "nya": {
+        "category": "nglegena",
+        "gt_boxes": 182,
+        "ap50_pct": 98.47,
+        "ap50_95_pct": 90.07
+      },
+      "ma": {
+        "category": "nglegena",
+        "gt_boxes": 197,
+        "ap50_pct": 98.55,
+        "ap50_95_pct": 91.36
+      },
+      "ga": {
+        "category": "nglegena",
+        "gt_boxes": 206,
+        "ap50_pct": 99.46,
+        "ap50_95_pct": 91.69
+      },
+      "ba": {
+        "category": "nglegena",
+        "gt_boxes": 182,
+        "ap50_pct": 99.13,
+        "ap50_95_pct": 92.49
+      },
+      "tha": {
+        "category": "nglegena",
+        "gt_boxes": 179,
+        "ap50_pct": 99.4,
+        "ap50_95_pct": 87.75
+      },
+      "nga": {
+        "category": "nglegena",
+        "gt_boxes": 202,
+        "ap50_pct": 99.31,
+        "ap50_95_pct": 91.97
+      },
+      "p_ha": {
+        "category": "pasangan",
+        "gt_boxes": 65,
+        "ap50_pct": 98.81,
+        "ap50_95_pct": 82.99
+      },
+      "p_na": {
+        "category": "pasangan",
+        "gt_boxes": 81,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 85.91
+      },
+      "p_ca": {
+        "category": "pasangan",
+        "gt_boxes": 71,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 85.84
+      },
+      "p_ra": {
+        "category": "pasangan",
+        "gt_boxes": 87,
+        "ap50_pct": 99.11,
+        "ap50_95_pct": 83.17
+      },
+      "p_ka": {
+        "category": "pasangan",
+        "gt_boxes": 86,
+        "ap50_pct": 99.28,
+        "ap50_95_pct": 85.59
+      },
+      "p_da": {
+        "category": "pasangan",
+        "gt_boxes": 84,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 87.63
+      },
+      "p_ta": {
+        "category": "pasangan",
+        "gt_boxes": 72,
+        "ap50_pct": 98.99,
+        "ap50_95_pct": 86.11
+      },
+      "p_sa": {
+        "category": "pasangan",
+        "gt_boxes": 89,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 85.93
+      },
+      "p_wa": {
+        "category": "pasangan",
+        "gt_boxes": 81,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 87.39
+      },
+      "p_la": {
+        "category": "pasangan",
+        "gt_boxes": 78,
+        "ap50_pct": 95.92,
+        "ap50_95_pct": 76.95
+      },
+      "p_pa": {
+        "category": "pasangan",
+        "gt_boxes": 66,
+        "ap50_pct": 99.4,
+        "ap50_95_pct": 87.23
+      },
+      "p_dha": {
+        "category": "pasangan",
+        "gt_boxes": 77,
+        "ap50_pct": 99.49,
+        "ap50_95_pct": 86.77
+      },
+      "p_ja": {
+        "category": "pasangan",
+        "gt_boxes": 78,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 85.7
+      },
+      "p_ya": {
+        "category": "pasangan",
+        "gt_boxes": 73,
+        "ap50_pct": 99.2,
+        "ap50_95_pct": 85.01
+      },
+      "p_nya": {
+        "category": "pasangan",
+        "gt_boxes": 71,
+        "ap50_pct": 98.65,
+        "ap50_95_pct": 92.03
+      },
+      "p_ma": {
+        "category": "pasangan",
+        "gt_boxes": 69,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 86.76
+      },
+      "p_ga": {
+        "category": "pasangan",
+        "gt_boxes": 86,
+        "ap50_pct": 99.45,
+        "ap50_95_pct": 85.88
+      },
+      "p_ba": {
+        "category": "pasangan",
+        "gt_boxes": 84,
+        "ap50_pct": 99.14,
+        "ap50_95_pct": 88.65
+      },
+      "p_tha": {
+        "category": "pasangan",
+        "gt_boxes": 72,
+        "ap50_pct": 99.49,
+        "ap50_95_pct": 90.11
+      },
+      "p_nga": {
+        "category": "pasangan",
+        "gt_boxes": 77,
+        "ap50_pct": 98.8,
+        "ap50_95_pct": 86.77
+      },
+      "wulu": {
+        "category": "sandhangan",
+        "gt_boxes": 285,
+        "ap50_pct": 94.79,
+        "ap50_95_pct": 82.42
+      },
+      "suku": {
+        "category": "sandhangan",
+        "gt_boxes": 555,
+        "ap50_pct": 97.55,
+        "ap50_95_pct": 79.0
+      },
+      "pepet": {
+        "category": "sandhangan",
+        "gt_boxes": 292,
+        "ap50_pct": 99.28,
+        "ap50_95_pct": 88.75
+      },
+      "taling": {
+        "category": "sandhangan",
+        "gt_boxes": 378,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 94.9
+      },
+      "tarung": {
+        "category": "sandhangan",
+        "gt_boxes": 104,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 87.07
+      },
+      "layar": {
+        "category": "sandhangan",
+        "gt_boxes": 268,
+        "ap50_pct": 99.36,
+        "ap50_95_pct": 82.41
+      },
+      "cecak": {
+        "category": "sandhangan",
+        "gt_boxes": 285,
+        "ap50_pct": 92.69,
+        "ap50_95_pct": 55.47
+      },
+      "wignyan": {
+        "category": "sandhangan",
+        "gt_boxes": 274,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 87.14
+      },
+      "pangkon": {
+        "category": "sandhangan",
+        "gt_boxes": 120,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 96.15
+      },
+      "cakra": {
+        "category": "sandhangan",
+        "gt_boxes": 130,
+        "ap50_pct": 97.9,
+        "ap50_95_pct": 93.11
+      },
+      "keret": {
+        "category": "sandhangan",
+        "gt_boxes": 117,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 88.39
+      },
+      "pengkal": {
+        "category": "sandhangan",
+        "gt_boxes": 93,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 98.28
+      },
+      "pada_adeg": {
+        "category": "pada",
+        "gt_boxes": 85,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 87.85
+      },
+      "pada_lingsa": {
+        "category": "pada",
+        "gt_boxes": 150,
+        "ap50_pct": 99.49,
+        "ap50_95_pct": 82.87
+      },
+      "pada_lungsi": {
+        "category": "pada",
+        "gt_boxes": 53,
+        "ap50_pct": 99.5,
+        "ap50_95_pct": 86.78
+      }
+    },
+    "small_objects_lt16px_total": {
+      "gt_416": 604,
+      "tp_416": 541,
+      "recall_416_pct": 89.57
+    },
+    "small_objects_per_class": [
+      {
+        "class": "na",
+        "category": "nglegena",
+        "gt_lt16px_416": 1,
+        "tp_lt16px_416": 0,
+        "recall_416_pct": 0.0,
+        "gt_lt16px_raw": 1,
+        "tp_lt16px_raw": 0
+      },
+      {
+        "class": "p_sa",
+        "category": "pasangan",
+        "gt_lt16px_416": 3,
+        "tp_lt16px_416": 2,
+        "recall_416_pct": 66.67,
+        "gt_lt16px_raw": 3,
+        "tp_lt16px_raw": 2
+      },
+      {
+        "class": "p_ja",
+        "category": "pasangan",
+        "gt_lt16px_416": 2,
+        "tp_lt16px_416": 2,
+        "recall_416_pct": 100.0,
+        "gt_lt16px_raw": 2,
+        "tp_lt16px_raw": 2
+      },
+      {
+        "class": "wulu",
+        "category": "sandhangan",
+        "gt_lt16px_416": 135,
+        "tp_lt16px_416": 108,
+        "recall_416_pct": 80.0,
+        "gt_lt16px_raw": 135,
+        "tp_lt16px_raw": 108
+      },
+      {
+        "class": "suku",
+        "category": "sandhangan",
+        "gt_lt16px_416": 1,
+        "tp_lt16px_416": 1,
+        "recall_416_pct": 100.0,
+        "gt_lt16px_raw": 1,
+        "tp_lt16px_raw": 1
+      },
+      {
+        "class": "pepet",
+        "category": "sandhangan",
+        "gt_lt16px_416": 10,
+        "tp_lt16px_416": 10,
+        "recall_416_pct": 100.0,
+        "gt_lt16px_raw": 10,
+        "tp_lt16px_raw": 10
+      },
+      {
+        "class": "tarung",
+        "category": "sandhangan",
+        "gt_lt16px_416": 33,
+        "tp_lt16px_416": 32,
+        "recall_416_pct": 96.97,
+        "gt_lt16px_raw": 33,
+        "tp_lt16px_raw": 32
+      },
+      {
+        "class": "layar",
+        "category": "sandhangan",
+        "gt_lt16px_416": 67,
+        "tp_lt16px_416": 64,
+        "recall_416_pct": 95.52,
+        "gt_lt16px_raw": 67,
+        "tp_lt16px_raw": 64
+      },
+      {
+        "class": "cecak",
+        "category": "sandhangan",
+        "gt_lt16px_416": 285,
+        "tp_lt16px_416": 258,
+        "recall_416_pct": 90.53,
+        "gt_lt16px_raw": 285,
+        "tp_lt16px_raw": 258
+      },
+      {
+        "class": "pada_lingsa",
+        "category": "pada",
+        "gt_lt16px_416": 59,
+        "tp_lt16px_416": 56,
+        "recall_416_pct": 94.92,
+        "gt_lt16px_raw": 59,
+        "tp_lt16px_raw": 56
+      },
+      {
+        "class": "pada_lungsi",
+        "category": "pada",
+        "gt_lt16px_416": 8,
+        "tp_lt16px_416": 8,
+        "recall_416_pct": 100.0,
+        "gt_lt16px_raw": 8,
+        "tp_lt16px_raw": 8
+      }
+    ],
+    "top_confused_pairs": [
+      {
+        "gt": "wulu",
+        "pred": "cecak",
+        "count": 10
+      },
+      {
+        "gt": "ta",
+        "pred": "ba",
+        "count": 4
+      },
+      {
+        "gt": "ca",
+        "pred": "sa",
+        "count": 3
+      },
+      {
+        "gt": "nya",
+        "pred": "ba",
+        "count": 3
+      },
+      {
+        "gt": "ya",
+        "pred": "ha",
+        "count": 2
+      },
+      {
+        "gt": "ya",
+        "pred": "ka",
+        "count": 2
+      },
+      {
+        "gt": "ba",
+        "pred": "ta",
+        "count": 2
+      },
+      {
+        "gt": "tha",
+        "pred": "nga",
+        "count": 2
+      },
+      {
+        "gt": "p_la",
+        "pred": "p_ya",
+        "count": 2
+      },
+      {
+        "gt": "p_dha",
+        "pred": "p_tha",
+        "count": 2
+      },
+      {
+        "gt": "ha",
+        "pred": "nga",
+        "count": 1
+      },
+      {
+        "gt": "na",
+        "pred": "p_ha",
+        "count": 1
+      },
+      {
+        "gt": "ca",
+        "pred": "na",
+        "count": 1
+      },
+      {
+        "gt": "ca",
+        "pred": "tha",
+        "count": 1
+      },
+      {
+        "gt": "ca",
+        "pred": "nga",
+        "count": 1
+      },
+      {
+        "gt": "ka",
+        "pred": "na",
+        "count": 1
+      },
+      {
+        "gt": "ka",
+        "pred": "nya",
+        "count": 1
+      },
+      {
+        "gt": "da",
+        "pred": "wa",
+        "count": 1
+      },
+      {
+        "gt": "ta",
+        "pred": "ha",
+        "count": 1
+      },
+      {
+        "gt": "ta",
+        "pred": "ka",
+        "count": 1
+      },
+      {
+        "gt": "ta",
+        "pred": "ya",
+        "count": 1
+      },
+      {
+        "gt": "ta",
+        "pred": "pepet",
+        "count": 1
+      },
+      {
+        "gt": "sa",
+        "pred": "da",
+        "count": 1
+      },
+      {
+        "gt": "wa",
+        "pred": "ta",
+        "count": 1
+      },
+      {
+        "gt": "la",
+        "pred": "ya",
+        "count": 1
+      }
+    ],
+    "top_missed_classes_fn": [
+      {
+        "class": "suku",
+        "category": "sandhangan",
+        "fn": 31,
+        "gt": 555,
+        "recall_op_pct": 94.41
+      },
+      {
+        "class": "cecak",
+        "category": "sandhangan",
+        "fn": 26,
+        "gt": 285,
+        "recall_op_pct": 90.88
+      },
+      {
+        "class": "wulu",
+        "category": "sandhangan",
+        "fn": 21,
+        "gt": 285,
+        "recall_op_pct": 92.63
+      },
+      {
+        "class": "p_la",
+        "category": "pasangan",
+        "fn": 7,
+        "gt": 78,
+        "recall_op_pct": 91.03
+      },
+      {
+        "class": "pepet",
+        "category": "sandhangan",
+        "fn": 6,
+        "gt": 292,
+        "recall_op_pct": 97.95
+      },
+      {
+        "class": "cakra",
+        "category": "sandhangan",
+        "fn": 6,
+        "gt": 130,
+        "recall_op_pct": 95.38
+      },
+      {
+        "class": "p_ha",
+        "category": "pasangan",
+        "fn": 5,
+        "gt": 65,
+        "recall_op_pct": 92.31
+      },
+      {
+        "class": "layar",
+        "category": "sandhangan",
+        "fn": 5,
+        "gt": 268,
+        "recall_op_pct": 98.13
+      },
+      {
+        "class": "ra",
+        "category": "nglegena",
+        "fn": 4,
+        "gt": 196,
+        "recall_op_pct": 97.96
+      },
+      {
+        "class": "da",
+        "category": "nglegena",
+        "fn": 4,
+        "gt": 172,
+        "recall_op_pct": 97.67
+      },
+      {
+        "class": "ma",
+        "category": "nglegena",
+        "fn": 4,
+        "gt": 197,
+        "recall_op_pct": 97.97
+      },
+      {
+        "class": "p_nga",
+        "category": "pasangan",
+        "fn": 4,
+        "gt": 77,
+        "recall_op_pct": 94.81
+      },
+      {
+        "class": "ha",
+        "category": "nglegena",
+        "fn": 3,
+        "gt": 212,
+        "recall_op_pct": 98.58
+      },
+      {
+        "class": "na",
+        "category": "nglegena",
+        "fn": 3,
+        "gt": 198,
+        "recall_op_pct": 98.48
+      },
+      {
+        "class": "wa",
+        "category": "nglegena",
+        "fn": 3,
+        "gt": 209,
+        "recall_op_pct": 98.56
+      },
+      {
+        "class": "pa",
+        "category": "nglegena",
+        "fn": 3,
+        "gt": 175,
+        "recall_op_pct": 98.29
+      },
+      {
+        "class": "p_ra",
+        "category": "pasangan",
+        "fn": 3,
+        "gt": 87,
+        "recall_op_pct": 96.55
+      },
+      {
+        "class": "p_ba",
+        "category": "pasangan",
+        "fn": 3,
+        "gt": 84,
+        "recall_op_pct": 96.43
+      },
+      {
+        "class": "pada_lingsa",
+        "category": "pada",
+        "fn": 3,
+        "gt": 150,
+        "recall_op_pct": 98.0
+      },
+      {
+        "class": "ka",
+        "category": "nglegena",
+        "fn": 2,
+        "gt": 161,
+        "recall_op_pct": 98.76
+      }
+    ],
+    "top_false_positive_classes": [
+      {
+        "class": "layar",
+        "category": "sandhangan",
+        "fp": 5
+      },
+      {
+        "class": "suku",
+        "category": "sandhangan",
+        "fp": 4
+      },
+      {
+        "class": "taling",
+        "category": "sandhangan",
+        "fp": 2
+      },
+      {
+        "class": "cecak",
+        "category": "sandhangan",
+        "fp": 2
+      },
+      {
+        "class": "ha",
+        "category": "nglegena",
+        "fp": 1
+      },
+      {
+        "class": "ra",
+        "category": "nglegena",
+        "fp": 1
+      },
+      {
+        "class": "da",
+        "category": "nglegena",
+        "fp": 1
+      },
+      {
+        "class": "sa",
+        "category": "nglegena",
+        "fp": 1
+      },
+      {
+        "class": "p_ra",
+        "category": "pasangan",
+        "fp": 1
+      },
+      {
+        "class": "wignyan",
+        "category": "sandhangan",
+        "fp": 1
+      },
+      {
+        "class": "keret",
+        "category": "sandhangan",
+        "fp": 1
+      }
+    ],
+    "operating_point_totals": {
+      "tp_cls_ok": 8263,
+      "cls_confusion": 72,
+      "fn_missed": 159,
+      "fp_spurious": 20,
+      "mean_cluster_grapheme_f1_pct": 95.46,
+      "mean_cluster_cer_pct": 2.82
+    },
+    "worst50_gallery": "eval\\reports\\v3_phase4_browser\\baseline_worst50.html",
+    "worst50_count": 50
+  }
+}

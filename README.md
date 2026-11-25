@@ -1,66 +1,31 @@
-# AksaraScan v2.5
+# AksaraScan — Pemindai & Penerjemah Aksara Jawa (v3.0 Offline Browser Engine)
 
-**Pemeriksa & penerjemah kalimat Aksara Jawa (*Nglegena + Pasangan + Sandhangan + Tanda Baca Pada*) langsung dari kamera / gambar — 100% di browser, tanpa server.**
+**AksaraScan** adalah aplikasi web progresif (**100% client-side / luring via ONNX Runtime Web WASM**) untuk mendeteksi, memetakan ortografi **55 kelas** Aksara Jawa, mentransliterasi secara kanonik, dan menerjemahkannya ke Bahasa Indonesia secara langsung di peramban — tanpa mengunggah citra pengguna ke peladen mana pun.
 
-Web app client-only bermesin ganda (*Dual-Engine*):
-1. **Engine v2.5 — YOLOv8-Nano ONNX (55 Kelas Atomik · 3 Gaya Font)** via `onnxruntime-web` + **Rekonstruktor Ortografi (`orthography.js`)** + **Pemisah Kata DP & Penerjemah Bahasa Indonesia (`javanese_lexicon.js`)**: mengenali 20 Aksara Nglegena, 20 Pasangan, 12 Sandhangan/Pangkon, dan 3 Tanda Baca *Pada* (`꧋`, `꧈`, `꧉`), lalu merangkainya otomatis menjadi Unicode, kalimat Latin tergabung (*scriptio continua* → kata), dan terjemahan kalimat Bahasa Indonesia.
-2. **Engine v1.0 — Pipeline Pengolahan Citra Klasik + SVM Linear**: grayscale BT.601 → ambang adaptif Otsu → median 3×3 → morfologi → segmentasi CCL → normalisasi 96×96 → **SVM Linear One-vs-Rest** dari bobot float16 Base64.
+## Arsitektur Utama v3.0
+1. **Detektor Objek Atomik 55 Kelas (`app/web_camscanner/aksara_yolo.onnx`, `12.11 MB`)**:
+   - **20 Nglegena**, **20 Pasangan** (`p_ha`–`p_nga`), **12 Sandhangan & Pangkon**, serta **3 Tanda Baca Pada** (`pada_adeg`, `pada_lingsa`, `pada_lungsi`).
+   - Tersedia arsitektur pelatihan bersih **Apache-2.0 / MIT** di `training/yolox_model.py` dan `training/train_yolox.py` (**YOLOX** + opsional *P2* stride-4 head untuk glif kecil `< 16 px`, bebas `ultralytics` AGPL-3.0) serta jalur penantang **Track B CRNN + BiLSTM + CTC Loss** (`training/train_crnn_track_b.py` -> `aksara_crnn_ctc.onnx`).
+2. **Rekonstruktor Spasial & Validator Ortografi (`app/web_camscanner/orthography.js`)**:
+   - Perakitan gugus pasangan bawah & kanan (`p_ha`, `p_sa`, `p_pa`), pengaitan sandhangan relatif terhadap `fullAnchor`, dan validasi kanonik blok Unicode `U+A980..U+A9DF`.
+3. **Dekoder Beam Konservatif & Mesin Bahasa Jawa (`app/web_camscanner/javanese_lm_data.js`, `app/web_camscanner/javanese_lm_engine.js`)**:
+   - Menggabungkan kamus kurasi + `AKSARA_LM_DATA` (`10.589` unigram, `4.500` entri kamus, `560` konteks char-trigram dari `866.150` token korpus Jawa) serta morfologi afiks produktif untuk memperbaiki salah-baca diakritik kecil pada kata OOV tanpa menghalusinasi kata yang sudah sah.
+4. **Antarmuka Transparan & Umpan Balik Lokal (`app/web_camscanner/v3_ui_enhancer.js`)**:
+   - Menampilkan transkripsi Unicode mentah detektor di samping hasil perbaikan, menandai kata belum dikenal dengan garis bawah putus-putus untuk tukar kandidat *top-K*, ekspor koreksi lokal JSON, serta *toggle* terjemahan daring yang **mati secara baku**.
 
-Privasi penuh: gambar tidak pernah meninggalkan perangkat.
+## Struktur Dokumentasi, Pelatihan, & Evaluasi
+- [Audit & Roadmap (`docs/AUDIT.md`)](docs/AUDIT.md)
+- [Katalog Referensi & Lisensi (`docs/REFERENCES.md`)](docs/REFERENCES.md)
+- [Kartu Model (`MODEL_CARD.md`)](MODEL_CARD.md) & [Kredit Dataset (`DATASET_CREDITS.md`)](DATASET_CREDITS.md)
+- [Laporan Data Sintetis v2 (`dataset/external/reports/PHASE2_SYNTH_REPORT.md`)](dataset/external/reports/PHASE2_SYNTH_REPORT.md) (`14.998` sampel SIL OFL 1.1, `727.495` kotak tervalidasi)
+- [Runbook Pelatihan GPU Penuh (`training/COLAB_GPU_RUNBOOK.md`)](training/COLAB_GPU_RUNBOOK.md)
+- [Laporan Evaluasi Baseline & v3.0 (`eval/reports/v3.0.md`)](eval/reports/v3.0.md)
+- Uji Otomatis Browser: `node eval/test_e2e_assertions.mjs` & `python eval/run_eval.py --parity eval/parity_20.jsonl --failures eval/failures/manifest.jsonl`
 
-> Tugas Akhir — Muhammad Rayhan Najib (240533600012), Teknik Informasi, Universitas Negeri Malang.
-
-##  Fitur
-
-- **Mesin Ganda 1-Klik**: beralih bebas antara **YOLOv8-Nano ONNX (Full: Nglegena + Pasangan + Sandhangan)** dan **Pipeline Klasik PCD + SVM (20 Nglegena)**
-- Kamera web/ponsel (HTML5 MediaDevices) + auto-rata 6 frame biar hasil konsisten
-- **Auto-deteksi**: upload / tempel **Ctrl+V** / **seret gambar** ke halaman → langsung dipindai
-- **Seleksi area ala Google Lens**: seret kotak pada satu aksara → *Pindai Area Pilihan* (ambang lokal lebih akurat untuk glif kecil)
-- **Koreksi manual (human-in-the-loop)**: klik kotak deteksi → ganti aksara (20 kelas di mode SVM, 52 kelas di mode YOLOv8)
-- **Lab Pipeline 8 tahap**: histogram Otsu, biner, median, morfologi, segmentasi, normalisasi, montase — semua bisa diaudit visual
-- Kamus aksara Jawa lengkap + ekspor hasil JSON + contoh uji `sample_4.png` (Pasangan & Sandhangan)
-
-##  Menjalankan
+## Menjalankan Secara Lokal
+Buka folder `app/web_camscanner/` melalui *local web server* (live preview, `python -m http.server`, atau `npx serve`):
 
 ```bash
-# pilih salah satu
-python -m http.server 8899      # lalu buka http://127.0.0.1:8899/app/web_camscanner/
-# atau jalankan app/web_camscanner/run.bat (Windows, klik dua kali)
+cd app/web_camscanner
+npx serve .
 ```
-
-Butuh: browser modern. Tanpa Node, tanpa backend, tanpa instalasi lain.
-
-##  Struktur
-
-```
-app/web_camscanner/          # aplikasi web (index.html, app.js, orthography.js, aksara_yolo.onnx, model.json, PWA)
-training/                    # trainer YOLOv8n + SVM + pembagian segmen dataset
-  generate_yolo_dataset.py   # generator hibrid 1.050 halaman (Jawa.zip + OpenType javatext.ttf RAQM)
-  train_yolo.py              # pelatih YOLOv8n (52 kelas) -> app/web_camscanner/aksara_yolo.onnx
-  split_dataset.py           # -> dataset/split/{train,validation,test} (70/15/15, seed 42)
-  train_svm_v2.py            # augmentasi + Gaussian blur + LinearSVC -> model.json/js
-dataset/
-  hanacaraka/                # 1.579 citra tulisan tangan (20 kelas) — CC0, milik orang lain ⚠️
-  split/                     # hasil pembagian train/validation/test
-  manifest.csv               # 1 baris per citra: path, kelas, split, lisensi sumber
-docs/                        # PRD, arsitektur, spesifikasi dataset/model, rencana uji
-```
-
-##  Model
-
-| Engine | Detail & Evaluasi |
-|---|---|
-| **YOLOv8-Nano ONNX (v2.0)** | 52 kelas atomik (`nglegena` + `pasangan` + `sandhangan`), input `416×416` (`12.11 MB` di `aksara_yolo.onnx`), **mAP50 `98.4%`** (Precision `97.08%` · Recall `95.76%`) |
-| **LinearSVC SVM (v1.0)** | 20 Nglegena, fitur kanvas biner 96×96 Gaussian-blur (σ 2.5), float16 Base64 (`~484 KB` di `model.json`), **68.4%** bersih · **53.2%** simulasi foto |
-
-##  Lisensi & Kredit dataset (PENTING)
-
-Kode & model repo ini: **MIT** (Muhammad Rayhan Najib). **Dataset BUKAN milik proyek ini** dan tetap di bawah lisensi pembuatnya:
-
-| Dataset | Pemilik | Lisensi |
-|---|---|---|
-| `dataset/hanacaraka/` (data latih utama) | **vzrenggamani** + kontributor (Aditya Bayu Perdana, SMA Negeri 1 Wonoayu, Sakura Fukoka Studio, para partisipan kuesioner) | [CC0-1.0](https://github.com/vzrenggamani/aksarajawa-hanacaraka) |
-| Dataset Mendeley *Indonesian Local Script Characters* (eksperimen) | **Aditya Firman Ihsan** | [CC BY 4.0](https://doi.org/10.17632/vfj32bpjsf.1) |
-| Font Noto Sans Javanese (dimuat runtime, tidak didistribusikan) | Google | OFL 1.1 |
-
-Rincian lengkap, format sitasi, dan cara pembagian segmen: **[DATASET_CREDITS.md](DATASET_CREDITS.md)**.

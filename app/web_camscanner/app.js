@@ -649,13 +649,26 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
     const numAnchors = outTensor.dims[2];
     const raw = outTensor.data;
 
+    const SANDHANGAN_SET = new Set(['wulu', 'suku', 'pepet', 'taling', 'tarung', 'layar', 'cecak', 'wignyan', 'pangkon', 'cakra', 'keret', 'pengkal']);
     for (let a = 0; a < numAnchors; a++) {
       let bestCls = -1, bestScore = confThr;
+      const topCands = [];
       for (let c = 0; c < nc; c++) {
         const sc = raw[(4 + c) * numAnchors + a];
         if (sc > bestScore) { bestScore = sc; bestCls = c; }
+        if (sc >= 0.05) topCands.push({ c, sc });
       }
       if (bestCls < 0) continue;
+      topCands.sort((p, q) => q.sc - p.sc);
+      const topK = topCands.slice(0, 5).map((it) => {
+        const l = yoloMeta.classes[it.c];
+        return {
+          classIdx: it.c,
+          label: l,
+          category: l.startsWith('p_') ? 'pasangan' : l.startsWith('pada_') ? 'pada' : SANDHANGAN_SET.has(l) ? 'sandhangan' : 'nglegena',
+          prob: it.sc,
+        };
+      });
 
       const cx = raw[a], cy = raw[numAnchors + a], bw = raw[2 * numAnchors + a], bh = raw[3 * numAnchors + a];
       const x0 = Math.max(0, (cx - bw / 2 - padX) / scale + tx0);
@@ -683,12 +696,14 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
         unicode: yoloMeta.unicode[label] || '',
         confidence: bestScore,
         isUncertain: bestScore < 0.45,
+        topK,
         box: [Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1)]
       });
     }
   }
 
   let kept = yoloNms(cands, 0.42, 0.72);
+  window.__aksaraLastKeptDetections = kept;
   kept.sort((a, b) => (a.box[1] - b.box[1]) || (a.box[0] - b.box[0]));
 
   kept.forEach((det, idx) => {

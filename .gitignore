@@ -3,4 +3,13 @@ __pycache__/
 Thumbs.db
 Desktop.ini
 dataset/indonesian-scripts/*.zip
+dataset/external/
+dataset_yolo/
+runs_yolo/
+runs_yolox/
+runs_crnn/
+eval/node_modules/
+eval/artifacts/
+eval/reports/*_imgs/
 *.tmp
+aksarascan_colab_bundle.zip

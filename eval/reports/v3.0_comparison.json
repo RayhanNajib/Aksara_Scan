@@ -1,0 +1,256 @@
+{
+  "commit": "492b7bc",
+  "baseline_cer": {
+    "mean": 0.6149,
+    "ci_low": 0.2352,
+    "ci_high": 1.0126,
+    "n": 8
+  },
+  "v3_cer": {
+    "mean": 0.6014,
+    "ci_low": 0.222,
+    "ci_high": 1.0084,
+    "n": 8
+  },
+  "baseline_grapheme_f1": {
+    "mean": 0.5549,
+    "ci_low": 0.3285,
+    "ci_high": 0.7926,
+    "n": 8
+  },
+  "v3_grapheme_f1": {
+    "mean": 0.5813,
+    "ci_low": 0.3395,
+    "ci_high": 0.8347,
+    "n": 8
+  },
+  "baseline_word_acc": {
+    "mean": 0.3229,
+    "ci_low": 0.1016,
+    "ci_high": 0.6458,
+    "n": 8
+  },
+  "v3_word_acc": {
+    "mean": 0.3542,
+    "ci_low": 0.1016,
+    "ci_high": 0.7083,
+    "n": 8
+  },
+  "parity_v3": {
+    "n_images": 20,
+    "onnx_engine_exact_tensor_parity_same_input_max_abs_diff": 0.009124755859375,
+    "onnx_engine_exact_coord_px_max_abs_diff": 0.009124755859375,
+    "onnx_engine_exact_cls_prob_max_abs_diff": 5.0067901611328125e-06,
+    "preprocess_cv2_vs_sharp_max_abs_diff": 0.5490195751190186,
+    "raw_416_onnx_output_max_abs_diff_cv2_vs_sharp": 242.10504150390625,
+    "raw_416_box_class_agreement_iou085": "423/476",
+    "raw_416_max_conf_diff": 0.666393518447876,
+    "browser_e2e_unicode_exact_matches": "11/20",
+    "browser_e2e_mean_cer_delta": 0.07324,
+    "browser_e2e_box_agreement_iou070": "540/555",
+    "browser_console_errors": [],
+    "browser_external_requests_during_inference": [],
+    "per_item": [
+      {
+        "id": "p01",
+        "same_input_tensor_max_abs_diff": 0.000457763671875,
+        "preprocess_input_max_abs_diff": 0.3019607663154602,
+        "raw_box_match": "13/17 (py=14)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.0541,
+        "browser_js_ms": 1091.34
+      },
+      {
+        "id": "p02",
+        "same_input_tensor_max_abs_diff": 0.0005950927734375,
+        "preprocess_input_max_abs_diff": 0.3019607961177826,
+        "raw_box_match": "8/12 (py=10)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.0541,
+        "browser_js_ms": 980.12
+      },
+      {
+        "id": "p03",
+        "same_input_tensor_max_abs_diff": 0.0008392333984375,
+        "preprocess_input_max_abs_diff": 0.3529411852359772,
+        "raw_box_match": "20/20 (py=20)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 768.65
+      },
+      {
+        "id": "p04",
+        "same_input_tensor_max_abs_diff": 0.000640869140625,
+        "preprocess_input_max_abs_diff": 0.3333333432674408,
+        "raw_box_match": "2/5 (py=7)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.3333,
+        "browser_js_ms": 2108.83
+      },
+      {
+        "id": "p05",
+        "same_input_tensor_max_abs_diff": 0.00042724609375,
+        "preprocess_input_max_abs_diff": 0.3803921639919281,
+        "raw_box_match": "2/9 (py=7)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.1111,
+        "browser_js_ms": 2222.07
+      },
+      {
+        "id": "p06",
+        "same_input_tensor_max_abs_diff": 0.00042724609375,
+        "preprocess_input_max_abs_diff": 0.13725489377975464,
+        "raw_box_match": "8/9 (py=8)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.2222,
+        "browser_js_ms": 488.56
+      },
+      {
+        "id": "p07",
+        "same_input_tensor_max_abs_diff": 0.000457763671875,
+        "preprocess_input_max_abs_diff": 0.3607843220233917,
+        "raw_box_match": "3/13 (py=9)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.0909,
+        "browser_js_ms": 2535.41
+      },
+      {
+        "id": "p08",
+        "same_input_tensor_max_abs_diff": 0.00030517578125,
+        "preprocess_input_max_abs_diff": 0.5490195751190186,
+        "raw_box_match": "15/23 (py=21)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.2381,
+        "browser_js_ms": 1862.15
+      },
+      {
+        "id": "p09",
+        "same_input_tensor_max_abs_diff": 0.0004119873046875,
+        "preprocess_input_max_abs_diff": 0.37254899740219116,
+        "raw_box_match": "0/9 (py=8)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.25,
+        "browser_js_ms": 2472.18
+      },
+      {
+        "id": "p10",
+        "same_input_tensor_max_abs_diff": 0.000335693359375,
+        "preprocess_input_max_abs_diff": 0.3803921639919281,
+        "raw_box_match": "2/9 (py=7)",
+        "browser_unicode_exact": false,
+        "browser_py_cer_delta": 0.1111,
+        "browser_js_ms": 2013.5
+      },
+      {
+        "id": "p11",
+        "same_input_tensor_max_abs_diff": 0.0009765625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "23/23 (py=23)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 430.36
+      },
+      {
+        "id": "p12",
+        "same_input_tensor_max_abs_diff": 0.00018310546875,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "40/40 (py=40)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 458.54
+      },
+      {
+        "id": "p13",
+        "same_input_tensor_max_abs_diff": 0.000518798828125,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "44/44 (py=44)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 475.8
+      },
+      {
+        "id": "p14",
+        "same_input_tensor_max_abs_diff": 0.000152587890625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "52/52 (py=52)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 460.07
+      },
+      {
+        "id": "p15",
+        "same_input_tensor_max_abs_diff": 0.000244140625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "19/19 (py=19)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 405.79
+      },
+      {
+        "id": "p16",
+        "same_input_tensor_max_abs_diff": 0.00030517578125,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "29/29 (py=29)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 411.01
+      },
+      {
+        "id": "p17",
+        "same_input_tensor_max_abs_diff": 0.0015869140625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "27/27 (py=27)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 504.84
+      },
+      {
+        "id": "p18",
+        "same_input_tensor_max_abs_diff": 0.000213623046875,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "32/32 (py=32)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 527.57
+      },
+      {
+        "id": "p19",
+        "same_input_tensor_max_abs_diff": 0.009124755859375,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "38/38 (py=38)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 479.79
+      },
+      {
+        "id": "p20",
+        "same_input_tensor_max_abs_diff": 0.0006256103515625,
+        "preprocess_input_max_abs_diff": 0.0,
+        "raw_box_match": "46/46 (py=46)",
+        "browser_unicode_exact": true,
+        "browser_py_cer_delta": 0.0,
+        "browser_js_ms": 457.86
+      }
+    ]
+  },
+  "track_b_diag_preview": [
+    {
+      "id": "diag_01",
+      "unicode_gt": "꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉",
+      "pred_track_b": "",
+      "cer": 1.0
+    },
+    {
+      "id": "diag_02",
+      "unicode_gt": "꧋ꦮꦺꦢꦁꦧꦸꦧꦸꦏ꧀ꦠꦤ꧀ꦥꦒꦸꦭ꧈ꦲꦗꦔꦩꦸꦏ꧀ꦩꦸꦤ꧀ꦝꦏ꧀ꦠꦸꦮ꧉",
+      "pred_track_b": "",
+      "cer": 1.0
+    },
+    {
+      "id": "diag_03",
+      "unicode_gt": "ꦲꦏ꧀ꦱꦫꦗꦮ\nꦩꦔꦤ꧀ꦱꦼꦒ\nꦏꦿꦩꦏꦺꦴꦛꦶ",
+      "pred_track_b": "",
+      "cer": 1.0
+    }
+  ]
+}

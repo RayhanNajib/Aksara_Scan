@@ -1,0 +1,20 @@
+{"id": "p01", "image": "eval/failures/01_wedang_bubuk_full.png", "group": "diagnostic"}
+{"id": "p02", "image": "eval/failures/02_wedang_bubuk_crop.png", "group": "diagnostic"}
+{"id": "p03", "image": "eval/failures/03_sample_4_pasangan_sandhangan.png", "group": "diagnostic"}
+{"id": "p04", "image": "eval/failures/04_test_shadow.png", "group": "diagnostic"}
+{"id": "p05", "image": "eval/failures/05_test_walllines.png", "group": "diagnostic"}
+{"id": "p06", "image": "eval/failures/06_test_small_600px.png", "group": "diagnostic"}
+{"id": "p07", "image": "eval/failures/07_sample_1_paper_distractor.png", "group": "diagnostic"}
+{"id": "p08", "image": "eval/failures/08_sample_3_gelpen_labels.png", "group": "diagnostic"}
+{"id": "p09", "image": "app/web_camscanner/sample_1.png", "group": "sample"}
+{"id": "p10", "image": "app/web_camscanner/sample_2.png", "group": "sample"}
+{"id": "p11", "image": "eval/parity_fixtures/aks_val_0000.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0000.txt"}
+{"id": "p12", "image": "eval/parity_fixtures/aks_val_0001.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0001.txt"}
+{"id": "p13", "image": "eval/parity_fixtures/aks_val_0002.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0002.txt"}
+{"id": "p14", "image": "eval/parity_fixtures/aks_val_0003.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0003.txt"}
+{"id": "p15", "image": "eval/parity_fixtures/aks_val_0004.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0004.txt"}
+{"id": "p16", "image": "eval/parity_fixtures/aks_val_0005.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0005.txt"}
+{"id": "p17", "image": "eval/parity_fixtures/aks_val_0006.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0006.txt"}
+{"id": "p18", "image": "eval/parity_fixtures/aks_val_0007.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0007.txt"}
+{"id": "p19", "image": "eval/parity_fixtures/aks_val_0008.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0008.txt"}
+{"id": "p20", "image": "eval/parity_fixtures/aks_val_0009.jpg", "group": "synthetic_val", "label": "eval/parity_fixtures/labels/aks_val_0009.txt"}
