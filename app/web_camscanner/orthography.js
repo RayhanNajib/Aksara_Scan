@@ -66,12 +66,14 @@
   const NGA_LELET = '\uA98A';
   const SWARA_INDEP = new Set(['\uA984', '\uA986', '\uA988', '\uA98C', '\uA98E']);
 
-  // Hanya pasangan konfusi detektor terukur dari evaluasi Fase 0 (pepet/wulu/cecak/taling)
+  // Hanya pasangan konfusi detektor terukur dari evaluasi Fase 0 (pepet/wulu/cecak/taling + suku/keret)
   const CONFUSABLE_MODS = {
     pepet: ['taling', 'cecak', 'wulu'],
     taling: ['pepet'],
     wulu: ['cecak', 'pepet'],
     cecak: ['pepet', 'wulu'],
+    keret: ['suku', 'cakra'],
+    suku: ['keret'],
   };
 
   function boxMetrics(box) {
@@ -503,18 +505,31 @@
             if (score < bestScore) { bestScore = score; bestHost = cl; }
           }
         } else if (label === 'wulu' || label === 'pepet' || label === 'layar' || label === 'cecak') {
-          const dy = bm.cy - mod.m.cy;
-          const hOv = horizOverlap(mod.m, bm);
-          if (dy > 0 && dy < bm.h * 2.6 && (hOv > 0 || Math.abs(mod.m.cx - bm.cx) < bm.w * 0.95)) {
-            const score = Math.hypot(mod.m.cx - bm.cx, dy * 0.7);
+          const dy = fullAnchor.cy - mod.m.cy;
+          const hOv = horizOverlap(mod.m, fullAnchor);
+          const targetCenterX = (cl.pasangan && (cl.pasangan.label === 'p_ha' || cl.pasangan.label === 'p_sa' || cl.pasangan.label === 'p_pa') && mod.m.cx > bm.x1 - 4)
+            ? cl.pasangan.m.cx
+            : bm.cx;
+          if (dy > 0 && dy < fullAnchor.h * 2.6 && (hOv > 0 || Math.abs(mod.m.cx - targetCenterX) < fullAnchor.w * 0.95)) {
+            const score = Math.hypot(mod.m.cx - targetCenterX, Math.max(0, bm.y0 - mod.m.y1) * 0.7);
             if (score < bestScore) { bestScore = score; bestHost = cl; }
           }
         } else {
-          // suku, cakra, keret
+          // suku, cakra, keret: menggantung di bawah atau kaki kanan kluster induk (termasuk pasca-pasangan)
           const dy = mod.m.cy - bm.y0;
           const hOv = horizOverlap(mod.m, fullAnchor);
-          if (dy > 0 && dy < fullAnchor.h * 2.8 && (hOv > 0 || Math.abs(mod.m.cx - fullAnchor.cx) < fullAnchor.w * 1.15)) {
-            const score = Math.hypot(mod.m.cx - fullAnchor.cx, Math.abs(mod.m.y0 - fullAnchor.y1) * 0.8);
+          const rightReach = fullAnchor.x1 + Math.min(14, fullAnchor.w * 0.28);
+          if (dy > 0 && dy < fullAnchor.h * 2.8 && (hOv > 0 || (mod.m.cx >= fullAnchor.x0 - fullAnchor.w * 0.25 && mod.m.cx <= rightReach + fullAnchor.w * 0.45))) {
+            let hPen = 0;
+            if (mod.m.cx < fullAnchor.x0) {
+              hPen = (fullAnchor.x0 - mod.m.cx) * 2.8 + 16;
+            } else if (mod.m.cx > rightReach) {
+              hPen = (mod.m.cx - rightReach) * 2.8 + 16;
+            } else if (mod.m.cx < fullAnchor.cx) {
+              hPen = (fullAnchor.cx - mod.m.cx) * 0.18;
+            }
+            const vGap = Math.max(0, mod.m.y0 - fullAnchor.y1) + Math.max(0, bm.y1 - mod.m.y1);
+            const score = hPen + vGap * 1.2 + Math.abs(mod.m.cy - fullAnchor.y1) * 0.15;
             if (score < bestScore) { bestScore = score; bestHost = cl; }
           }
         }

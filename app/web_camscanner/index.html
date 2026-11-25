@@ -4,262 +4,267 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>AksaraScan</title>
-  <meta name="description" content="AksaraScan — Pemindai Aksara Jawa Berbasis Web dengan Dual Engine YOLOv8 dan Morfologi Citra SVM">
+  <meta name="description" content="AksaraScan — Pemindai Aksara Jawa Berbasis Web dengan Dual Engine YOLOv8 ONNX & PCD Klasik SVM">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="alternate icon" type="image/png" href="./favicon.png">
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
-  <meta name="theme-color" content="#1F2A44">
+  <meta name="theme-color" id="metaThemeColor" content="#0e1422">
 </head>
 <body>
 
-  <!-- Topbar Header -->
+  <!-- Topbar Navigasi Tunggal -->
   <header class="topbar">
-    <a href="#" class="brand">
-      <div class="brand__emblem">ꦲ</div>
+    <a href="#pemindai" class="brand" data-nav="scanner">
+      <div class="brand__emblem" aria-hidden="true">ꦲ</div>
       <div class="brand__title">Aksara<b>Scan</b></div>
-      <span class="brand__tag">Kelompok 4 · UM</span>
     </a>
-    
+
+    <nav class="topnav" aria-label="Navigasi Utama">
+      <button type="button" class="nav-pill active" data-nav="scanner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="12" x2="17" y2="12"></line></svg>
+        <span>Pemindai</span>
+      </button>
+      <button type="button" class="nav-pill" data-nav="lab">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        <span>Lab Citra</span>
+      </button>
+      <button type="button" class="nav-pill" data-nav="kamus">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <span>Kamus</span>
+      </button>
+      <button type="button" class="nav-pill" data-nav="about">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span>Tentang</span>
+      </button>
+    </nav>
+
     <div class="topbar__actions">
-      <div class="model-badge" id="modelBadge">Memuat Model SVM...</div>
-      <button class="theme-toggle" id="themeToggle" title="Ganti Tema (Terang / Gelap)" aria-label="Toggle theme">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="model-badge" id="modelBadge">Memuat Model…</div>
+      <button type="button" class="theme-toggle" id="themeToggle" title="Ganti Tema Terang / Gelap" aria-label="Ganti Tema">
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
       </button>
     </div>
   </header>
 
   <main>
-    <!-- Hero Section -->
-    <section class="hero">
-      <p class="hero__eyebrow">PTIN236021 · Pengolahan Citra Digital &amp; Komputer Vision</p>
-      <h1 class="hero__title">Pemindai Aksara Jawa Mandiri</h1>
-      <p class="hero__desc">
-        Foto tulisan aksara Jawa, langsung terbaca jadi teks digital di HP atau laptop — tanpa upload ke server mana pun.
-      </p>
-    </section>
-
-    <!-- Coba 1-Klik Demo Strip -->
-    <section class="demo-strip">
-      <div class="demo-strip__title">
-        <span>꧈ Coba Contoh Pindaian Nyata (1-Klik) ꧈</span>
-      </div>
-      <div class="demo-strip__grid">
-        <div class="demo-card" data-src="./sample_1.png">
-          <img class="demo-card__thumb" src="./sample_1.png" alt="Sampel 1">
-          <div class="demo-card__info">
-            <b>Sampel 1: Naskah 1 Baris</b>
-            <span>1600×1028 px · Kertas Polos</span>
-          </div>
+    <!-- ======================================================================
+         VIEW 1: PEMINDAI UTAMA (Split Studio)
+         ====================================================================== -->
+    <section id="viewScanner" data-view="scanner">
+      <div class="scanner-intro">
+        <div>
+          <h1 class="page-title">Pemindai Aksara Jawa</h1>
+          <p class="page-sub">Unggah atau tempel foto aksara Jawa (<code>Ctrl+V</code>) untuk membaca Unicode, ejaan Latin, dan arti bahasa Indonesia secara lokal di perangkat Anda.</p>
         </div>
-        <div class="demo-card" data-src="./sample_2.png">
-          <img class="demo-card__thumb" src="./sample_2.png" alt="Sampel 2">
-          <div class="demo-card__info">
-            <b>Sampel 2: Kisi 20 Aksara</b>
-            <span>1400×900 px · Buku Tulis</span>
-          </div>
-        </div>
-        <div class="demo-card" data-src="./sample_3.png">
-          <img class="demo-card__thumb" src="./sample_3.png" alt="Sampel 3">
-          <div class="demo-card__info">
-            <b>Sampel 3: Tulisan Tangan</b>
-            <span>1073×1102 px · Pulpen Gel</span>
-          </div>
-        </div>
-        <div class="demo-card" data-src="./sample_4.png">
-          <img class="demo-card__thumb" src="./sample_4.png" alt="Sampel 4">
-          <div class="demo-card__info">
-            <b>Sampel 4: Pasangan &amp; Sandhangan</b>
-            <span>Kalimat Lengkap · YOLOv8 v2.0</span>
+        <div class="sample-strip" aria-label="Contoh Cepat 1-Klik">
+          <span class="sample-strip__label">Sampel Uji:</span>
+          <div class="sample-pills">
+            <button type="button" class="demo-card sample-pill" data-src="./sample_1.png">
+              <img class="demo-card__thumb" src="./sample_1.png" alt="Sampel 1">
+              <span>Naskah Polos</span>
+            </button>
+            <button type="button" class="demo-card sample-pill" data-src="./sample_2.png">
+              <img class="demo-card__thumb" src="./sample_2.png" alt="Sampel 2">
+              <span>Kisi 20 Aksara</span>
+            </button>
+            <button type="button" class="demo-card sample-pill" data-src="./sample_3.png">
+              <img class="demo-card__thumb" src="./sample_3.png" alt="Sampel 3">
+              <span>Tulisan Tangan</span>
+            </button>
+            <button type="button" class="demo-card sample-pill" data-src="./sample_4.png">
+              <img class="demo-card__thumb" src="./sample_4.png" alt="Sampel 4">
+              <span>Kalimat Berpasangan</span>
+            </button>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Workspace 2 Kolom -->
-    <section class="workspace">
-      
-      <!-- Panel Kiri: Masukan Citra & Kontrol -->
-      <div class="panel">
-        <div class="panel__header">
-          <h2 class="panel__title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--prada)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-              <circle cx="12" cy="13" r="4"></circle>
-            </svg>
-            1 · Masukan Citra
-          </h2>
-          <span class="panel__badge" id="srcDim">Belum ada foto</span>
-        </div>
+      <div class="workspace">
+        <!-- Panel Kiri: Citra Masukan & Pengendali -->
+        <div class="panel panel--input">
+          <div class="panel__header">
+            <h2 class="panel__title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              Citra Sumber
+            </h2>
+            <div class="panel__header-right">
+              <span class="panel__badge" id="srcDim">Menunggu gambar</span>
+              <button type="button" class="btn-mini" id="btnReplaceImg" hidden title="Unggah foto baru">Ganti Foto</button>
+            </div>
+          </div>
 
-        <!-- Dropzone -->
-        <div class="dropzone" id="dropzone">
           <input type="file" id="fileInput" accept="image/*" hidden>
           <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
-          <svg class="dropzone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-          <p class="dropzone__title">Letakkan foto tulisan tangan di sini</p>
-          <p class="dropzone__desc">Mendukung format JPG, PNG, atau WebP</p>
-          <div class="btn-group">
-            <button class="btn btn--primary" id="btnCam">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              Buka Kamera
-            </button>
-            <button class="btn" id="btnFile">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              Pilih Berkas
-            </button>
+
+          <!-- Dropzone Upload -->
+          <div class="dropzone" id="dropzone">
+            <div class="dropzone__glyph" aria-hidden="true">ꦲꦤꦕꦫꦏ</div>
+            <p class="dropzone__title">Letakkan gambar aksara Jawa di sini</p>
+            <p class="dropzone__desc">Mendukung PNG, JPG, WebP · Screenshot terang maupun gelap (Dark Mode) · Paste <code>Ctrl+V</code></p>
+            <div class="btn-group">
+              <button type="button" class="btn btn--primary" id="btnCam">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                Kamera
+              </button>
+              <button type="button" class="btn" id="btnFile">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Pilih Berkas
+              </button>
+            </div>
+          </div>
+
+          <!-- Stage Kanvas Hasil -->
+          <div class="stage" id="stageWrap" hidden>
+            <div class="wayang-corner wayang-corner--tl"></div>
+            <div class="wayang-corner wayang-corner--tr"></div>
+            <div class="wayang-corner wayang-corner--bl"></div>
+            <div class="wayang-corner wayang-corner--br"></div>
+
+            <canvas id="mainCanvas"></canvas>
+            <div id="scanFx" hidden>
+              <div class="scanfx__ring" id="scanfxRing"></div>
+              <div class="scanfx__label" id="scanfxLabel">Menganalisis…</div>
+            </div>
+            <div id="selOverlay" hidden></div>
+            <button type="button" class="btn btn--accent" id="btnRescanSel" hidden>Pindai Area Pilihan</button>
+
+            <div class="stage__toolbar">
+              <label class="toggle-label">
+                <input type="checkbox" id="showBoxes" checked>
+                <span>Kotak Deteksi</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" id="showBin">
+                <span>Hitam Putih</span>
+              </label>
+              <span class="stage__hint">Seret area di gambar untuk fokus wilayah</span>
+            </div>
+          </div>
+
+          <!-- Pengalih Mesin Deteksi -->
+          <div class="engine-bar" id="engineBar">
+            <div class="engine-bar__label">
+              <span>Mesin Deteksi</span>
+              <span id="engineStatus" class="engine-status-pill">Memeriksa ONNX…</span>
+            </div>
+            <div class="engine-switch">
+              <button type="button" class="engine-btn" id="btnEngineYolo" data-engine="yolo">
+                <b>YOLOv8-Nano ONNX</b>
+                <span>55 Kelas · Nglegena+Sandhangan+Pasangan</span>
+              </button>
+              <button type="button" class="engine-btn active" id="btnEngineSvm" data-engine="svm">
+                <b>Pipeline Klasik SVM</b>
+                <span>20 Nglegena · Silabus PCD</span>
+              </button>
+            </div>
+            <div class="legend-row" id="yoloLegend" hidden>
+              <span><i class="legend-dot" style="background:#d9a443"></i>Nglegena</span>
+              <span><i class="legend-dot" style="background:#5c8df6"></i>Pasangan</span>
+              <span><i class="legend-dot" style="background:#e88c30"></i>Sandhangan</span>
+              <span><i class="legend-dot" style="background:#3fa97a"></i>Pada</span>
+              <span><i class="legend-dot" style="background:#d1563b"></i>Ragu</span>
+            </div>
+          </div>
+
+          <!-- Parameter Praproses & Sensitivitas (Lipat) -->
+          <details class="adv-accordion" id="pipelineOptions">
+            <summary>Pengaturan Praproses &amp; Sensitivitas</summary>
+            <div class="adv-accordion__body">
+              <div class="adv-checks">
+                <label class="toggle-label">
+                  <input type="checkbox" id="optRemoveLines" checked>
+                  <span>Hapus Garis Buku</span>
+                </label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="optMedian" checked>
+                  <span>Bersihkan Noise</span>
+                </label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="optMorph" checked>
+                  <span>Sambungkan Goresan</span>
+                </label>
+              </div>
+              <div class="conf-slider-row">
+                <label for="optConfRange">Ambang Keyakinan Model: <b id="optConfVal">0.25</b></label>
+                <input type="range" id="optConfRange" min="0.14" max="0.45" step="0.01" value="0.25">
+              </div>
+            </div>
+          </details>
+
+          <button type="button" class="btn btn--accent btn--block" id="btnRun" disabled>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            Kenali Aksara Jawa
+          </button>
+
+          <div class="progress-timeline" id="progressBox" hidden>
+            <div class="progress-timeline__head">
+              <span id="progressText">Memulai pemrosesan…</span>
+              <span id="progressPercent">Proses</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar__fill" id="progressFill"></div>
+            </div>
           </div>
         </div>
 
-        <!-- Stage Kanvas dengan Bingkai Wayang -->
-        <div class="stage" id="stageWrap" hidden>
-          <div class="wayang-corner wayang-corner--tl"></div>
-          <div class="wayang-corner wayang-corner--tr"></div>
-          <div class="wayang-corner wayang-corner--bl"></div>
-          <div class="wayang-corner wayang-corner--br"></div>
-          
-          <canvas id="mainCanvas"></canvas>
-          <div id="scanFx" hidden>
-            <div class="scanfx__ring" id="scanfxRing"></div>
-            <div class="scanfx__label" id="scanfxLabel">Menganalisis…</div>
+        <!-- Panel Kanan: Hasil Transliterasi & Terjemahan -->
+        <div class="panel panel--output" id="tabResult">
+          <div class="panel__header">
+            <h2 class="panel__title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              Hasil Pembacaan
+            </h2>
+            <div class="btn-group btn-group--compact">
+              <button type="button" class="btn btn--sm btn--primary" id="btnCopyUnicode">Salin Aksara</button>
+              <button type="button" class="btn btn--sm" id="btnCopyLatin">Salin Latin</button>
+              <button type="button" class="btn btn--sm" id="btnDownload" title="Unduh JSON hasil">JSON</button>
+            </div>
           </div>
-          <div id="selOverlay" hidden></div>
-          <button class="btn btn--accent" id="btnRescanSel" hidden>Pindai Area Pilihan</button>
-          
-          <div class="stage__toolbar">
-            <label class="toggle-label">
-              <input type="checkbox" id="showBoxes" checked>
-              <span>Tampilkan Kotak Deteksi</span>
-            </label>
-            <label class="toggle-label">
-              <input type="checkbox" id="showBin">
-              <span>Tampilan Hitam Putih</span>
-            </label>
-          </div>
-        </div>
 
-        <!-- Pengalih Mesin Deteksi -->
-        <div class="engine-bar" id="engineBar">
-          <div class="engine-bar__label">
-            <span>Mesin Pengenalan Aksara</span>
-            <span id="engineStatus">Memeriksa ONNX…</span>
-          </div>
-          <div class="engine-switch">
-            <button type="button" class="engine-btn" id="btnEngineYolo" data-engine="yolo">
-              <b>YOLOv8-Nano ONNX</b>
-              <span>52 Kelas · Nglegena+Sandhangan+Pasangan</span>
-            </button>
-            <button type="button" class="engine-btn active" id="btnEngineSvm" data-engine="svm">
-              <b>Pipeline Klasik SVM</b>
-              <span>20 Nglegena · Silabus PCD Bab 1–9</span>
-            </button>
-          </div>
-          <div class="legend-row" id="yoloLegend" hidden>
-            <span><i class="legend-dot" style="background:#c8963e"></i>Nglegena</span>
-            <span><i class="legend-dot" style="background:#5c8df6"></i>Pasangan</span>
-            <span><i class="legend-dot" style="background:#e88c30"></i>Sandhangan</span>
-            <span><i class="legend-dot" style="background:#3fa97a"></i>Pada</span>
-            <span><i class="legend-dot" style="background:#d1563b"></i>Ragu</span>
-          </div>
-        </div>
-
-        <!-- Pilihan Parameter Pipeline -->
-        <div class="pipeline-options" id="pipelineOptions">
-          <label class="toggle-label">
-            <input type="checkbox" id="optRemoveLines" checked>
-            <span>Hapus Garis Buku</span>
-          </label>
-          <label class="toggle-label">
-            <input type="checkbox" id="optMedian" checked>
-            <span>Bersihkan Bintik Noise</span>
-          </label>
-          <label class="toggle-label">
-            <input type="checkbox" id="optMorph" checked>
-            <span>Sambungkan Goresan Putus</span>
-          </label>
-        </div>
-
-        <!-- Tombol Aksi Utama -->
-        <button class="btn btn--accent btn--block" id="btnRun" disabled>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-          Kenali Aksara Jawa
-        </button>
-
-        <!-- Linimasa Progres -->
-        <div class="progress-timeline" id="progressBox" hidden>
-          <div class="progress-timeline__head">
-            <span id="progressText">Memulai pemrosesan...</span>
-            <span id="progressPercent">Proses</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-bar__fill" id="progressFill"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panel Kanan: Hasil Pindaian & Lab Pipeline -->
-      <div class="panel">
-        <div class="tabs-header">
-          <button class="tab-btn active" data-tab="result">Hasil Pindaian</button>
-          <button class="tab-btn" data-tab="lab">Lab Pipeline (8 Tahap)</button>
-        </div>
-
-        <!-- Konten Tab 1: Hasil -->
-        <div id="tabResult">
-          <div class="output-card">
+          <!-- Kartu Utama 1: Aksara Jawa -->
+          <div class="output-card output-card--hero">
             <div class="output-label">
               <span>Aksara Jawa (Unicode)</span>
-              <small>Font: Noto Sans Javanese</small>
+              <small>Noto Sans Javanese</small>
             </div>
             <div class="output-text--aksara" id="outJavanese">—</div>
           </div>
 
+          <!-- Kartu Utama 2: Bacaan & Terjemahan -->
           <div class="output-card">
-            <div class="output-label">
-              <span>Kalimat Bacaan Latin (Pemisah Kata Otomatis)</span>
-              <small>Scriptio Continua → Kata Jawa</small>
+            <div class="output-section">
+              <div class="output-label">
+                <span>Bacaan Latin</span>
+                <small>Klik kata bergaris putus untuk koreksi</small>
+              </div>
+              <div class="output-text--latin" id="outSentenceLatin">—</div>
             </div>
-            <div class="output-text--latin" id="outSentenceLatin">—</div>
-          </div>
-
-          <div class="output-card">
-            <div class="output-label">
-              <span>Terjemahan Bahasa Indonesia</span>
-              <small>Arti Kalimat</small>
+            <div class="output-divider"></div>
+            <div class="output-section">
+              <div class="output-label">
+                <span>Arti Bahasa Indonesia</span>
+                <small>Terjemahan Kalimat</small>
+              </div>
+              <div class="output-text--meaning" id="outIndonesian">—</div>
             </div>
-            <div class="output-text--latin" id="outIndonesian" style="color:var(--text-main);font-size:15px;line-height:1.5;">—</div>
-          </div>
-
-          <div class="output-card">
-            <div class="output-label">
-              <span>Ejaan Per Suku Kata (Fonetik)</span>
-              <small>Detail Gugus Aksara</small>
-            </div>
-            <div class="output-text--latin" id="outLatin" style="font-size:13px;opacity:0.85;">—</div>
           </div>
 
           <!-- Keyakinan Meter -->
           <div class="confidence-meter" id="meterWrap" hidden>
             <div class="confidence-meter__header">
-              <span>Tingkat Keyakinan Rata-rata</span>
+              <span>Rata-rata Keyakinan Kotak</span>
               <b id="meterVal">0%</b>
             </div>
             <div class="confidence-meter__track">
@@ -267,119 +272,164 @@
             </div>
           </div>
 
-          <!-- Tombol Aksi Salin & Unduh -->
-          <div class="btn-group" style="justify-content: flex-start; margin-bottom: 16px;">
-            <button class="btn btn--primary" id="btnCopyUnicode">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Salin Aksara
-            </button>
-            <button class="btn" id="btnCopyLatin">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Salin Latin
-            </button>
-            <button class="btn" id="btnDownload">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Unduh Hasil
-            </button>
-          </div>
-
-          <!-- Galeri Glif Terpotong -->
-          <div class="output-label" style="margin-top: 18px;">
-            <span>Potongan Glif 96×96 (Ketuk untuk Mengoreksi)</span>
-          </div>
-          <div class="glyphs-grid" id="glyphsGrid">
-            <!-- Glif item digenerate via JS -->
-          </div>
+          <!-- Suku Kata Fonetik & Glif -->
+          <details class="adv-accordion" open>
+            <summary><span>Rincian Glif &amp; Ejaan Fonetik (<b id="glyphCountBadge">0</b>)</span></summary>
+            <div class="adv-accordion__body">
+              <div class="phonetic-line" id="outLatin">—</div>
+              <div class="glyphs-grid" id="glyphsGrid"></div>
+            </div>
+          </details>
         </div>
-
-        <!-- Konten Tab 2: Lab Pipeline Interaktif -->
-        <div id="tabLab" hidden>
-          <div class="lab-container">
-            <div class="lab-stage-tabs">
-              <button class="lab-stage-btn" data-stage="grayscale">1. Grayscale</button>
-              <button class="lab-stage-btn active" data-stage="otsu">2. Otsu</button>
-              <button class="lab-stage-btn" data-stage="median">3. Median 3×3</button>
-              <button class="lab-stage-btn" data-stage="morphology">4. Morfologi</button>
-              <button class="lab-stage-btn" data-stage="segmentation">5 &amp; 6. Segmentasi</button>
-              <button class="lab-stage-btn" data-stage="norm">7. Norm 96×96</button>
-              <button class="lab-stage-btn" data-stage="svm">8. SVM</button>
-            </div>
-
-            <!-- Preview Citra Antara -->
-            <div class="lab-preview-box" id="labPreviewBox">
-              <p style="padding:40px;color:var(--text-muted);font-size:13px">Tahapan belum diproses.</p>
-            </div>
-
-            <!-- Histogram Intensitas dengan Garis Ambang -->
-            <div class="output-card" style="padding: 12px;">
-              <div class="output-label">
-                <span>Histogram Intensitas &amp; Ambang Batas Otsu (T*)</span>
-                <span id="otsuValueDisplay" style="color:var(--bata);font-weight:bold;">128</span>
-              </div>
-              <div id="labHistogramBox" style="text-align: center; margin-top: 4px;"></div>
-            </div>
-
-            <!-- Parameter Slider Interaktif Dosen -->
-            <div class="lab-controls">
-              <div class="control-row">
-                <span>Ambang Binerisasi Otsu (T*):</span>
-                <input type="range" id="otsuRange" min="20" max="235" value="128">
-              </div>
-              <button class="btn btn--primary btn--block" id="btnReapplyLab">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                Terapkan Ulang &amp; Ukur Latensi
-              </button>
-              <button class="btn btn--block" id="btnResetThreshold">Pakai Otomatis Lagi</button>
-            </div>
-          </div>
-        </div>
-
       </div>
     </section>
 
-    <!-- Seksi Kamus 20 Aksara Nglegena -->
-    <section class="dictionary-section">
-      <div class="hero__eyebrow" style="text-align:center;">Pedoman Ortografi Tradisional</div>
-      <h2 style="font-family:var(--font-serif);text-align:center;font-size:24px;margin-bottom:8px;">
-        Kamus 20 Aksara Nglegena
-      </h2>
-      <p style="text-align:center;color:var(--text-muted);font-size:14px;max-width:600px;margin:0 auto 20px;">
-        Urutan aksara dasar Hanacaraka beserta representasi Unicode dan nama Latin resmi.
-      </p>
-      
-      <div class="dictionary-grid" id="dictionaryGrid">
-        <!-- 20 Kartu digenerate via JS -->
+    <!-- ======================================================================
+         VIEW 2: LAB CITRA DIGITAL (8 Tahap PCD Interaktif)
+         ====================================================================== -->
+    <section id="viewLab" data-view="lab" hidden>
+      <div class="view-header">
+        <div>
+          <h1 class="page-title">Laboratorium Pengolahan Citra</h1>
+          <p class="page-sub">Inspeksi visual tiap tahapan pra-pemrosesan sebelum ekstraksi aksara dan atur ambang Otsu secara langsung.</p>
+        </div>
+        <button type="button" class="btn btn--sm" data-nav="scanner">← Kembali ke Pemindai</button>
+      </div>
+
+      <div id="tabLab" class="lab-workbench">
+        <div class="panel">
+          <div class="lab-stage-tabs">
+            <button type="button" class="lab-stage-btn" data-stage="grayscale">1. Grayscale</button>
+            <button type="button" class="lab-stage-btn active" data-stage="otsu">2. Otsu Biner</button>
+            <button type="button" class="lab-stage-btn" data-stage="median">3. Median 3×3</button>
+            <button type="button" class="lab-stage-btn" data-stage="morphology">4. Morfologi</button>
+            <button type="button" class="lab-stage-btn" data-stage="segmentation">5 &amp; 6. Kotak Segmentasi</button>
+            <button type="button" class="lab-stage-btn" data-stage="norm">7. Norm 96×96</button>
+            <button type="button" class="lab-stage-btn" data-stage="svm">8. Montase Glif</button>
+          </div>
+          <div class="lab-preview-box" id="labPreviewBox">
+            <p class="lab-empty-msg">Belum ada gambar yang dipindai. Unggah gambar di tab Pemindai terlebih dahulu.</p>
+          </div>
+        </div>
+
+        <div class="panel lab-sidebar">
+          <div class="panel__header">
+            <h2 class="panel__title">Histogram &amp; Kalibrasi Otsu</h2>
+            <span id="otsuValueDisplay" class="panel__badge accent-num">128</span>
+          </div>
+          <div id="labHistogramBox" class="lab-hist-wrap"></div>
+          <div class="lab-controls">
+            <div class="control-row">
+              <span>Ambang Binerisasi (T*)</span>
+              <input type="range" id="otsuRange" min="20" max="235" value="128">
+            </div>
+            <button type="button" class="btn btn--primary btn--block" id="btnReapplyLab">Terapkan Ulang Binerisasi</button>
+            <button type="button" class="btn btn--block" id="btnResetThreshold">Kembalikan Otsu Otomatis</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         VIEW 3: KAMUS & PANDUAN AKSARA JAWA
+         ====================================================================== -->
+    <section id="viewKamus" data-view="kamus" hidden>
+      <div class="view-header">
+        <div>
+          <h1 class="page-title">Kamus &amp; Panduan Aksara Jawa</h1>
+          <p class="page-sub">Daftar 20 Aksara Nglegena, 20 Pasangan pemati vokal, serta 12 Sandhangan dan tanda baca Pada.</p>
+        </div>
+        <div class="kamus-tabs">
+          <button type="button" class="kamus-pill active" data-kcat="nglegena">Nglegena (20)</button>
+          <button type="button" class="kamus-pill" data-kcat="pasangan">Pasangan (20)</button>
+          <button type="button" class="kamus-pill" data-kcat="sandhangan">Sandhangan &amp; Pada (15)</button>
+        </div>
+      </div>
+
+      <div id="kamusNglegenaWrap">
+        <div class="dictionary-grid" id="dictionaryGrid"></div>
+      </div>
+      <div id="kamusPasanganWrap" hidden>
+        <div class="info-callout">Pasangan menghilangkan bunyi <i>-a</i> pada aksara sebelumnya. Pasangan <code>p_ha</code>, <code>p_sa</code>, dan <code>p_pa</code> ditulis sejajar di sebelah kanan; lainnya ditulis di bawah aksara induk.</div>
+        <div class="dictionary-grid" id="pasanganDictGrid"></div>
+      </div>
+      <div id="kamusSandhanganWrap" hidden>
+        <div class="info-callout">Sandhangan mengubah bunyi vokal (<i>wulu/i, suku/u, pepet/ê, taling/é, taling-tarung/o</i>), menyisipkan konsonan tengah (<i>cakra, keret, pengkal</i>), atau mengakhiri suku kata (<i>layar, cecak, wignyan, pangkon</i>).</div>
+        <div class="dictionary-grid" id="sandhanganDictGrid"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         VIEW 4: TENTANG, TIM & BATASAN TEKNIS
+         ====================================================================== -->
+    <section id="viewAbout" data-view="about" hidden>
+      <div class="about-stack">
+        <div class="panel about-hero">
+          <div class="about-hero__badge">Profil Proyek &amp; Pengembang</div>
+          <h1 class="about-hero__title">AksaraScan v2.0 — Pemindai Aksara Jawa (PCD Klasik + YOLOv8-Nano ONNX)</h1>
+          <p class="about-hero__desc">Dilengkapi penyusun ortografi Unicode (<code>U+A980..U+A9DF</code>), model bahasa Jawa 10.589 lema, dan terjemahan bahasa Indonesia yang dijalankan 100% di sisi klien (browser) tanpa mengunggah foto Anda ke server luar.</p>
+        </div>
+
+        <div class="about-grid">
+          <div class="panel">
+            <div class="panel__header">
+              <h2 class="panel__title">Tim Penyusun</h2>
+              <span class="panel__badge">Kelompok 4</span>
+            </div>
+            <div class="team-list">
+              <div class="team-item">
+                <b>Muhammad Rayhan Najib</b>
+                <code>NIM 240533600012</code>
+              </div>
+              <div class="team-item">
+                <b>M. Ikhsan Ridho A.</b>
+                <code>NIM 240533609185</code>
+              </div>
+              <div class="team-divider"></div>
+              <div class="team-item">
+                <span>Dosen Pengampu</span>
+                <b>Mahfud Jiono, S.Pd., M.Eng.</b>
+              </div>
+              <div class="team-item">
+                <span>Institusi</span>
+                <b>Universitas Negeri Malang</b>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__header">
+              <h2 class="panel__title">Catatan Akurasi &amp; Cakupan Model</h2>
+              <span class="panel__badge">55 Kelas Aktif</span>
+            </div>
+            <ul class="tech-notes">
+              <li><b>Cakupan Penuh:</b> 20 Aksara Nglegena, 20 Pasangan, 12 Sandhangan, dan 3 Pada (<code>pada_adeg, lingsa, lungsi</code>).</li>
+              <li><b>Dukungan Otomatis Dark Mode:</b> Gambar bertuliskan putih di latar gelap otomatis dibalik ke polaritas kertas terang sebelum deteksi.</li>
+              <li><b>Karakter Belum Tercakup:</b> Aksara Murda, Aksara Swara mandiri, <i>Pa Cerek</i> (ꦉ), <i>Nga Lelet</i> (ꦊ), <i>Cecak Telu</i> (꦳), dan Angka Jawa (꧐–꧙) belum masuk dalam 55 kelas model ONNX saat ini.</li>
+              <li><b>Tips Gambar Acak / Foto Buram:</b> Pastikan huruf cukup jelas (&ge; 24 px) atau turunkan penggeser <i>Ambang Keyakinan</i> pada pengaturan di panel Pemindai.</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
-  <!-- Modal Bottom-Sheet Koreksi Karakter -->
+  <!-- Modal Koreksi Karakter -->
   <div class="modal-overlay is-hidden" id="correctionModal" hidden>
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modalTargetLabel">Koreksi Aksara</h3>
-        <button class="btn-icon" id="closeModal">&times;</button>
+        <button type="button" class="btn-icon" id="closeModal" aria-label="Tutup">&times;</button>
       </div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">
-        Pilih salah satu dari 20 aksara Nglegena di bawah ini untuk memperbarui hasil prediksi:
-      </p>
-      <div class="correction-grid" id="correctionGrid">
-        <!-- 20 Tombol aksara digenerate via JS -->
-      </div>
+      <p class="modal-sub">Pilih karakter pengganti untuk memperbarui hasil bacaan:</p>
+      <div class="correction-grid" id="correctionGrid"></div>
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer>
-    <div>
-      <b>AksaraScan v2.0</b> — Pemindai Aksara Jawa (PCD Klasik + YOLOv8-Nano ONNX)
-    </div>
-    <div>
-      Kelompok 4: Muhammad Rayhan Najib (240533600012) &amp; M. Ikhsan Ridho A. (240533609185)
-    </div>
-    <div>
-      Dosen Pengampu: <b>Mahfud Jiono, S.Pd., M.Eng.</b> · Universitas Negeri Malang
-    </div>
+  <!-- Footer Minimalis -->
+  <footer class="footer-minimal">
+    <span>&copy; 2026 <b>AksaraScan</b> · Universitas Negeri Malang</span>
+    <button type="button" class="footer-link" data-nav="about">Tim &amp; Informasi Model</button>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>

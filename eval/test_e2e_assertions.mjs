@@ -90,10 +90,10 @@ async function runUpload(page, imgPath) {
 
   const data = await page.evaluate(() => ({
     unicodeText: document.querySelector('#outJavanese')?.textContent || '',
-    rawUnicodeText: document.querySelector('#outRawJavanese')?.textContent || '',
     sentenceLatin: document.querySelector('#outSentenceLatin')?.textContent || '',
     sentenceIndonesian: document.querySelector('#outIndonesian')?.textContent || '',
-    orthoBadge: document.querySelector('#v3OrthoBadge')?.textContent || '',
+    hasOrthoBadge: Boolean(document.querySelector('#v3OrthoBadge')),
+    hasRawLabel: document.body.innerText.includes('Mentah detektor:'),
     mtChecked: document.querySelector('#chkOptInOnlineMT')?.checked,
     hasExportBtn: Boolean(document.querySelector('#btnExportV3Corrections')),
     btnEngineText: document.querySelector('#btnEngineYolo')?.textContent || '',
@@ -173,8 +173,9 @@ async function main() {
     console.log('[diag_02 crop]', rCrop);
     assert.equal(rCrop.mtChecked, false, 'Toggle MT daring harus MATI secara baku');
     assert.equal(rCrop.hasExportBtn, true, 'Tombol ekspor koreksi lokal harus tersedia');
-    assert.match(rCrop.btnEngineText, /55\s*Kelas/i, 'Label UI harus menyebut 55 Kelas (bukan 52)');
-    assert.ok(rCrop.rawUnicodeText.length > 5, 'Transkripsi Unicode mentah (#outRawJavanese) harus tampil');
+    assert.match(rCrop.btnEngineText, /55\s*Kelas/i, 'Label UI harus menyebut 55 Kelas');
+    assert.equal(rCrop.hasOrthoBadge, false, 'Badge Ortografi Valid harus sudah dihapus');
+    assert.equal(rCrop.hasRawLabel, false, 'Label Mentah detektor harus sudah dihapus');
     assert.ok(rCrop.latencyMs < 2000, `Latensi baris (${rCrop.latencyMs} ms) harus < 2000 ms`);
     assert.match(rCrop.sentenceLatin.toLowerCase(), /wédang|wedang/, 'Beam decoder harus memulihkan kata "wédang"');
     assert.match(rCrop.sentenceLatin.toLowerCase(), /bubuk/, 'Harus terbaca "bubuk"');
@@ -193,7 +194,51 @@ async function main() {
     assert.match(rS4.sentenceLatin.toLowerCase(), /krama/, 'Sample 4 harus mengandung "krama"');
     console.log('[PASS] Asersi positif sample_4.png:', rS4.sentenceLatin);
 
-    // 4. Verifikasi nol error & nol permintaan eksternal
+    // 4. Uji konsistensi kontras tema Gelap -> Terang & navigasi tab baru
+    const lumDiff = async () => page.evaluate(() => {
+      const parseRgb = (s) => (s.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+      const lum = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const checkEl = (sel) => {
+        const el = document.querySelector(sel);
+        const st = getComputedStyle(el);
+        return Math.abs(lum(parseRgb(st.color)) - lum(parseRgb(st.backgroundColor)));
+      };
+      return {
+        theme: document.documentElement.getAttribute('data-theme'),
+        navContrast: checkEl('.nav-pill.active'),
+        engContrast: checkEl('.engine-btn.active'),
+        titleColor: getComputedStyle(document.querySelector('.page-title')).color,
+        bodyBg: getComputedStyle(document.body).backgroundColor,
+      };
+    });
+    const darkMetrics = await lumDiff();
+    assert.ok(darkMetrics.navContrast > 80, `Kontras nav aktif gelap (${darkMetrics.navContrast}) harus tinggi`);
+    assert.ok(darkMetrics.engContrast > 80, `Kontras mesin aktif gelap (${darkMetrics.engContrast}) harus tinggi`);
+
+    await page.click('#themeToggle');
+    await page.waitForTimeout(100);
+    const lightMetrics = await lumDiff();
+    assert.equal(lightMetrics.theme, 'light', 'Tema harus berpindah ke light');
+    assert.ok(lightMetrics.navContrast > 80, `Kontras nav aktif terang (${lightMetrics.navContrast}) harus tinggi (tidak ketutup bg)`);
+    assert.ok(lightMetrics.engContrast > 80, `Kontras mesin aktif terang (${lightMetrics.engContrast}) harus tinggi`);
+    assert.notEqual(darkMetrics.titleColor, lightMetrics.titleColor, 'Warna font judul harus berubah saat berganti tema');
+    console.log('[PASS] Kontras tema Gelap & Terang konsisten:', { darkNav: Math.round(darkMetrics.navContrast), lightNav: Math.round(lightMetrics.navContrast) });
+
+    // 5. Uji navigasi 4 tab & footer ringkas
+    await page.click('[data-nav="about"]');
+    await page.waitForTimeout(80);
+    const aboutCheck = await page.evaluate(() => ({
+      aboutVisible: !document.querySelector('#viewAbout').hidden,
+      aboutText: document.querySelector('#viewAbout').innerText,
+      footerText: document.querySelector('.footer-minimal').innerText,
+    }));
+    assert.equal(aboutCheck.aboutVisible, true, 'Tab Tentang harus terbuka');
+    assert.match(aboutCheck.aboutText, /Muhammad Rayhan Najib/, 'Nama anggota harus tampil di tab Tentang');
+    assert.match(aboutCheck.aboutText, /Mahfud Jiono/, 'Nama dosen harus tampil di tab Tentang');
+    assert.ok(!aboutCheck.footerText.includes('240533600012'), 'Footer ringkas tidak boleh memuat daftar NIM panjang');
+    console.log('[PASS] Navigasi tab & pemindahan kredit tim ke tab Tentang terverifikasi.');
+
+    // 6. Verifikasi nol error & nol permintaan eksternal
     assert.equal(consoleErrors.length, 0, `Tidak boleh ada console/page error: ${consoleErrors.join('; ')}`);
     assert.equal(externalInfReqs.length, 0, `Tidak boleh ada network request eksternal saat inferensi: ${externalInfReqs.join(', ')}`);
     console.log('[PASS] 0 console error, 0 network request eksternal saat inferensi.');

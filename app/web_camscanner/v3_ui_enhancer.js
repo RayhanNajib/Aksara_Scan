@@ -1,9 +1,9 @@
 /**
- * Peningkatan Antarmuka AksaraScan v3.0 (Fase 4g):
- *  - Menampilkan transkripsi Unicode mentah (top-1 detektor) di samping hasil Dekoder Beam + LM
- *  - Garis bawah putus-putus pada kata berkeyakinan rendah / OOV dengan menu klik-untuk-tukar top-K
- *  - Pencatatan koreksi lokal ke localStorage + ekspor JSON lokal untuk fine-tuning putaran berikutnya
- *  - Toggle opsional MT daring opt-in (mati secara baku, tanpa unggahan citra ke peladen)
+ * Peningkatan Antarmuka AksaraScan v3.0:
+ *  - Garis bawah putus-putus pada kata OOV/ragu dengan menu klik-untuk-tukar top-K
+ *  - Pencatatan koreksi lokal ke localStorage + ekspor JSON lokal
+ *  - Toggle opsional MT daring opt-in (baku mati)
+ *  - Sepenuhnya selaras token tema Terang & Gelap (tanpa lencana Ortografi Valid / Mentah detektor)
  */
 (function () {
   'use strict';
@@ -38,83 +38,93 @@
     const st = document.createElement('style');
     st.id = 'aksaraV3Styles';
     st.textContent = `
-      .v3-meta-bar {
-        display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-        margin-top: 8px; padding: 8px 10px; border-radius: 8px;
-        background: rgba(18, 25, 38, 0.05); border: 1px solid rgba(0, 0, 0, 0.08);
-        font-size: 0.82rem; color: inherit;
-      }
-      body.dark-mode .v3-meta-bar {
-        background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12);
-      }
-      .v3-pill {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 0.75rem;
-        background: #e2e8f0; color: #1e293b;
-      }
-      .v3-pill.ok { background: #dcfce7; color: #166534; }
-      .v3-pill.warn { background: #fef3c7; color: #92400e; }
-      .v3-raw-line { font-family: 'Noto Sans Javanese', serif; opacity: 0.85; word-break: break-word; }
       .v3-word-uncertain {
-        border-bottom: 2px dotted #d97706; cursor: pointer; padding: 0 2px; border-radius: 3px;
-        transition: background 0.15s;
+        border-bottom: 2px dotted var(--prada);
+        cursor: pointer;
+        padding: 0 2px;
+        border-radius: 3px;
+        transition: background-color 0.15s;
       }
-      .v3-word-uncertain:hover { background: rgba(217, 119, 6, 0.14); }
+      .v3-word-uncertain:hover {
+        background: var(--prada-glow);
+      }
       .v3-controls-row {
-        display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
-        margin-top: 10px; font-size: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-dim);
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .v3-controls-row input[type="checkbox"] {
+        accent-color: var(--prada);
       }
       .v3-btn-mini {
-        padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(100,116,139,0.4);
-        background: transparent; color: inherit; cursor: pointer; font-weight: 600; font-size: 0.78rem;
+        padding: 5px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-dim);
+        background: var(--bg-surface);
+        color: var(--text-main);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 11.5px;
+        transition: border-color 0.15s, background-color 0.15s;
       }
-      .v3-btn-mini:hover { background: rgba(100,116,139,0.12); }
+      .v3-btn-mini:hover {
+        border-color: var(--prada);
+        background: var(--bg-panel-hover);
+      }
       .v3-swap-popover {
-        position: fixed; z-index: 9999; background: #1e293b; color: #f8fafc;
-        border: 1px solid #475569; border-radius: 8px; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        font-size: 0.82rem; min-width: 190px;
+        position: fixed;
+        z-index: 9999;
+        background: var(--popover-bg);
+        color: var(--popover-text);
+        border: 1px solid var(--popover-border);
+        border-radius: var(--radius-md);
+        padding: 10px;
+        box-shadow: var(--shadow-card);
+        font-size: 12.5px;
+        min-width: 205px;
       }
       .v3-swap-popover button {
-        display: block; width: 100%; text-align: left; padding: 5px 8px; margin-top: 4px;
-        border: 0; border-radius: 4px; background: #334155; color: #f8fafc; cursor: pointer;
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 6px 9px;
+        margin-top: 5px;
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius-sm);
+        background: var(--popover-item);
+        color: var(--popover-text);
+        cursor: pointer;
+        font-size: 12px;
       }
-      .v3-swap-popover button:hover { background: #475569; }
+      .v3-swap-popover button:hover {
+        border-color: var(--prada);
+      }
     `;
     document.head.appendChild(st);
   }
 
   function ensureMetaContainers() {
     injectStyles();
-    const outJav = document.getElementById('outJavanese');
-    if (outJav && !document.getElementById('v3RawMetaBar')) {
-      const bar = document.createElement('div');
-      bar.id = 'v3RawMetaBar';
-      bar.className = 'v3-meta-bar';
-      bar.style.display = 'none';
-      bar.innerHTML = `
-        <span id="v3OrthoBadge" class="v3-pill ok">Ortografi Valid</span>
-        <span id="v3BeamBadge" class="v3-pill" style="display:none">Koreksi Beam + LM</span>
-        <span style="opacity:0.75">Mentah detektor:</span>
-        <span id="outRawJavanese" class="v3-raw-line"></span>
-      `;
-      outJav.parentNode.insertBefore(bar, outJav.nextSibling);
-    }
-
     const outIndo = document.getElementById('outIndonesian');
     if (outIndo && !document.getElementById('v3FooterControls')) {
       const ctrl = document.createElement('div');
       ctrl.id = 'v3FooterControls';
       ctrl.className = 'v3-controls-row';
       ctrl.innerHTML = `
-        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Baku: MATI. Hanya aktifkan jika Anda mengizinkan teks terdeteksi dikirim ke layanan terjemahan daring.">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;" title="Baku: MATI. Aktifkan hanya bila ingin menerjemahkan lewat layanan daring.">
           <input type="checkbox" id="chkOptInOnlineMT" />
-          <span>Terjemahan Daring Opsional (opt-in, baku mati)</span>
+          <span>Terjemahan Daring Opsional</span>
         </label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button type="button" id="btnExportV3Corrections" class="v3-btn-mini">
-            Ekspor Koreksi Lokal (<span id="v3CorrectionCount">0</span>)
-          </button>
-        </div>
+        <button type="button" id="btnExportV3Corrections" class="v3-btn-mini">
+          Ekspor Koreksi (<span id="v3CorrectionCount">0</span>)
+        </button>
       `;
       outIndo.parentNode.insertBefore(ctrl, outIndo.nextSibling);
       updateExportBadge(loadCorrections().length);
@@ -140,7 +150,7 @@
           if (!res || !res.sentenceLatin || !window.AksaraLexicon || !window.AksaraLexicon.optionalOnlineTranslate) return;
           const tr = await window.AksaraLexicon.optionalOnlineTranslate(res.sentenceLatin, true);
           if (tr) {
-            outIndo.textContent = `${tr} (MT daring opt-in)`;
+            outIndo.textContent = `${tr} (MT daring)`;
           }
         });
       }
@@ -158,15 +168,14 @@
     pop.id = 'v3SwapPopover';
     pop.className = 'v3-swap-popover';
     const rect = anchorEl.getBoundingClientRect();
-    pop.style.left = `${Math.max(8, Math.min(window.innerWidth - 220, rect.left))}px`;
-    pop.style.top = `${Math.min(window.innerHeight - 180, rect.bottom + 6)}px`;
+    pop.style.left = `${Math.max(8, Math.min(window.innerWidth - 225, rect.left))}px`;
+    pop.style.top = `${Math.min(window.innerHeight - 190, rect.bottom + 6)}px`;
 
     const title = document.createElement('div');
     title.style.fontWeight = '700';
     title.textContent = `Perbaiki "${wordMeta.word}"`;
     pop.appendChild(title);
 
-    // Ambil alternatif top-K dari deteksi yang relevan
     const dets = window.__aksaraLastKeptDetections || [];
     const topAlts = [];
     dets.forEach((d) => {
@@ -182,7 +191,7 @@
     if (topAlts.length > 0) {
       topAlts.slice(0, 3).forEach(({ det, alt }) => {
         const b = document.createElement('button');
-        b.textContent = `Tukar ${det.label} -> ${alt.label} (${(alt.prob * 100).toFixed(0)}%)`;
+        b.textContent = `Tukar ${det.label} → ${alt.label} (${(alt.prob * 100).toFixed(0)}%)`;
         b.addEventListener('click', () => {
           const prevLabel = det.label;
           det.label = alt.label;
@@ -205,7 +214,7 @@
     }
 
     const customBtn = document.createElement('button');
-    customBtn.textContent = 'Ketik koreksi kata manual...';
+    customBtn.textContent = 'Ketik koreksi manual…';
     customBtn.addEventListener('click', () => {
       closePopover();
       const edited = window.prompt(`Koreksi kata "${wordMeta.word}":`, wordMeta.word);
@@ -237,21 +246,8 @@
     ensureMetaContainers();
     if (!res) return;
 
-    const bar = document.getElementById('v3RawMetaBar');
-    const rawSpan = document.getElementById('outRawJavanese');
-    const orthoBadge = document.getElementById('v3OrthoBadge');
-    const beamBadge = document.getElementById('v3BeamBadge');
-    if (bar && rawSpan && orthoBadge && beamBadge) {
-      bar.style.display = res.unicodeText ? 'flex' : 'none';
-      rawSpan.textContent = res.rawUnicodeText || res.unicodeText || '';
-      orthoBadge.className = `v3-pill ${res.orthoValid ? 'ok' : 'warn'}`;
-      orthoBadge.textContent = res.orthoValid ? 'Ortografi Valid' : `Catatan Ortografi (${(res.orthoErrors || []).length})`;
-      beamBadge.style.display = res.beamUsed ? 'inline-flex' : 'none';
-    }
-
     const outLat = document.getElementById('outSentenceLatin');
     if (outLat && Array.isArray(res.wordDetails) && res.wordDetails.length > 0 && res.sentenceLatin) {
-      // Beri garis bawah putus-putus HANYA pada kata OOV agar pengguna tahu mana yang perlu ditinjau
       const metaByClean = new Map();
       res.wordDetails.forEach((wm) => metaByClean.set(wm.word, wm));
 
@@ -267,7 +263,7 @@
         if (wm && !wm.known && clean.length >= 2) {
           const sp = document.createElement('span');
           sp.className = 'v3-word-uncertain';
-          sp.title = 'Kata tidak ditemukan di kamus/korpus Jawa — klik untuk tinjau atau perbaiki';
+          sp.title = 'Klik untuk meninjau atau memperbaiki kata ini';
           sp.textContent = part;
           sp.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -284,13 +280,7 @@
   function updateVersionCopy() {
     const btnYolo = document.getElementById('btnEngineYolo');
     if (btnYolo) {
-      btnYolo.innerHTML = btnYolo.innerHTML
-        .replace(/52\s*Kelas/gi, '55 Kelas')
-        .replace(/v2\.5/gi, 'v3.0');
-    }
-    const subtitle = document.querySelector('.brand-sub, .subtitle, header p');
-    if (subtitle && subtitle.textContent.includes('52 Kelas')) {
-      subtitle.textContent = subtitle.textContent.replace(/52 Kelas/g, '55 Kelas');
+      btnYolo.innerHTML = btnYolo.innerHTML.replace(/52\s*Kelas/gi, '55 Kelas');
     }
   }
 
@@ -300,7 +290,6 @@
   });
 
   window.addEventListener('aksara:reconstructed', (ev) => {
-    // Tunda 0ms agar berjalan sesudah app.js selesai mengisi textContent DOM
     setTimeout(() => renderV3Annotations(ev.detail || window.__aksaraLastOrthoResult), 0);
   });
 })();

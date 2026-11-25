@@ -131,8 +131,26 @@ async function initApp() {
 
   // Setup Tema
   const savedTheme = localStorage.getItem('aksarascan_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+  applyTheme(savedTheme);
   $('#themeToggle').addEventListener('click', toggleTheme);
+
+  // Setup Navigasi Atas & Tab Kamus
+  $$('[data-nav]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      switchMainView(el.dataset.nav);
+    });
+  });
+  $$('.kamus-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.kamus-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.kcat;
+      if ($('#kamusNglegenaWrap')) $('#kamusNglegenaWrap').hidden = (cat !== 'nglegena');
+      if ($('#kamusPasanganWrap')) $('#kamusPasanganWrap').hidden = (cat !== 'pasangan');
+      if ($('#kamusSandhanganWrap')) $('#kamusSandhanganWrap').hidden = (cat !== 'sandhangan');
+    });
+  });
 
   // Setup Events
   // Kamera: mobile pakai input capture; desktop pakai MediaDevices getUserMedia.
@@ -142,6 +160,7 @@ async function initApp() {
     else camInput.click();
   });
   $('#btnFile').addEventListener('click', () => fileInput.click());
+  if ($('#btnReplaceImg')) $('#btnReplaceImg').addEventListener('click', () => fileInput.click());
   // Reset value agar file yang sama bisa diunggah ulang tanpa refresh.
   fileInput.addEventListener('change', e => {
     const f = e.target.files[0];
@@ -153,6 +172,15 @@ async function initApp() {
     if (f) handleImageUpload(f);
     e.target.value = '';
   });
+
+  if ($('#optConfRange')) {
+    $('#optConfRange').addEventListener('input', e => {
+      if ($('#optConfVal')) $('#optConfVal').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+    $('#optConfRange').addEventListener('change', () => {
+      if (sourceImage && activeEngine === 'yolo') executePipeline();
+    });
+  }
 
   initSelection();
   initPasteAndDrop();
@@ -181,27 +209,11 @@ async function initApp() {
   // Klik langsung pada kanvas untuk mengoreksi karakter
   mainCanvas.addEventListener('click', handleCanvasClick);
 
-  // Lab Tab switcher
-  $$('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      $$('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const target = btn.dataset.tab;
-      if (target === 'result') {
-        $('#tabResult').hidden = false;
-        $('#tabLab').hidden = true;
-      } else {
-        $('#tabResult').hidden = true;
-        $('#tabLab').hidden = false;
-        renderLabStage('otsu');
-      }
-    });
-  });
-
   // Demo Card Coba 1-Klik (dukungan click dan touch)
   $$('.demo-card').forEach(card => {
     const trigger = (e) => {
       e.preventDefault();
+      switchMainView('scanner');
       loadDemoImage(card.dataset.src);
     };
     card.addEventListener('click', trigger);
@@ -212,11 +224,38 @@ async function initApp() {
   setupCorrectionModal();
 }
 
+function applyTheme(theme) {
+  const mode = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', mode);
+  localStorage.setItem('aksarascan_theme', mode);
+  const metaTheme = $('#metaThemeColor');
+  if (metaTheme) metaTheme.setAttribute('content', mode === 'light' ? '#f6efe0' : '#0e1422');
+}
+
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'light' ? 'dark' : 'light';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('aksarascan_theme', next);
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
+function switchMainView(viewKey) {
+  const views = {
+    scanner: $('#viewScanner'),
+    lab: $('#viewLab'),
+    kamus: $('#viewKamus'),
+    about: $('#viewAbout')
+  };
+  if (!views[viewKey]) return;
+  Object.entries(views).forEach(([k, el]) => {
+    if (el) el.hidden = (k !== viewKey);
+  });
+  $$('.nav-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.nav === viewKey);
+  });
+  if (viewKey === 'lab') {
+    const activeStage = document.querySelector('.lab-stage-btn.active')?.dataset.stage || 'otsu';
+    renderLabStage(activeStage);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Muat Citra ke Kanvas
@@ -336,6 +375,7 @@ function loadImageElement(img, label) {
 
   dropzone.hidden = true;
   stageWrap.hidden = false;
+  if ($('#btnReplaceImg')) $('#btnReplaceImg').hidden = false;
   clearSelection();
   $('#srcDim').textContent = `${mainCanvas.width}×${mainCanvas.height} px (${label})`;
   btnRun.disabled = false;
@@ -357,6 +397,7 @@ function resetResults() {
   $('#outLatin').textContent = '—';
   if ($('#outSentenceLatin')) $('#outSentenceLatin').textContent = '—';
   if ($('#outIndonesian')) $('#outIndonesian').textContent = '—';
+  if ($('#glyphCountBadge')) $('#glyphCountBadge').textContent = '0';
   const meterVal = $('#meterVal');
   if (meterVal) meterVal.textContent = '0%';
   const meterFill = $('#meterFill');
@@ -441,9 +482,9 @@ async function initYoloEngine() {
 
 function updateModelBadge() {
   if (activeEngine === 'yolo' && yoloMeta) {
-    const m50 = yoloMeta.metrics && yoloMeta.metrics.map50 ? `${yoloMeta.metrics.map50}% mAP50` : '52 Kelas';
+    const m50 = yoloMeta.metrics && yoloMeta.metrics.map50 ? `${yoloMeta.metrics.map50}% mAP50` : '55 Kelas';
     modelBadge.textContent = `YOLOv8 · ${m50}`;
-    modelBadge.style.color = '#f0d48a';
+    modelBadge.style.color = 'var(--accent-text)';
   } else if (model) {
     modelBadge.textContent = `SVM Siap · ${model.accuracy}% Uji`;
     modelBadge.style.color = 'var(--lontar)';
@@ -483,22 +524,64 @@ function yoloNms(candidates, sameCatIou = 0.42, crossCatIou = 0.72) {
   const kept = [];
   for (const cand of candidates) {
     let suppress = false;
+    const areaC = Math.max(1, (cand.box[2] - cand.box[0]) * (cand.box[3] - cand.box[1]));
     for (const k of kept) {
+      const ix0 = Math.max(cand.box[0], k.box[0]), iy0 = Math.max(cand.box[1], k.box[1]);
+      const ix1 = Math.min(cand.box[2], k.box[2]), iy1 = Math.min(cand.box[3], k.box[3]);
+      const iw = Math.max(0, ix1 - ix0), ih = Math.max(0, iy1 - iy0);
+      const inter = iw * ih;
+      if (inter <= 0) continue;
+      const areaK = Math.max(1, (k.box[2] - k.box[0]) * (k.box[3] - k.box[1]));
+      const iou = inter / Math.max(1, areaC + areaK - inter);
+      const contain = inter / Math.min(areaC, areaK);
+
       // nglegena, pasangan, & pada tidak boleh bertumpuk di posisi sama; hanya sandhangan yang boleh overlap dengan induknya
       const sameExclusiveGroup = (cand.category !== 'sandhangan' && k.category !== 'sandhangan');
       const thr = (cand.category === k.category || sameExclusiveGroup) ? sameCatIou : crossCatIou;
-      if (yoloIoU(cand.box, k.box) > thr) { suppress = true; break; }
+      if (iou > thr) { suppress = true; break; }
+      // Cegah fragmen kecil di dalam huruf lebar yang SAMA kategorinya (misal fragmen dalam nya/ga)
+      if (cand.category === k.category && contain > 0.74) {
+        suppress = true; break;
+      }
     }
     if (!suppress) kept.push(cand);
   }
   return kept;
 }
 
-async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
+function estimatePaperBgCss(srcCanvasOrImg, w, h) {
+  try {
+    const tmp = document.createElement('canvas');
+    const sw = 64, sh = 64;
+    tmp.width = sw; tmp.height = sh;
+    const tctx = tmp.getContext('2d', { willReadFrequently: true });
+    tctx.drawImage(srcCanvasOrImg, 0, 0, sw, sh);
+    const d = tctx.getImageData(0, 0, sw, sh).data;
+    const rs = [], gs = [], bs = [];
+    for (let i = 0; i < d.length; i += 4) {
+      const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      if (lum > 140) {
+        rs.push(d[i]); gs.push(d[i + 1]); bs.push(d[i + 2]);
+      }
+    }
+    if (rs.length >= 40) {
+      rs.sort((a, b) => a - b); gs.sort((a, b) => a - b); bs.sort((a, b) => a - b);
+      const mid = Math.floor(rs.length * 0.65);
+      return `rgb(${rs[mid]}, ${gs[mid]}, ${bs[mid]})`;
+    }
+  } catch (_e) { /* fallback */ }
+  return 'rgb(248, 245, 238)';
+}
+
+async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInputEl) {
+  const srcEl = yoloInputEl || sourceImage;
+  const srcW = srcEl.naturalWidth || srcEl.width || CW;
+  const srcH = srcEl.naturalHeight || srcEl.height || CH;
   const imgsz = yoloMeta.imgsz || 416;
   const off = document.createElement('canvas');
   off.width = imgsz; off.height = imgsz;
   const octx = off.getContext('2d', { willReadFrequently: true });
+  const padBgCss = estimatePaperBgCss(srcEl, CW, CH);
 
   // Temukan kotak pembatas tinta bersih di ROI untuk membuang margin kosong besar
   let minX = rx + w, minY = ry + h, maxX = rx, maxY = ry;
@@ -529,7 +612,7 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
   const bhArea = Math.max(1, baseY1 - baseY0);
   const tiles = [];
 
-  if (Math.max(bwArea, bhArea) <= 580 && (bwArea / bhArea) <= 2.2) {
+  if (Math.max(bwArea, bhArea) <= 580 && (bwArea / Math.max(1, bhArea)) <= 4.6) {
     tiles.push([baseX0, baseY0, baseX1, baseY1]);
   } else {
     // Deteksi pita baris horizontal dari morphBin agar kalimat memanjang tetap beresolusi tinggi per jendela
@@ -555,17 +638,16 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
     }
     if (lStart >= 0 && baseY1 - lStart >= 14) lineBands.push([lStart, baseY1]);
 
-    if (lineBands.length && lineBands.length <= 6) {
-      const maxLH = Math.max(...lineBands.map(b => b[1] - b[0]));
-      const activeBands = lineBands.length >= 2
-        ? lineBands.filter(b => (b[1] - b[0]) >= Math.max(20, maxLH * 0.45))
-        : lineBands;
+    const maxBandH = lineBands.length ? Math.max(...lineBands.map(b => b[1] - b[0])) : 0;
+    if (lineBands.length && lineBands.length <= 8 && maxBandH <= 260) {
+      // Jangan buang baris valid yang tingginya 25-40px (baris tanpa pasangan!)
+      const activeBands = lineBands.filter(b => (b[1] - b[0]) >= 18);
       const chosenBands = activeBands.length ? activeBands : lineBands;
 
       for (let bIdx = 0; bIdx < chosenBands.length; bIdx++) {
         const [ly0, ly1] = chosenBands[bIdx];
         const lh = Math.max(36, ly1 - ly0);
-        const padV = Math.min(20, Math.max(10, Math.round(lh * 0.22)));
+        const padV = Math.min(28, Math.max(14, Math.round(lh * 0.28)));
 
         // Jangan biarkan padding meluber masuk ke pita baris atas/bawah (atau teks keterangan Latin tipis)
         let minTopBound = 0;
@@ -581,7 +663,7 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
         const ty1 = Math.min(maxBotBound, ly1 + padV);
         const bandH = Math.max(1, ty1 - ty0);
         const tileW = Math.min(440, Math.max(260, Math.round(bandH * 2.8)));
-        if (bwArea <= tileW * 1.12) {
+        if (bwArea <= tileW * 1.15) {
           tiles.push([baseX0, ty0, baseX1, ty1]);
         } else {
           const step = Math.round(tileW * 0.65);
@@ -589,15 +671,15 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
             const txEnd = Math.min(baseX1, tx + tileW);
             const txStart = (txEnd === baseX1) ? Math.max(baseX0, txEnd - tileW) : tx;
             tiles.push([txStart, ty0, txEnd, ty1]);
-            if (txEnd >= baseX1 || tiles.length >= 12) break;
+            if (txEnd >= baseX1 || tiles.length >= 24) break;
             tx += step;
           }
         }
-        if (tiles.length >= 12) break;
+        if (tiles.length >= 24) break;
       }
     } else {
-      const ts = 480;
-      const step = Math.round(ts * 0.72);
+      const ts = 440;
+      const step = Math.round(ts * 0.68);
       for (let ty = baseY0; ty < baseY1; ) {
         const tyEnd = Math.min(baseY1, ty + ts);
         const tyStart = (tyEnd === baseY1 && tyEnd - ty < ts * 0.5) ? Math.max(baseY0, tyEnd - ts) : ty;
@@ -605,22 +687,23 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
           const txEnd = Math.min(baseX1, tx + ts);
           const txStart = (txEnd === baseX1 && txEnd - tx < ts * 0.5) ? Math.max(baseX0, txEnd - ts) : tx;
           tiles.push([txStart, tyStart, txEnd, tyEnd]);
-          if (txEnd >= baseX1 || tiles.length >= 12) break;
+          if (txEnd >= baseX1 || tiles.length >= 24) break;
           tx += step;
         }
-        if (tyEnd >= baseY1 || tiles.length >= 12) break;
+        if (tyEnd >= baseY1 || tiles.length >= 24) break;
         ty += step;
       }
     }
   }
 
   const nc = yoloMeta.classes.length;
-  const confThr = yoloMeta.conf_thresh || 0.26;
+  const uiConfEl = document.getElementById('optConfRange');
+  const confThr = uiConfEl ? (parseFloat(uiConfEl.value) || 0.25) : (yoloMeta.conf_thresh || 0.25);
   const inpName = yoloSession.inputNames[0];
   const plane = imgsz * imgsz;
   const chw = new Float32Array(3 * plane);
-  const natScaleX = sourceImage.naturalWidth / CW;
-  const natScaleY = sourceImage.naturalHeight / CH;
+  const natScaleX = srcW / CW;
+  const natScaleY = srcH / CH;
   const cands = [];
 
   for (let tIdx = 0; tIdx < tiles.length; tIdx++) {
@@ -628,13 +711,13 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
     const tw = Math.max(1, tx1 - tx0), th = Math.max(1, ty1 - ty0);
     updateProgress(6, `Tahap 6 · Inferensi YOLOv8 ONNX (${tIdx + 1}/${tiles.length})…`);
 
-    octx.fillStyle = 'rgb(114, 114, 114)';
+    octx.fillStyle = tiles.length === 1 ? padBgCss : 'rgb(114, 114, 114)';
     octx.fillRect(0, 0, imgsz, imgsz);
     const scale = Math.min(imgsz / tw, imgsz / th);
     const nw = Math.round(tw * scale), nh = Math.round(th * scale);
     const padX = Math.floor((imgsz - nw) / 2), padY = Math.floor((imgsz - nh) / 2);
 
-    octx.drawImage(sourceImage, tx0 * natScaleX, ty0 * natScaleY, tw * natScaleX, th * natScaleY, padX, padY, nw, nh);
+    octx.drawImage(srcEl, tx0 * natScaleX, ty0 * natScaleY, tw * natScaleX, th * natScaleY, padX, padY, nw, nh);
     const rgba = octx.getImageData(0, 0, imgsz, imgsz).data;
     for (let i = 0; i < plane; i++) {
       const p = i * 4;
@@ -679,7 +762,7 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
 
       // Abaikan kotak terpotong di tepi irisan petak internal (petak tetangga menangkap glif utuh)
       if (tiles.length > 1) {
-        if ((tx0 > baseX0 && x0 <= tx0 + 4) || (tx1 < baseX1 && x1 >= tx1 - 4)) continue;
+        if ((tx0 > baseX0 + 2 && x0 <= tx0 + 2) || (tx1 < baseX1 - 2 && x1 >= tx1 - 2)) continue;
       }
 
       if (sel) {
@@ -765,16 +848,44 @@ function executePipeline(roi) {
         if (w < 24 || h < 24) { rx = 0; ry = 0; w = CW; h = CH; roi = null; sel = null; }
       }
 
-      // Tahap 1: Grayscale (ITU-R BT.601)
+      // Tahap 1: Grayscale (ITU-R BT.601) + Deteksi Otomatis Latar Gelap (Dark Mode Rescue)
       const gray = new Uint8Array(w * h);
       const data = imgData.data;
+      const lumHist = new Uint32Array(256);
       for (let y = 0; y < h; y++) {
         const srcRow = ((ry + y) * CW + rx) * 4;
         const dstRow = y * w;
         for (let x = 0; x < w; x++) {
           const i = srcRow + x * 4;
-          gray[dstRow + x] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+          const v = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+          gray[dstRow + x] = v;
+          lumHist[v]++;
         }
+      }
+
+      // Hitung median luminans latar untuk mendeteksi gambar teks terang di atas latar gelap
+      let cum = 0, medianLum = 255;
+      const halfPx = (w * h) >> 1;
+      for (let b = 0; b < 256; b++) {
+        cum += lumHist[b];
+        if (cum >= halfPx) { medianLum = b; break; }
+      }
+      let yoloInputEl = sourceImage;
+      if (medianLum < 112) {
+        for (let k = 0; k < gray.length; k++) gray[k] = 255 - gray[k];
+        const invC = document.createElement('canvas');
+        invC.width = CW; invC.height = CH;
+        const ictx = invC.getContext('2d', { willReadFrequently: true });
+        const invImg = ictx.createImageData(CW, CH);
+        const dstD = invImg.data;
+        for (let p = 0; p < data.length; p += 4) {
+          dstD[p] = 255 - data[p];
+          dstD[p + 1] = 255 - data[p + 1];
+          dstD[p + 2] = 255 - data[p + 2];
+          dstD[p + 3] = 255;
+        }
+        ictx.putImageData(invImg, 0, 0);
+        yoloInputEl = invC;
       }
       cacheLabStage('grayscale', gray, w, h, 'gray');
 
@@ -810,7 +921,7 @@ function executePipeline(roi) {
 
       if (activeEngine === 'yolo' && yoloSession) {
         yoloReconstructed = null;
-        await executeYoloPipeline(CW, CH, rx, ry, w, h, sel, labStages.binary);
+        await executeYoloPipeline(CW, CH, rx, ry, w, h, sel, labStages.binary, yoloInputEl);
         const segForLab = currentDetections.map(d => ({
           box: [Math.max(0, d.box[0] - rx), Math.max(0, d.box[1] - ry), Math.min(w - 1, d.box[2] - rx), Math.min(h - 1, d.box[3] - ry)]
         }));
@@ -865,6 +976,10 @@ function executePipeline(roi) {
 
       redrawMainCanvas();
       renderOutputs();
+      if ($('#viewLab') && !$('#viewLab').hidden) {
+        const activeStage = document.querySelector('.lab-stage-btn.active')?.dataset.stage || 'otsu';
+        renderLabStage(activeStage);
+      }
     } catch (err) {
       console.error(err);
       alert(`Terjadi kesalahan pemrosesan: ${err.message}`);
@@ -1597,6 +1712,7 @@ function renderOutputs() {
   if (meterFill) meterFill.style.width = `${avgConf}%`;
   const meterWrap = $('#meterWrap');
   if (meterWrap) meterWrap.hidden = false;
+  if ($('#glyphCountBadge')) $('#glyphCountBadge').textContent = String(currentDetections.length);
 
   // Grid Karakter Glif
   const grid = $('#glyphsGrid');
@@ -1869,20 +1985,71 @@ $('#btnReapplyLab').addEventListener('click', () => {
   executePipeline();
 });
 
-// Kamus Aksara
+// Kamus Aksara (Nglegena + Pasangan + Sandhangan/Pada)
 function renderDictionary() {
   const grid = $('#dictionaryGrid');
-  grid.replaceChildren();
-  AKSARA_DATA.forEach((a, i) => {
-    const card = document.createElement('div');
-    card.className = 'dict-card';
-    card.innerHTML = `
-      <div class="glif">${a.unicode}</div>
-      <div class="nama">${a.name}</div>
-      <div class="latin">#${i + 1} · ${a.latin}</div>
-    `;
-    grid.append(card);
-  });
+  if (grid) {
+    grid.replaceChildren();
+    AKSARA_DATA.forEach((a, i) => {
+      const card = document.createElement('div');
+      card.className = 'dict-card';
+      card.innerHTML = `
+        <div class="glif">${a.unicode}</div>
+        <div class="nama">${a.name}</div>
+        <div class="latin">#${i + 1} · ${a.latin}</div>
+      `;
+      grid.append(card);
+    });
+  }
+
+  const pGrid = $('#pasanganDictGrid');
+  if (pGrid) {
+    pGrid.replaceChildren();
+    AKSARA_DATA.forEach(a => {
+      const posNote = (a.latin === 'ha' || a.latin === 'sa' || a.latin === 'pa') ? 'posisi kanan' : 'di bawah';
+      const card = document.createElement('div');
+      card.className = 'dict-card';
+      card.innerHTML = `
+        <div class="glif">꧀${a.unicode}</div>
+        <div class="nama">p_${a.latin}</div>
+        <div class="latin">${posNote}</div>
+      `;
+      pGrid.append(card);
+    });
+  }
+
+  const sGrid = $('#sandhanganDictGrid');
+  if (sGrid) {
+    sGrid.replaceChildren();
+    const sItems = [
+      { g: 'ꦶ', n: 'Wulu', l: 'Vokal -i (atas)' },
+      { g: 'ꦸ', n: 'Suku', l: 'Vokal -u (bawah)' },
+      { g: 'ꦼ', n: 'Pepet', l: 'Vokal -ê (atas)' },
+      { g: 'ꦺ', n: 'Taling', l: 'Vokal -é/è (kiri)' },
+      { g: 'ꦴ', n: 'Tarung', l: 'Pasangan -o (kanan)' },
+      { g: 'ꦂ', n: 'Layar', l: 'Akhir -r (atas)' },
+      { g: 'ꦁ', n: 'Cecak', l: 'Akhir -ng (atas)' },
+      { g: 'ꦃ', n: 'Wignyan', l: 'Akhir -h (kanan)' },
+      { g: '꧀', n: 'Pangkon', l: 'Pemati vokal' },
+      { g: 'ꦿ', n: 'Cakra', l: 'Sisipan -ra' },
+      { g: 'ꦽ', n: 'Keret', l: 'Sisipan -rê' },
+      { g: 'ꦾ', n: 'Pengkal', l: 'Sisipan -ya' },
+      { g: '꧋', n: 'Pada Adeg', l: 'Pembuka kalimat' },
+      { g: '꧈', n: 'Pada Lingsa', l: 'Tanda koma (,)' },
+      { g: '꧉', n: 'Pada Lungsi', l: 'Tanda titik (.)' },
+    ];
+    sItems.forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'dict-card';
+      const isPada = it.g === '꧋' || it.g === '꧈' || it.g === '꧉';
+      card.innerHTML = `
+        <div class="glif">${isPada ? it.g : 'ꦏ' + it.g}</div>
+        <div class="nama">${it.n}</div>
+        <div class="latin">${it.l}</div>
+      `;
+      sGrid.append(card);
+    });
+  }
 }
 
 // Utilitas Clipboard & Unduh
