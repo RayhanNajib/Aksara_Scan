@@ -1,7 +1,7 @@
 # AksaraScan
 Pemindai & Penerjemah Aksara Jawa (v3.0 Offline Browser Engine)
 
-**AksaraScan** adalah aplikasi web progresif (**100% client-side / luring via ONNX Runtime Web WASM**) untuk mendeteksi, memetakan ortografi **55 kelas** Aksara Jawa, mentransliterasi secara kanonik, dan menerjemahkannya ke Bahasa Indonesia secara langsung di peramban tanpa mengunggah citra pengguna ke peladen mana pun.
+**AksaraScan** adalah aplikasi web progresif untuk mendeteksi, memetakan ortografi **55 kelas** Aksara Jawa, mentransliterasi secara kanonik, dan menerjemahkannya ke Bahasa Indonesia secara langsung di peramban tanpa mengunggah citra pengguna ke peladen mana pun.
 
 ## Arsitektur Utama v3.0
 1. **Detektor Objek Atomik 55 Kelas (`app/web_camscanner/aksara_yolo.onnx`, `12.11 MB`)**:
