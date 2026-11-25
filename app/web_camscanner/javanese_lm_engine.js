@@ -285,11 +285,12 @@
     // Bonus proporsional panjang huruf + penalti batas kata -1.45 mencegah pemecahan kata sah ('bubuk' -> 'bu buk')
     const perCharVal = info.exact ? 0.92 : info.viaAffix ? 0.72 : 0.85;
     const lenReward = bare.length * perCharVal;
+    const exactAccentBonus = MERGED_DICT[clean] ? 1.85 : 0.0;
     const freqPart = Math.max(-5.5, info.unigramLog10) * 0.22;
     const wordBoundaryCost = -1.45;
     return {
       known: true,
-      score: lenReward + freqPart + tri * 0.25 + wordBoundaryCost,
+      score: lenReward + exactAccentBonus + freqPart + tri * 0.25 + wordBoundaryCost,
       tri,
       info,
     };

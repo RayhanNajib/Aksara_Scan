@@ -567,10 +567,13 @@
 
     const rawEval = lex.scoreWordSequence(rawLatin);
     const rawOovCount = (rawEval.wordMeta || []).filter((w) => !w.known && w.word.length >= 3).length;
+    const hasLowConfMod = lineClusters.some(
+      (cl) => !cl.isPada && (cl.sandhangans || []).some((s) => (s.confidence || 1.0) < 0.62)
+    );
     const meanBaseConf = lineClusters.reduce((s, cl) => s + (cl.base.confidence || 0), 0) / Math.max(1, lineClusters.length);
     // Hanya jalankan Beam perbaikan jika sebagian besar konteks baris valid (>= 45% kata dikenal)
-    // DAN keyakinan dasar detektor memadai — mencegah halusinasi LM pada coretan tak terbaca!
-    if (rawOovCount === 0 || (rawEval.knownRatio || 0) < 0.45 || meanBaseConf < 0.76) {
+    // DAN ada OOV atau modifier berkeyakinan rendah (<0.62) pada frasa potensial.
+    if ((rawOovCount === 0 && !hasLowConfMod) || (rawEval.knownRatio || 0) < 0.45 || meanBaseConf < 0.76) {
       return {
         rawUnicode,
         unicode: rawUnicode,
@@ -689,7 +692,9 @@
         const substantiveGain = gainedKnownWords.length > 0 && gainedKnownWords.every((w) => w.word.length >= 5 && w.meaning);
         const curPhrases = (lex.scoreWordSequence(curLatin).phraseHits || 0);
         const phraseImproved = (trialEv.phraseHits || 0) > curPhrases;
-        if (!substantiveGain || trialKnownCount <= curKnownCount) continue;
+        const okByOov = substantiveGain && trialKnownCount > curKnownCount;
+        const okByPhrase = phraseImproved && trialKnownCount >= curKnownCount;
+        if (!okByOov && !okByPhrase) continue;
         if ((trialEv.knownRatio || 0) < 0.90 && !phraseImproved) continue;
 
         const netGain = (trialEv.score - curScore) - planCost;

@@ -289,10 +289,11 @@
     "pada_lungsi": "pada"
   },
   "metrics": {
-    "map50": 98.81,
-    "map50_95": 87.7,
-    "precision": 98.7,
-    "recall": 96.52,
-    "epochs": 20
-  }
+    "map50": 92.18,
+    "map50_95": 74.19,
+    "precision": 91.72,
+    "recall": 85.74,
+    "epochs": 3
+  },
+  "version": "3.1.0-blur-hw"
 }

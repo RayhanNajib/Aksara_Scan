@@ -166,6 +166,22 @@ def build_corpus_and_lexicon(max_wiki_sentences=8000):
                     if re.fullmatch(r"[a-z]{2,16}", w):
                         lexicon.setdefault(w, vals[1].lower())
 
+    # 4b. Javanese ConceptNet (MIT — train_cn_jv.csv)
+    cn_path = os.path.join(EXT_DIR, "public_javanese", "train_cn_jv.csv")
+    if os.path.exists(cn_path):
+        with open(cn_path, "r", encoding="utf-8", errors="replace") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                txt = (row.get("text") or "").strip()
+                # Ekstrak pasangan "A is a synonym of B." / kata Jawa Latin bersih
+                m = re.match(r"^([a-zéèê\s]{2,24}) is a synonym of ([a-zéèê\s]{2,24})\.?$", txt, re.I)
+                if m:
+                    a, b = m.group(1).strip().lower(), m.group(2).strip().lower()
+                    if re.fullmatch(r"[a-zéèê]{2,16}", a):
+                        word_freq[a] += 2
+                    if re.fullmatch(r"[a-zéèê]{2,16}", b):
+                        word_freq[b] += 2
+
     # 5. Wikipedia Bahasa Jawa dump (jika ada)
     wiki_bz2 = os.path.join(EXT_DIR, "jvwiki", "jvwiki-latest-pages-articles.xml.bz2")
     if os.path.exists(wiki_bz2):

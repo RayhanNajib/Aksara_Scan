@@ -4,7 +4,7 @@
 **AksaraScan** adalah aplikasi pemindai dan penerjemah Aksara Jawa **100% di peramban** (*client-side WASM/ONNX*) berbasis deteksi objek atomik **55 kelas** dan jalur penalaran ortografi-bahasa hibrid:
 
 - **Jalur Utama (Track A)**:
-  1. **Detektor**: Arsitektur CNN/CSPNet + FPN/PAN (`aksara_yolo.onnx`, `12.11 MB` FP32 untuk bobot v2.5 terpasang saat ini; arsitektur YOLOX Apache-2.0 + `P2` stride-4 siap di `training/yolox_model.py`).
+  1. **Detektor**: YOLOv8n ONNX (`aksara_yolo.onnx`, `12.11 MB` FP32 `v3.1.0-blur-hw`, `92.18% mAP50`, `91.72% Precision`, `85.74% Recall` pada 796 citra validasi campuran blur optik, tulisan tangan, 11 font OFL/Apache-2.0, dan `Jawa.zip`; arsitektur YOLOX Apache-2.0 + `P2` stride-4 juga tersedia di `training/yolox_model.py`), dipadukan dengan normalisasi bayangan & penajaman adaptif (*Unsharp Mask*) serta *scale-matched tiling* di `app/web_camscanner/app.js`.
   2. **Rekonstruktor Spasial & Validator Ortografi**: Pengelompokan baris, pemasangan `pasangan` (termasuk `p_ha`/`p_sa`/`p_pa` kanan), pemasangan `sandhangan`, dan validator kanonik blok Unicode `U+A980..U+A9DF` (`app/web_camscanner/orthography.js`).
   3. **Dekoder Beam Konservatif & Mesin Bahasa Jawa**: Pencarian perbaikan terarah berdasar kamus kurasi + `AKSARA_LM_DATA` (`10.589` unigram, `4.500` entri kamus, `560` konteks char-trigram dari `866.150` token korpus) serta aturan afiks produktif Jawa (`app/web_camscanner/javanese_lm_engine.js`).
 - **Jalur Penantang (Track B)**: Pengenal baris *segmentation-free* **CRNN + BiLSTM 2-lapis + CTC Loss** (`training/train_crnn_track_b.py` -> `aksara_crnn_ctc.onnx`, `9.86 MB`) dilatih pada data baris `setilanaji/aksara-jawa-ocr` + `synth_v2`.
@@ -23,10 +23,10 @@
 ## Sumber Data & Kepatuhan Lisensi
 - **Dataset Terkonversi & Terverifikasi**:
   - `hanacaraka` (`CC0-1.0`, `1.453` kotak tervalidasi)
-  - Mendeley `Jawa.zip` (`10.931` kotak Nglegena + `2.196` citra silabus Sandhangan; label `Vokal E` dan `Vokal È` telah diperbaiki setelah inspeksi visual)
-  - `setilanaji/aksara-jawa-ocr` (`Apache-2.0`, `2.059` train + `150` val baris Unicode setelah deduplikasi dHash)
-  - Korpus Bahasa Jawa: `IndoNLP/nusax`, `IndoNLP/nusa-writes`, `nsulistiyawan/sastra-jawa` (`MIT`), `afrizalha/Gatra-1-Javanese`, Wikipedia Jawa (`jvwiki-latest-pages-articles.xml.bz2`).
-- **Generator Sintetis v2 (`tools/synth_v2/generate_v2.py`)**: HANYA menggunakan font berlisensi **SIL OFL 1.1** (`NotoSansJavanese.ttf`, `TuladhaJejegOT-Regular.{ttf,otf}`), **bebas dari font proprieter Windows (`javatext.ttf`)**.
+  - Mendeley `Jawa.zip` (`10.931` kotak Nglegena + `1.469` silabus bersandhangan nyata `jawa_syllables_boxed` dengan kotak atomik `wulu`/`pepet`/`taling`/`tarung` terverifikasi; label `Vokal E` dan `Vokal È` telah diperbaiki setelah inspeksi visual)
+  - `setilanaji/aksara-jawa-ocr` (`Apache-2.0`, `2.059` train + `150` val baris Unicode setelah deduplikasi dHash; `67` baris nyata berpenyelarasan guru tepat dipakai untuk *fine-tuning* Track A)
+  - Korpus Bahasa Jawa: `IndoNLP/nusax`, `IndoNLP/nusa-writes`, `nsulistiyawan/sastra-jawa` (`MIT`), `afrizalha/Gatra-1-Javanese`, `DGurgurov/javanese_conceptnet` (`MIT`), `thesimonharms/public-javanese-dataset` (`CC-BY-SA-3.0`/`MIT`), Wikipedia Jawa (`jvwiki-latest-pages-articles.xml.bz2`).
+- **Generator Sintetis v2 & v3 (`tools/synth_v2/generate_v2.py` & `generate_v3_blur_hw.py`)**: HANYA menggunakan font berlisensi **SIL OFL 1.1 / Apache-2.0** (`NotoSansJavanese` Regular & Bold, `TuladhaJejegOT-Regular.{ttf,otf}`, `Sehulbari_Arif_Budiarto`, `Bharatayuddha`, `Chandrasa`, `Righma_Ciddhi`, `TUNJUNG_BIRU`, `Tunjung_putih`, `Warastra`, `YBG_Kramawirya`), **bebas dari font proprieter Windows (`javatext.ttf`)** maupun font non-komersial (`NC-ND`).
 - **Pelatihan Bebas AGPL-3.0**: Skrip pelatihan baru (`training/yolox_model.py`, `training/train_yolox.py`, `training/train_crnn_track_b.py`) menggunakan PyTorch/YOLOX (**Apache-2.0 / MIT**) — bebas dari `ultralytics` (`AGPL-3.0`).
 
 ---

@@ -539,8 +539,8 @@ function yoloNms(candidates, sameCatIou = 0.42, crossCatIou = 0.72) {
       const sameExclusiveGroup = (cand.category !== 'sandhangan' && k.category !== 'sandhangan');
       const thr = (cand.category === k.category || sameExclusiveGroup) ? sameCatIou : crossCatIou;
       if (iou > thr) { suppress = true; break; }
-      // Cegah fragmen kecil di dalam huruf lebar yang SAMA kategorinya (misal fragmen dalam nya/ga)
-      if (cand.category === k.category && contain > 0.74) {
+      // Cegah fragmen kecil di dalam huruf lebar yang SAMA kelompok eksklusifnya (misal sub-lengkungan ra di dalam ha/na/ka)
+      if ((cand.category === k.category || sameExclusiveGroup) && contain > 0.60) {
         suppress = true; break;
       }
     }
@@ -573,8 +573,154 @@ function estimatePaperBgCss(srcCanvasOrImg, w, h) {
   return 'rgb(248, 245, 238)';
 }
 
+/**
+ * Normalisasi pencahayaan lokal, kompensasi bayangan, & penajaman adaptif untuk citra
+ * yang sedikit blur atau goresan pensil tipis sebelum inferensi YOLO.
+ */
+function prepareYoloInputCanvas(srcEl, CW, CH) {
+  try {
+    const c = document.createElement('canvas');
+    c.width = CW; c.height = CH;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(srcEl, 0, 0, CW, CH);
+    const img = ctx.getImageData(0, 0, CW, CH);
+    const data = img.data;
+    const N = CW * CH;
+    const luma = new Float32Array(N);
+    for (let i = 0, p = 0; i < N; i++, p += 4) {
+      luma[i] = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2];
+    }
+
+    // Estimasi kertas murni di resolusi 1/4 (max dalam blok 4x4 + dilasi 3x3 + box blur)
+    const ds = 4;
+    const SW = Math.max(4, Math.ceil(CW / ds));
+    const SH = Math.max(4, Math.ceil(CH / ds));
+    const smallBg = new Float32Array(SW * SH);
+    for (let sy = 0; sy < SH; sy++) {
+      const y0 = sy * ds, y1 = Math.min(CH, y0 + ds);
+      for (let sx = 0; sx < SW; sx++) {
+        const x0 = sx * ds, x1 = Math.min(CW, x0 + ds);
+        let mx = 0;
+        for (let yy = y0; yy < y1; yy++) {
+          const row = yy * CW;
+          for (let xx = x0; xx < x1; xx++) {
+            if (luma[row + xx] > mx) mx = luma[row + xx];
+          }
+        }
+        smallBg[sy * SW + sx] = mx;
+      }
+    }
+
+    const dil = new Float32Array(SW * SH);
+    for (let sy = 0; sy < SH; sy++) {
+      for (let sx = 0; sx < SW; sx++) {
+        let mx = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          const yy = Math.min(SH - 1, Math.max(0, sy + dy));
+          for (let dx = -1; dx <= 1; dx++) {
+            const xx = Math.min(SW - 1, Math.max(0, sx + dx));
+            if (smallBg[yy * SW + xx] > mx) mx = smallBg[yy * SW + xx];
+          }
+        }
+        dil[sy * SW + sx] = mx;
+      }
+    }
+
+    const rad = Math.max(3, Math.min(14, Math.round(Math.min(SW, SH) / 10)));
+    const hBlur = new Float32Array(SW * SH);
+    for (let sy = 0; sy < SH; sy++) {
+      const row = sy * SW;
+      for (let sx = 0; sx < SW; sx++) {
+        let sum = 0, cnt = 0;
+        const x0 = Math.max(0, sx - rad), x1 = Math.min(SW - 1, sx + rad);
+        for (let xx = x0; xx <= x1; xx++) { sum += dil[row + xx]; cnt++; }
+        hBlur[row + sx] = sum / cnt;
+      }
+    }
+    const vBlur = new Float32Array(SW * SH);
+    let minBg = 255;
+    for (let sy = 0; sy < SH; sy++) {
+      const y0 = Math.max(0, sy - rad), y1 = Math.min(SH - 1, sy + rad);
+      for (let sx = 0; sx < SW; sx++) {
+        let sum = 0, cnt = 0;
+        for (let yy = y0; yy <= y1; yy++) { sum += hBlur[yy * SW + sx]; cnt++; }
+        const val = Math.max(40, sum / cnt);
+        vBlur[sy * SW + sx] = val;
+        if (val < minBg) minBg = val;
+      }
+    }
+
+    const needIllumNorm = minBg < 182;
+    const norm = new Float32Array(N);
+    let minInk = 255;
+    for (let y = 0; y < CH; y++) {
+      const syf = Math.min(SH - 1.001, y / ds);
+      const sy0 = Math.floor(syf), fy = syf - sy0, sy1 = Math.min(SH - 1, sy0 + 1);
+      for (let x = 0; x < CW; x++) {
+        const sxf = Math.min(SW - 1.001, x / ds);
+        const sx0 = Math.floor(sxf), fx = sxf - sx0, sx1 = Math.min(SW - 1, sx0 + 1);
+        const bgVal =
+          (vBlur[sy0 * SW + sx0] * (1 - fx) + vBlur[sy0 * SW + sx1] * fx) * (1 - fy) +
+          (vBlur[sy1 * SW + sx0] * (1 - fx) + vBlur[sy1 * SW + sx1] * fx) * fy;
+        const v = needIllumNorm ? Math.min(255, Math.max(0, (luma[y * CW + x] * 246) / bgVal)) : luma[y * CW + x];
+        norm[y * CW + x] = v;
+        if (v < minInk) minInk = v;
+      }
+    }
+
+    let lapSum = 0, inkCnt = 0;
+    for (let y = 1; y < CH - 1; y += 2) {
+      const row = y * CW;
+      for (let x = 1; x < CW - 1; x += 2) {
+        const cv = norm[row + x];
+        if (cv < 218) {
+          lapSum += Math.abs(4 * cv - norm[row + x - 1] - norm[row + x + 1] - norm[row - CW + x] - norm[row + CW + x]);
+          inkCnt++;
+        }
+      }
+    }
+    const avgLap = inkCnt > 15 ? lapSum / inkCnt : 60;
+    if (!needIllumNorm && avgLap >= 21 && minInk <= 65) {
+      return srcEl;
+    }
+
+    const sharpAmount = avgLap < 14 ? 1.45 : (avgLap < 26 ? 0.95 : 0.45);
+    const outLuma = new Float32Array(N);
+    for (let y = 0; y < CH; y++) {
+      const ym = Math.max(0, y - 1), yp = Math.min(CH - 1, y + 1);
+      for (let x = 0; x < CW; x++) {
+        const xm = Math.max(0, x - 1), xp = Math.min(CW - 1, x + 1);
+        const smooth = (
+          norm[ym * CW + xm] + 2 * norm[ym * CW + x] + norm[ym * CW + xp] +
+          2 * norm[y * CW + xm] + 4 * norm[y * CW + x] + 2 * norm[y * CW + xp] +
+          norm[yp * CW + xm] + 2 * norm[yp * CW + x] + norm[yp * CW + xp]
+        ) / 16.0;
+        let v = Math.min(255, Math.max(0, norm[y * CW + x] + sharpAmount * (norm[y * CW + x] - smooth)));
+        if (v < 224) {
+          v = 224 * Math.pow(Math.max(0, (v - 6) / 218), 1.32);
+        } else {
+          v = Math.min(255, 240 + (v - 224) * 0.48);
+        }
+        outLuma[y * CW + x] = v;
+      }
+    }
+
+    for (let i = 0, p = 0; i < N; i++, p += 4) {
+      const ratio = outLuma[i] / Math.max(8, luma[i]);
+      data[p] = needIllumNorm ? outLuma[i] : Math.min(255, Math.max(0, Math.round(data[p] * ratio)));
+      data[p + 1] = needIllumNorm ? outLuma[i] : Math.min(255, Math.max(0, Math.round(data[p + 1] * ratio)));
+      data[p + 2] = needIllumNorm ? outLuma[i] : Math.min(255, Math.max(0, Math.round(data[p + 2] * ratio)));
+    }
+    ctx.putImageData(img, 0, 0);
+    return c;
+  } catch (_e) {
+    return srcEl;
+  }
+}
+
 async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInputEl) {
-  const srcEl = yoloInputEl || sourceImage;
+  const rawSrcEl = yoloInputEl || sourceImage;
+  const srcEl = prepareYoloInputCanvas(rawSrcEl, CW, CH);
   const srcW = srcEl.naturalWidth || srcEl.width || CW;
   const srcH = srcEl.naturalHeight || srcEl.height || CH;
   const imgsz = yoloMeta.imgsz || 416;
@@ -644,9 +790,18 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInpu
       const activeBands = lineBands.filter(b => (b[1] - b[0]) >= 18);
       const chosenBands = activeBands.length ? activeBands : lineBands;
 
+      // Untuk halaman berkarakter besar renggang (mis. grid tulisan tangan 1-4 baris),
+      // sertakan jendela makro agar aksara lebar (ha/na/ka) tidak terpecah menjadi 'ra'.
+      const sortedBandHs = chosenBands.map(b => b[1] - b[0]).sort((a, b) => a - b);
+      const medianBandH = sortedBandHs.length ? sortedBandHs[Math.floor(sortedBandHs.length / 2)] : 0;
+      if (medianBandH >= 82 && Math.max(bwArea, bhArea) <= 1550) {
+        tiles.push([baseX0, baseY0, baseX1, baseY1]);
+      }
+
       for (let bIdx = 0; bIdx < chosenBands.length; bIdx++) {
         const [ly0, ly1] = chosenBands[bIdx];
-        const lh = Math.max(36, ly1 - ly0);
+        const rawH = ly1 - ly0;
+        const lh = Math.max(36, rawH);
         const padV = Math.min(28, Math.max(14, Math.round(lh * 0.28)));
 
         // Jangan biarkan padding meluber masuk ke pita baris atas/bawah (atau teks keterangan Latin tipis)
@@ -662,7 +817,10 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInpu
         const ty0 = Math.max(minTopBound, ly0 - padV);
         const ty1 = Math.min(maxBotBound, ly1 + padV);
         const bandH = Math.max(1, ty1 - ty0);
-        const tileW = Math.min(440, Math.max(260, Math.round(bandH * 2.8)));
+        // Karakter tinggi >= 96px diberi petak lebih lebar agar skala dalam imgsz 416px tetap ideal (~50-75px)
+        const tileW = rawH >= 96
+          ? Math.min(bwArea, Math.max(440, Math.round(rawH * 5.2)))
+          : Math.min(440, Math.max(260, Math.round(bandH * 2.8)));
         if (bwArea <= tileW * 1.15) {
           tiles.push([baseX0, ty0, baseX1, ty1]);
         } else {
@@ -678,6 +836,9 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInpu
         if (tiles.length >= 24) break;
       }
     } else {
+      if (Math.max(bwArea, bhArea) <= 1550) {
+        tiles.push([baseX0, baseY0, baseX1, baseY1]);
+      }
       const ts = 440;
       const step = Math.round(ts * 0.68);
       for (let ty = baseY0; ty < baseY1; ) {

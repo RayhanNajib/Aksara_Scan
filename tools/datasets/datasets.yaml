@@ -151,6 +151,47 @@ sources:
     hf_repo: "afrizalha/Gatra-1-Javanese"
     method: "hf_snapshot"
 
+  - id: bennylin_ofl_fonts
+    name: "Community Open-License Javanese Unicode Fonts (8 OFL/Apache-2.0 Fonts)"
+    author: "Arif Budiarto, Yayat Suhiryatna, Bennylin & Kontributor"
+    url: "https://github.com/bennylin/bennylin.github.io/tree/master/keyboards/fonts"
+    task: "synthetic_rendering_font_diversity"
+    format: "ttf_opentype"
+    license: "SIL OFL 1.1 / Apache-2.0 (tabel name TTF teraudit; NC-ND dikecualikan)"
+    license_verified: true
+    size: "~3.6 MB (8 berkas font + NotoSansJavanese-Bold)"
+    status: "OK"
+    local_dir: "dataset/external/fonts"
+    method: "http_files"
+
+  - id: dgurgurov_javanese_conceptnet
+    name: "Javanese ConceptNet & Vocabulary"
+    author: "D. Gurgurov (Hugging Face)"
+    url: "https://huggingface.co/datasets/DGurgurov/javanese_conceptnet"
+    task: "vocabulary_and_javanese_unicode_reference"
+    format: "csv"
+    license: "MIT"
+    license_verified: true
+    size: "171 KB"
+    status: "OK"
+    local_dir: "dataset/external/public_javanese"
+    urls:
+      - "https://huggingface.co/datasets/DGurgurov/javanese_conceptnet/resolve/main/train_cn_jv.csv"
+    method: "http_files"
+
+  - id: public_javanese_dataset_primer
+    name: "Public-Domain Javanese Manuscript & Primer Metadata"
+    author: "S. Harms & Wikisource"
+    url: "https://huggingface.co/datasets/thesimonharms/public-javanese-dataset"
+    task: "corpus_reference_and_metadata"
+    format: "json_yaml"
+    license: "CC-BY-SA-3.0 / MIT"
+    license_verified: true
+    size: "~16 KB"
+    status: "OK"
+    local_dir: "dataset/external/public_javanese"
+    method: "http_files"
+
   - id: jv_wikipedia_dump
     name: "Wikipedia Bahasa Jawa (jvwiki Dump Resmi)"
     author: "Wikimedia Foundation & Kontributor"
