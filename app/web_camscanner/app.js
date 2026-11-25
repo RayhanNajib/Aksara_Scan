@@ -171,7 +171,11 @@ async function initApp() {
   $('#showBoxes').addEventListener('change', redrawMainCanvas);
   $('#showBin').addEventListener('change', redrawMainCanvas);
   $('#btnCopyUnicode').addEventListener('click', () => copyToClipboard($('#outJavanese').textContent, 'Aksara Jawa disalin!'));
-  $('#btnCopyLatin').addEventListener('click', () => copyToClipboard($('#outLatin').textContent, 'Teks Latin disalin!'));
+  $('#btnCopyLatin').addEventListener('click', () => {
+    const sent = $('#outSentenceLatin')?.textContent;
+    const raw = $('#outLatin').textContent;
+    copyToClipboard(sent && sent !== '—' ? sent : raw, 'Kalimat Latin disalin!');
+  });
   $('#btnDownload').addEventListener('click', downloadJson);
 
   // Klik langsung pada kanvas untuk mengoreksi karakter
@@ -351,6 +355,8 @@ function loadImageElement(img, label) {
 function resetResults() {
   $('#outJavanese').textContent = '—';
   $('#outLatin').textContent = '—';
+  if ($('#outSentenceLatin')) $('#outSentenceLatin').textContent = '—';
+  if ($('#outIndonesian')) $('#outIndonesian').textContent = '—';
   const meterVal = $('#meterVal');
   if (meterVal) meterVal.textContent = '0%';
   const meterFill = $('#meterFill');
@@ -478,7 +484,9 @@ function yoloNms(candidates, sameCatIou = 0.42, crossCatIou = 0.72) {
   for (const cand of candidates) {
     let suppress = false;
     for (const k of kept) {
-      const thr = cand.category === k.category ? sameCatIou : crossCatIou;
+      // nglegena, pasangan, & pada tidak boleh bertumpuk di posisi sama; hanya sandhangan yang boleh overlap dengan induknya
+      const sameExclusiveGroup = (cand.category !== 'sandhangan' && k.category !== 'sandhangan');
+      const thr = (cand.category === k.category || sameExclusiveGroup) ? sameCatIou : crossCatIou;
       if (yoloIoU(cand.box, k.box) > thr) { suppress = true; break; }
     }
     if (!suppress) kept.push(cand);
@@ -521,25 +529,88 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
   const bhArea = Math.max(1, baseY1 - baseY0);
   const tiles = [];
 
-  if (Math.max(bwArea, bhArea) <= 640) {
+  if (Math.max(bwArea, bhArea) <= 580 && (bwArea / bhArea) <= 2.2) {
     tiles.push([baseX0, baseY0, baseX1, baseY1]);
   } else {
-    // Pecah area besar menjadi petak tumpang-tindih agar glif kecil tetap beresolusi optimal
-    const ts = 500;
-    const step = Math.round(ts * 0.72);
-    for (let ty = baseY0; ty < baseY1; ) {
-      const tyEnd = Math.min(baseY1, ty + ts);
-      const tyStart = (tyEnd === baseY1 && tyEnd - ty < ts * 0.5) ? Math.max(baseY0, tyEnd - ts) : ty;
-      for (let tx = baseX0; tx < baseX1; ) {
-        const txEnd = Math.min(baseX1, tx + ts);
-        const txStart = (txEnd === baseX1 && txEnd - tx < ts * 0.5) ? Math.max(baseX0, txEnd - ts) : tx;
-        tiles.push([txStart, tyStart, txEnd, tyEnd]);
-        if (txEnd >= baseX1) break;
-        tx += step;
+    // Deteksi pita baris horizontal dari morphBin agar kalimat memanjang tetap beresolusi tinggi per jendela
+    const lineBands = [];
+    let lStart = -1;
+    let emptyRun = 0;
+    const minRowInk = Math.max(2, Math.round(bwArea * 0.004));
+    for (let yy = baseY0; yy < baseY1; yy++) {
+      let s = 0;
+      const row = yy * CW;
+      for (let xx = baseX0; xx < baseX1; xx++) s += morphBin[row + xx];
+      if (s >= minRowInk) {
+        if (lStart < 0) lStart = yy;
+        emptyRun = 0;
+      } else if (lStart >= 0) {
+        emptyRun++;
+        if (emptyRun > 10) {
+          if (yy - emptyRun - lStart >= 14) lineBands.push([lStart, yy - emptyRun]);
+          lStart = -1;
+          emptyRun = 0;
+        }
       }
-      if (tyEnd >= baseY1) break;
-      ty += step;
-      if (tiles.length >= 9) break;
+    }
+    if (lStart >= 0 && baseY1 - lStart >= 14) lineBands.push([lStart, baseY1]);
+
+    if (lineBands.length && lineBands.length <= 6) {
+      const maxLH = Math.max(...lineBands.map(b => b[1] - b[0]));
+      const activeBands = lineBands.length >= 2
+        ? lineBands.filter(b => (b[1] - b[0]) >= Math.max(20, maxLH * 0.45))
+        : lineBands;
+      const chosenBands = activeBands.length ? activeBands : lineBands;
+
+      for (let bIdx = 0; bIdx < chosenBands.length; bIdx++) {
+        const [ly0, ly1] = chosenBands[bIdx];
+        const lh = Math.max(36, ly1 - ly0);
+        const padV = Math.min(20, Math.max(10, Math.round(lh * 0.22)));
+
+        // Jangan biarkan padding meluber masuk ke pita baris atas/bawah (atau teks keterangan Latin tipis)
+        let minTopBound = 0;
+        for (const [allY0, allY1] of lineBands) {
+          if (allY1 <= ly0) minTopBound = Math.max(minTopBound, Math.min(ly0 - 2, allY1 + 2));
+        }
+        let maxBotBound = CH;
+        for (const [allY0, allY1] of lineBands) {
+          if (allY0 >= ly1) { maxBotBound = Math.min(maxBotBound, Math.max(ly1 + 2, allY0 - 2)); break; }
+        }
+
+        const ty0 = Math.max(minTopBound, ly0 - padV);
+        const ty1 = Math.min(maxBotBound, ly1 + padV);
+        const bandH = Math.max(1, ty1 - ty0);
+        const tileW = Math.min(440, Math.max(260, Math.round(bandH * 2.8)));
+        if (bwArea <= tileW * 1.12) {
+          tiles.push([baseX0, ty0, baseX1, ty1]);
+        } else {
+          const step = Math.round(tileW * 0.65);
+          for (let tx = baseX0; tx < baseX1; ) {
+            const txEnd = Math.min(baseX1, tx + tileW);
+            const txStart = (txEnd === baseX1) ? Math.max(baseX0, txEnd - tileW) : tx;
+            tiles.push([txStart, ty0, txEnd, ty1]);
+            if (txEnd >= baseX1 || tiles.length >= 12) break;
+            tx += step;
+          }
+        }
+        if (tiles.length >= 12) break;
+      }
+    } else {
+      const ts = 480;
+      const step = Math.round(ts * 0.72);
+      for (let ty = baseY0; ty < baseY1; ) {
+        const tyEnd = Math.min(baseY1, ty + ts);
+        const tyStart = (tyEnd === baseY1 && tyEnd - ty < ts * 0.5) ? Math.max(baseY0, tyEnd - ts) : ty;
+        for (let tx = baseX0; tx < baseX1; ) {
+          const txEnd = Math.min(baseX1, tx + ts);
+          const txStart = (txEnd === baseX1 && txEnd - tx < ts * 0.5) ? Math.max(baseX0, txEnd - ts) : tx;
+          tiles.push([txStart, tyStart, txEnd, tyEnd]);
+          if (txEnd >= baseX1 || tiles.length >= 12) break;
+          tx += step;
+        }
+        if (tyEnd >= baseY1 || tiles.length >= 12) break;
+        ty += step;
+      }
     }
   }
 
@@ -592,6 +663,11 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
       const x1 = Math.min(CW, (cx + bw / 2 - padX) / scale + tx0);
       const y1 = Math.min(CH, (cy + bh / 2 - padY) / scale + ty0);
       if (x1 - x0 < 3 || y1 - y0 < 3) continue;
+
+      // Abaikan kotak terpotong di tepi irisan petak internal (petak tetangga menangkap glif utuh)
+      if (tiles.length > 1) {
+        if ((tx0 > baseX0 && x0 <= tx0 + 4) || (tx1 < baseX1 && x1 >= tx1 - 4)) continue;
+      }
 
       if (sel) {
         const gx = (x0 + x1) / 2, gy = (y0 + y1) / 2;
@@ -1444,6 +1520,9 @@ function redrawMainCanvas() {
       } else if (det.category === 'sandhangan') {
         strokeCol = '#e88c30';
         tagBg = '#7c430d';
+      } else if (det.category === 'pada') {
+        strokeCol = '#3fa97a';
+        tagBg = '#1e5e41';
       }
 
       mainCtx.strokeStyle = strokeCol;
@@ -1467,12 +1546,26 @@ function renderOutputs() {
 
   let javaneseText = '';
   let latinText = '';
+  let sentenceLatin = '—';
+  let sentenceIndonesian = '—';
+
   if (activeEngine === 'yolo' && yoloReconstructed) {
     javaneseText = yoloReconstructed.unicodeText;
     latinText = yoloReconstructed.latinText;
+    sentenceLatin = yoloReconstructed.sentenceLatin || latinText;
+    sentenceIndonesian = yoloReconstructed.sentenceIndonesian || '—';
   } else {
     javaneseText = currentDetections.map(d => d.unicode).join(' ');
     latinText = currentDetections.map(d => d.label).join(' ');
+    if (window.AksaraLexicon) {
+      const tr = window.AksaraLexicon.translateJavaneseTokens(
+        currentDetections.map(d => ({ isPunct: false, latin: d.label }))
+      );
+      sentenceLatin = tr.sentenceLatin;
+      sentenceIndonesian = tr.sentenceIndonesian;
+    } else {
+      sentenceLatin = latinText;
+    }
   }
 
   const avgConf = Math.round(
@@ -1481,6 +1574,8 @@ function renderOutputs() {
 
   $('#outJavanese').textContent = javaneseText;
   $('#outLatin').textContent = latinText;
+  if ($('#outSentenceLatin')) $('#outSentenceLatin').textContent = sentenceLatin;
+  if ($('#outIndonesian')) $('#outIndonesian').textContent = sentenceIndonesian;
   const meterVal = $('#meterVal');
   if (meterVal) meterVal.textContent = `${avgConf}%`;
   const meterFill = $('#meterFill');
@@ -1499,6 +1594,7 @@ function renderOutputs() {
     card.title = `Ketuk untuk mengoreksi aksara #${idx + 1}`;
     if (det.category === 'pasangan') card.style.borderColor = '#5c8df6';
     else if (det.category === 'sandhangan') card.style.borderColor = '#e88c30';
+    else if (det.category === 'pada') card.style.borderColor = '#3fa97a';
 
     const c = document.createElement('canvas');
     c.width = normSize;
@@ -1788,6 +1884,8 @@ function downloadJson() {
       : { algoritma: 'SVM Linear OvR', jumlahKelas: model.classes.length, akurasiUji: model.accuracy },
     rataRataKeyakinan: currentDetections.reduce((a, b) => a + b.confidence, 0) / currentDetections.length,
     teksUnicode: $('#outJavanese').textContent,
+    kalimatLatin: $('#outSentenceLatin')?.textContent || $('#outLatin').textContent,
+    terjemahanIndonesia: $('#outIndonesian')?.textContent || '—',
     transliterasiLatin: $('#outLatin').textContent,
     deteksi: currentDetections.map(d => ({
       index: d.index + 1,

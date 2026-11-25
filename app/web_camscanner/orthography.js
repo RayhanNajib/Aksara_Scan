@@ -1,7 +1,8 @@
 /**
- * Rekonstruktor Ortografi Spasial Aksara Jawa (AksaraScan v2.0)
- * Mengubah kumpulan bounding box deteksi atomik (Nglegena, Pasangan, Sandhangan)
- * menjadi deretan Unicode Aksara Jawa yang valid (U+A980..U+A9DF) dan transliterasi Latin.
+ * Rekonstruktor Ortografi Spasial Aksara Jawa (AksaraScan v2.5)
+ * Mengubah kumpulan bounding box deteksi atomik (Nglegena, Pasangan, Sandhangan, Pada)
+ * menjadi deretan Unicode Aksara Jawa (U+A980..U+A9DF), suku kata Latin,
+ * kalimat Latin tergabung (DP word segmentation), dan terjemahan Bahasa Indonesia.
  */
 
 const JAVANESE_UNICODE = {
@@ -13,7 +14,9 @@ const JAVANESE_UNICODE = {
   // Sandhangan & Pangkon
   wulu: '\uA9B6', suku: '\uA9B8', pepet: '\uA9BC', taling: '\uA9BA', tarung: '\uA9B4',
   layar: '\uA982', cecak: '\uA981', wignyan: '\uA983', pangkon: '\uA9C0',
-  cakra: '\uA9BF', keret: '\uA9BD', pengkal: '\uA9BE'
+  cakra: '\uA9BF', keret: '\uA9BD', pengkal: '\uA9BE',
+  // Tanda Baca Pada
+  pada_adeg: '\uA9CB', pada_lingsa: '\uA9C8', pada_lungsi: '\uA9C9'
 };
 
 function boxMetrics(box) {
@@ -40,34 +43,38 @@ function stripTrailingA(syl) {
 }
 
 /**
- * Susun ulang deteksi YOLO menjadi gugus suku kata & baris teks utuh.
- * @param {Array} detections - [{label, category, box:[x0,y0,x1,y1], confidence}, ...]
- * @returns {{unicodeText: string, latinText: string, clusters: Array}}
+ * Susun ulang deteksi YOLO menjadi gugus suku kata, tanda baca, kalimat Latin, & terjemahan ID.
  */
 function reconstructJavaneseText(detections) {
   if (!detections || !detections.length) {
-    return { unicodeText: '—', latinText: '—', clusters: [] };
+    return { unicodeText: '—', latinText: '—', sentenceLatin: '—', sentenceIndonesian: '—', clusters: [] };
   }
 
-  // Pisahkan Nglegena (jangkar utama) dan modifier (Pasangan & Sandhangan)
-  const bases = [];
+  const anchors = [];
   const modifiers = [];
 
   detections.forEach((d, idx) => {
     const item = { ...d, m: boxMetrics(d.box), origIdx: idx };
-    if (d.category === 'nglegena') {
-      bases.push({ base: item, pasangan: null, sandhangans: [], box: [...d.box] });
+    if (d.category === 'nglegena' || d.category === 'pada') {
+      anchors.push({
+        isPada: d.category === 'pada',
+        base: item,
+        pasangan: null,
+        sandhangans: [],
+        box: [...d.box]
+      });
     } else {
       modifiers.push(item);
     }
   });
 
-  // Fallback jika model hanya mendeteksi sandhangan/pasangan tanpa base yang tertangkap
-  if (!bases.length) {
+  if (!anchors.length) {
     const sorted = [...modifiers].sort((a, b) => a.m.cy - b.m.cy || a.m.x0 - b.m.x0);
     return {
       unicodeText: sorted.map(s => JAVANESE_UNICODE[s.label] || s.unicode || '').join(' '),
       latinText: sorted.map(s => s.label).join(' '),
+      sentenceLatin: sorted.map(s => s.label).join(' '),
+      sentenceIndonesian: '—',
       clusters: sorted.map(s => ({
         label: s.label,
         unicode: s.unicode || JAVANESE_UNICODE[s.label] || '',
@@ -77,16 +84,21 @@ function reconstructJavaneseText(detections) {
     };
   }
 
-  // Kelompokkan base ke dalam baris teks
-  bases.sort((a, b) => a.base.m.cy - b.base.m.cy);
-  const avgBaseH = bases.reduce((s, b) => s + b.base.m.h, 0) / bases.length;
+  // Kelompokkan jangkar (nglegena & pada) ke baris teks
+  const baseOnly = anchors.filter(a => !a.isPada);
+  const refHList = baseOnly.length ? baseOnly : anchors;
+  const avgBaseH = refHList.reduce((s, b) => s + b.base.m.h, 0) / refHList.length;
+
+  anchors.sort((a, b) => a.base.m.cy - b.base.m.cy);
   const lines = [];
 
-  for (const cl of bases) {
+  for (const cl of anchors) {
     let placed = false;
     for (const line of lines) {
-      const avgY = line.reduce((s, it) => s + it.base.m.cy, 0) / line.length;
-      if (Math.abs(cl.base.m.cy - avgY) < Math.max(24, avgBaseH * 0.9)) {
+      const refItems = line.filter(it => !it.isPada);
+      const pool = refItems.length ? refItems : line;
+      const avgY = pool.reduce((s, it) => s + it.base.m.cy, 0) / pool.length;
+      if (Math.abs(cl.base.m.cy - avgY) < Math.max(24, avgBaseH * 1.05)) {
         line.push(cl);
         placed = true;
         break;
@@ -95,7 +107,6 @@ function reconstructJavaneseText(detections) {
     if (!placed) lines.push([cl]);
   }
 
-  // Urutkan baris atas->bawah dan huruf kiri->kanan
   lines.sort((l1, l2) => {
     const y1 = l1.reduce((s, it) => s + it.base.m.cy, 0) / l1.length;
     const y2 = l2.reduce((s, it) => s + it.base.m.cy, 0) / l2.length;
@@ -103,9 +114,9 @@ function reconstructJavaneseText(detections) {
   });
   lines.forEach(line => line.sort((a, b) => a.base.m.x0 - b.base.m.x0));
 
-  const flatClusters = lines.flat();
+  const syllableClusters = lines.flat().filter(c => !c.isPada);
 
-  // Pasangkan setiap Pasangan terlebih dahulu ke base terdekat (di bawah atau sebelah kanan)
+  // Pasangkan setiap Pasangan terlebih dahulu ke nglegena terdekat
   const remainingMods = [];
   for (const mod of modifiers) {
     if (mod.category === 'pasangan') {
@@ -113,21 +124,19 @@ function reconstructJavaneseText(detections) {
       let bestScore = Infinity;
       const isRightPasangan = (mod.label === 'p_ha' || mod.label === 'p_sa' || mod.label === 'p_pa');
 
-      for (const cl of flatClusters) {
+      for (const cl of syllableClusters) {
         const bm = cl.base.m;
         const dx = mod.m.cx - bm.cx;
         const dy = mod.m.cy - bm.cy;
 
         if (isRightPasangan) {
-          // Berada di sebelah kanan huruf induk dengan ketinggian sejajar
           if (mod.m.x0 >= bm.x0 && mod.m.x0 - bm.x1 < bm.w * 1.4 && Math.abs(dy) < bm.h * 0.9) {
             const dist = Math.hypot(mod.m.x0 - bm.x1, dy);
             if (dist < bestScore) { bestScore = dist; bestHost = cl; }
           }
         } else {
-          // Berada di bawah huruf induk
           const hOv = horizOverlap(mod.m, bm);
-          if (dy > 0 && dy < bm.h * 2.6 && (hOv > 0 || Math.abs(dx) < bm.w * 0.85)) {
+          if (dy > 0 && dy < bm.h * 2.8 && (hOv > 0 || Math.abs(dx) < bm.w * 0.9)) {
             const dist = Math.hypot(dx * 1.5, dy);
             if (dist < bestScore) { bestScore = dist; bestHost = cl; }
           }
@@ -143,14 +152,13 @@ function reconstructJavaneseText(detections) {
     }
   }
 
-  // Pasangkan seluruh Sandhangan (wulu, suku, pepet, taling, tarung, layar, cecak, wignyan, pangkon, cakra, keret, pengkal)
+  // Pasangkan seluruh Sandhangan
   for (const mod of remainingMods) {
     if (mod.category !== 'sandhangan') continue;
     let bestHost = null;
     let bestScore = Infinity;
 
-    for (const cl of flatClusters) {
-      // Gunakan gabungan area base (+ pasangan jika ada) sebagai referensi jangkar
+    for (const cl of syllableClusters) {
       const bm = cl.base.m;
       const fullAnchor = cl.pasangan
         ? boxMetrics([
@@ -163,32 +171,29 @@ function reconstructJavaneseText(detections) {
 
       const label = mod.label;
       if (label === 'taling') {
-        // Taling selalu di KIRI huruf induk
         const gapLeft = bm.x0 - mod.m.x1;
         if (mod.m.cx < bm.cx && gapLeft < bm.w * 1.3 && gapLeft > -bm.w * 0.5 && vertOverlap(mod.m, fullAnchor) > 0) {
           const score = Math.abs(gapLeft) + Math.abs(mod.m.cy - bm.cy) * 0.4;
           if (score < bestScore) { bestScore = score; bestHost = cl; }
         }
       } else if (label === 'tarung' || label === 'wignyan' || label === 'pangkon' || label === 'pengkal') {
-        // Di KANAN huruf induk/pasangan
         const gapRight = mod.m.x0 - fullAnchor.x1;
-        if (mod.m.cx > fullAnchor.x0 && gapRight < bm.w * 1.4 && vertOverlap(mod.m, fullAnchor) >= -bm.h * 0.3) {
+        if (mod.m.cx > fullAnchor.x0 && gapRight < bm.w * 1.4 && vertOverlap(mod.m, fullAnchor) >= -bm.h * 0.35) {
           const score = Math.max(0, gapRight) + Math.abs(mod.m.cy - fullAnchor.cy) * 0.5;
           if (score < bestScore) { bestScore = score; bestHost = cl; }
         }
       } else if (label === 'wulu' || label === 'pepet' || label === 'layar' || label === 'cecak') {
-        // Di ATAS huruf induk
         const dy = bm.cy - mod.m.cy;
         const hOv = horizOverlap(mod.m, bm);
-        if (dy > 0 && dy < bm.h * 2.5 && (hOv > 0 || Math.abs(mod.m.cx - bm.cx) < bm.w * 0.9)) {
+        if (dy > 0 && dy < bm.h * 2.6 && (hOv > 0 || Math.abs(mod.m.cx - bm.cx) < bm.w * 0.95)) {
           const score = Math.hypot(mod.m.cx - bm.cx, dy * 0.7);
           if (score < bestScore) { bestScore = score; bestHost = cl; }
         }
       } else {
-        // suku, cakra, keret -> di BAWAH / melingkari
+        // suku, cakra, keret
         const dy = mod.m.cy - bm.y0;
         const hOv = horizOverlap(mod.m, fullAnchor);
-        if (dy > 0 && dy < fullAnchor.h * 2.4 && (hOv > 0 || Math.abs(mod.m.cx - fullAnchor.cx) < fullAnchor.w * 1.1)) {
+        if (dy > 0 && dy < fullAnchor.h * 2.8 && (hOv > 0 || Math.abs(mod.m.cx - fullAnchor.cx) < fullAnchor.w * 1.15)) {
           const score = Math.hypot(mod.m.cx - fullAnchor.cx, Math.abs(mod.m.y0 - fullAnchor.y1) * 0.8);
           if (score < bestScore) { bestScore = score; bestHost = cl; }
         }
@@ -200,21 +205,37 @@ function reconstructJavaneseText(detections) {
     }
   }
 
-  // Konversi setiap gugus menjadi Unicode & Latin yang akurat
   const lineStringsUni = [];
   const lineStringsLat = [];
   const outClusters = [];
+  const phraseTokens = [];
 
   for (const line of lines) {
     const uniWords = [];
     const latWords = [];
 
     for (const cl of line) {
+      if (cl.isPada) {
+        const pName = cl.base.label;
+        const uniP = JAVANESE_UNICODE[pName] || '';
+        const punctChar = pName === 'pada_lingsa' ? ',' : (pName === 'pada_lungsi' ? '.' : '');
+        uniWords.push(uniP);
+        if (punctChar) latWords.push(punctChar);
+        phraseTokens.push({ isPunct: true, punctChar });
+        outClusters.push({
+          label: pName,
+          unicode: uniP,
+          confidence: cl.base.confidence,
+          isUncertain: cl.base.confidence < 0.40,
+          box: cl.base.box
+        });
+        continue;
+      }
+
       const baseName = cl.base.label;
       let uni = JAVANESE_UNICODE[baseName] || '';
       let lat = baseName;
 
-      // Gabung bounding box menyeluruh untuk gugus
       let [ux0, uy0, ux1, uy1] = cl.base.box;
       let confSum = cl.base.confidence;
       let countParts = 1;
@@ -241,8 +262,7 @@ function reconstructJavaneseText(detections) {
         countParts++;
       }
 
-      // Aturan urutan fonetik Jawa:
-      // 1. Wyanjana (-r-, -re-, -y-)
+      // Wyanjana
       if (modNames.has('cakra')) {
         uni += JAVANESE_UNICODE.cakra;
         lat = stripTrailingA(lat) + 'ra';
@@ -254,7 +274,7 @@ function reconstructJavaneseText(detections) {
         lat = stripTrailingA(lat) + 'ya';
       }
 
-      // 2. Swara (vokal) & Pangkon (pemati vokal)
+      // Swara / Pangkon
       if (modNames.has('pangkon')) {
         uni += JAVANESE_UNICODE.pangkon;
         lat = stripTrailingA(lat);
@@ -263,7 +283,7 @@ function reconstructJavaneseText(detections) {
         lat = stripTrailingA(lat) + 'o';
       } else if (modNames.has('taling')) {
         uni += JAVANESE_UNICODE.taling;
-        lat = stripTrailingA(lat) + 'è';
+        lat = stripTrailingA(lat) + 'é';
       } else if (modNames.has('wulu')) {
         uni += JAVANESE_UNICODE.wulu;
         lat = stripTrailingA(lat) + 'i';
@@ -275,7 +295,7 @@ function reconstructJavaneseText(detections) {
         lat = stripTrailingA(lat) + 'ê';
       }
 
-      // 3. Panyigeg Wanda (-r, -ng, -h)
+      // Panyigeg Wanda
       if (modNames.has('layar')) {
         uni += JAVANESE_UNICODE.layar;
         lat += 'r';
@@ -291,6 +311,7 @@ function reconstructJavaneseText(detections) {
 
       uniWords.push(uni);
       latWords.push(lat);
+      phraseTokens.push({ isPunct: false, latin: lat });
 
       outClusters.push({
         label: lat,
@@ -304,13 +325,23 @@ function reconstructJavaneseText(detections) {
       });
     }
 
-    lineStringsUni.push(uniWords.join(' '));
+    lineStringsUni.push(uniWords.join(''));
     lineStringsLat.push(latWords.join(' '));
+  }
+
+  let sentenceLatin = lineStringsLat.join(' ');
+  let sentenceIndonesian = '—';
+  if (window.AksaraLexicon) {
+    const tr = window.AksaraLexicon.translateJavaneseTokens(phraseTokens);
+    sentenceLatin = tr.sentenceLatin;
+    sentenceIndonesian = tr.sentenceIndonesian;
   }
 
   return {
     unicodeText: lineStringsUni.join('\n'),
     latinText: lineStringsLat.join('\n'),
+    sentenceLatin,
+    sentenceIndonesian,
     clusters: outClusters
   };
 }

@@ -170,6 +170,7 @@
             <span><i class="legend-dot" style="background:#c8963e"></i>Nglegena</span>
             <span><i class="legend-dot" style="background:#5c8df6"></i>Pasangan</span>
             <span><i class="legend-dot" style="background:#e88c30"></i>Sandhangan</span>
+            <span><i class="legend-dot" style="background:#3fa97a"></i>Pada</span>
             <span><i class="legend-dot" style="background:#d1563b"></i>Ragu</span>
           </div>
         </div>
@@ -229,10 +230,26 @@
 
           <div class="output-card">
             <div class="output-label">
-              <span>Transliterasi Latin</span>
-              <small>Fonetik Karakter</small>
+              <span>Kalimat Bacaan Latin (Pemisah Kata Otomatis)</span>
+              <small>Scriptio Continua → Kata Jawa</small>
             </div>
-            <div class="output-text--latin" id="outLatin">—</div>
+            <div class="output-text--latin" id="outSentenceLatin">—</div>
+          </div>
+
+          <div class="output-card">
+            <div class="output-label">
+              <span>Terjemahan Bahasa Indonesia</span>
+              <small>Arti Kalimat</small>
+            </div>
+            <div class="output-text--latin" id="outIndonesian" style="color:var(--text-main);font-size:15px;line-height:1.5;">—</div>
+          </div>
+
+          <div class="output-card">
+            <div class="output-label">
+              <span>Ejaan Per Suku Kata (Fonetik)</span>
+              <small>Detail Gugus Aksara</small>
+            </div>
+            <div class="output-text--latin" id="outLatin" style="font-size:13px;opacity:0.85;">—</div>
           </div>
 
           <!-- Keyakinan Meter -->
@@ -363,6 +380,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
   <script src="./model.js"></script>
+  <script src="./javanese_lexicon.js"></script>
   <script src="./orthography.js"></script>
   <script src="./app.js"></script>
 </body>

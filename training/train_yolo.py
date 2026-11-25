@@ -1,13 +1,16 @@
 """
-AksaraScan v2.0 YOLOv8-Nano Trainer & ONNX Web Exporter
-Melatih detektor objek YOLOv8n untuk 52 kelas atomik Aksara Jawa
-(20 Nglegena + 20 Pasangan + 12 Sandhangan/Pangkon), lalu mengekspor ke ONNX
-untuk dijalankan langsung di browser melalui ONNX Runtime Web.
+AksaraScan v2.5 YOLOv8-Nano Fine-Tuner & ONNX Web Exporter (55 Kelas)
+Melatih / fine-tune detektor YOLOv8n untuk 55 kelas atomik Aksara Jawa:
+  - 20 Nglegena (0..19)
+  - 20 Pasangan (20..39)
+  - 12 Sandhangan & Pangkon (40..51)
+  -  3 Tanda Baca Jawa / Pada (52..54: pada_adeg, pada_lingsa, pada_lungsi)
+dengan 3 gaya font OpenType (Javanese Text, Noto Sans Javanese, Tuladha Jejeg OT)
++ tulisan tangan nyata Jawa.zip, lalu mengekspor ke ONNX untuk browser.
 """
 import os
 import json
 import shutil
-import cv2
 import numpy as np
 import onnxruntime as ort
 from ultralytics import YOLO
@@ -17,6 +20,7 @@ DATA_YAML = os.path.join(ROOT_DIR, "dataset_yolo", "data.yaml")
 WEB_DIR = os.path.join(ROOT_DIR, "app", "web_camscanner")
 ONNX_OUT = os.path.join(WEB_DIR, "aksara_yolo.onnx")
 META_OUT = os.path.join(WEB_DIR, "yolo_meta.json")
+PREV_BEST = os.path.join(ROOT_DIR, "runs_yolo", "aksara_v2", "weights", "best.pt")
 
 NGLEGENA = [
     ("ha", "\uA9B2"), ("na", "\uA9A4"), ("ca", "\uA995"), ("ra", "\uA9AB"), ("ka", "\uA98F"),
@@ -40,13 +44,16 @@ SANDHANGAN_INFO = [
     ("pengkal", "\uA9BE", "ya_med", "right"),
 ]
 
+PADA_INFO = [
+    ("pada_adeg", "\uA9CB", "", "pada"),
+    ("pada_lingsa", "\uA9C8", ",", "pada"),
+    ("pada_lungsi", "\uA9C9", ".", "pada"),
+]
+
 
 def build_metadata(metrics_dict=None):
-    classes = []
-    categories = []
-    unicode_map = {}
-    latin_map = {}
-    pos_map = {}
+    classes, categories = [], []
+    unicode_map, latin_map, pos_map = {}, {}, {}
 
     for name, ch in NGLEGENA:
         classes.append(name)
@@ -70,11 +77,18 @@ def build_metadata(metrics_dict=None):
         latin_map[name] = lat
         pos_map[name] = pos
 
-    payload = {
+    for name, ch, lat, pos in PADA_INFO:
+        classes.append(name)
+        categories.append("pada")
+        unicode_map[name] = ch
+        latin_map[name] = lat
+        pos_map[name] = pos
+
+    return {
         "model_type": "yolov8n",
         "imgsz": 416,
-        "conf_thresh": 0.28,
-        "iou_thresh": 0.45,
+        "conf_thresh": 0.25,
+        "iou_thresh": 0.42,
         "classes": classes,
         "categories": categories,
         "unicode": unicode_map,
@@ -82,16 +96,18 @@ def build_metadata(metrics_dict=None):
         "positions": pos_map,
         "metrics": metrics_dict or {},
     }
-    return payload
 
 
-def main(epochs=18, imgsz=416):
+def main(epochs=20, imgsz=416):
     print("=" * 64)
-    print("AKSARASCAN v2.0 — YOLOv8-NANO TRAINER & ONNX EXPORTER")
+    print("AKSARASCAN v2.5 — YOLOv8-NANO MULTI-FONT FINE-TUNER (55 KELAS)")
     print("=" * 64)
 
-    model = YOLO("yolov8n.pt")
-    results = model.train(
+    base_weights = PREV_BEST if os.path.exists(PREV_BEST) else "yolov8n.pt"
+    print(f"[INFO] Memulai transfer/fine-tune dari bobot: {base_weights}")
+    model = YOLO(base_weights)
+
+    model.train(
         data=DATA_YAML,
         epochs=epochs,
         imgsz=imgsz,
@@ -100,13 +116,12 @@ def main(epochs=18, imgsz=416):
         cache="ram",
         device="cpu",
         project=os.path.join(ROOT_DIR, "runs_yolo"),
-        name="aksara_v2",
+        name="aksara_v2_5",
         exist_ok=True,
-        # KRITIS: Jangan flip aksara Jawa secara horizontal/vertikal!
         fliplr=0.0,
         flipud=0.0,
         degrees=3.0,
-        scale=0.15,
+        scale=0.18,
         translate=0.05,
         mosaic=0.25,
         mixup=0.0,
@@ -114,14 +129,13 @@ def main(epochs=18, imgsz=416):
         verbose=True,
     )
 
-    best_pt = os.path.join(ROOT_DIR, "runs_yolo", "aksara_v2", "weights", "best.pt")
+    best_pt = os.path.join(ROOT_DIR, "runs_yolo", "aksara_v2_5", "weights", "best.pt")
     if not os.path.exists(best_pt):
-        best_pt = os.path.join(ROOT_DIR, "runs_yolo", "aksara_v2", "weights", "last.pt")
+        best_pt = os.path.join(ROOT_DIR, "runs_yolo", "aksara_v2_5", "weights", "last.pt")
 
     print(f"[INFO] Memuat bobot terbaik: {best_pt}")
     best_model = YOLO(best_pt)
 
-    # Validasi akurasi mAP50
     val_res = best_model.val(data=DATA_YAML, imgsz=imgsz, batch=16, workers=0, device="cpu")
     metrics = {
         "map50": round(float(val_res.box.map50) * 100.0, 2),
@@ -132,13 +146,11 @@ def main(epochs=18, imgsz=416):
     }
     print(f"[VAL METRICS] mAP50={metrics['map50']}% | P={metrics['precision']}% | R={metrics['recall']}%")
 
-    # Ekspor ke ONNX opset 12 untuk kompatibilitas maksimal onnxruntime-web
     exported_path = best_model.export(format="onnx", imgsz=imgsz, opset=12, simplify=False, dynamic=False)
     shutil.copy2(exported_path, ONNX_OUT)
     size_mb = os.path.getsize(ONNX_OUT) / (1024 * 1024)
     print(f"[EXPORT] Tersimpan di {ONNX_OUT} ({size_mb:.2f} MB)")
 
-    # Verifikasi inferensi ONNX Runtime secara nyata
     sess = ort.InferenceSession(ONNX_OUT, providers=["CPUExecutionProvider"])
     inp_name = sess.get_inputs()[0].name
     dummy = np.zeros((1, 3, imgsz, imgsz), dtype=np.float32)

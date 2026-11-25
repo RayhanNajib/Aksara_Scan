@@ -1,8 +1,8 @@
 {
   "model_type": "yolov8n",
   "imgsz": 416,
-  "conf_thresh": 0.28,
-  "iou_thresh": 0.45,
+  "conf_thresh": 0.25,
+  "iou_thresh": 0.42,
   "classes": [
     "ha",
     "na",
@@ -55,7 +55,10 @@
     "pangkon",
     "cakra",
     "keret",
-    "pengkal"
+    "pengkal",
+    "pada_adeg",
+    "pada_lingsa",
+    "pada_lungsi"
   ],
   "categories": [
     "nglegena",
@@ -109,7 +112,10 @@
     "sandhangan",
     "sandhangan",
     "sandhangan",
-    "sandhangan"
+    "sandhangan",
+    "pada",
+    "pada",
+    "pada"
   ],
   "unicode": {
     "ha": "ꦲ",
@@ -163,7 +169,10 @@
     "pangkon": "꧀",
     "cakra": "ꦿ",
     "keret": "ꦽ",
-    "pengkal": "ꦾ"
+    "pengkal": "ꦾ",
+    "pada_adeg": "꧋",
+    "pada_lingsa": "꧈",
+    "pada_lungsi": "꧉"
   },
   "latin": {
     "ha": "ha",
@@ -217,7 +226,10 @@
     "pangkon": "",
     "cakra": "ra_med",
     "keret": "re_med",
-    "pengkal": "ya_med"
+    "pengkal": "ya_med",
+    "pada_adeg": "",
+    "pada_lingsa": ",",
+    "pada_lungsi": "."
   },
   "positions": {
     "ha": "base",
@@ -271,13 +283,16 @@
     "pangkon": "right",
     "cakra": "below",
     "keret": "below",
-    "pengkal": "right"
+    "pengkal": "right",
+    "pada_adeg": "pada",
+    "pada_lingsa": "pada",
+    "pada_lungsi": "pada"
   },
   "metrics": {
-    "map50": 98.4,
-    "map50_95": 89.77,
-    "precision": 97.08,
-    "recall": 95.76,
-    "epochs": 18
+    "map50": 98.81,
+    "map50_95": 87.7,
+    "precision": 98.7,
+    "recall": 96.52,
+    "epochs": 20
   }
 }

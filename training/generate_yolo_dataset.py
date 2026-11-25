@@ -1,16 +1,15 @@
 """
-AksaraScan v2.0 Hybrid Dataset Generator (Nglegena + Pasangan + Sandhangan)
-Menghasilkan dataset deteksi objek format YOLO (images + labels + data.yaml)
-dengan bounding box presisi piksel tingkat atomik:
-  - 20 Aksara Nglegena (kelas 0..19) — gabungan tulisan tangan nyata (Jawa.zip) + OpenType RAQM
-  - 20 Aksara Pasangan (kelas 20..39) — OpenType RAQM dengan augmentasi tulisan tangan
-  - 12 Sandhangan & Pangkon (kelas 40..51) — wulu, suku, pepet, taling, tarung, layar, cecak, wignyan, pangkon, cakra, keret, pengkal
+AksaraScan v2.5 Hybrid Multi-Font Dataset Generator (55 Kelas Atomik)
+Mencakup:
+  - 20 Aksara Nglegena (0..19) — gabungan tulisan tangan nyata (Jawa.zip) + 3 Font OpenType
+  - 20 Aksara Pasangan (20..39) — 3 Font OpenType (Javanese Text, Noto Sans Javanese, Tuladha Jejeg OT)
+  - 12 Sandhangan & Pangkon (40..51) — termasuk kombinasi nested Pasangan + Suku/Wulu/Pepet/Taling
+  -  3 Tanda Baca Jawa / Pada (52..54) — pada_adeg (꧋), pada_lingsa (꧈), pada_lungsi (꧉)
+  + Dukungan tata letak kalimat bersambung rapat (scriptio continua) & distraktor teks Latin non-label.
 """
 import os
-import io
 import random
 import zipfile
-import glob
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -18,7 +17,12 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT_DIR, "dataset_yolo")
 JAWA_ZIP = os.path.join(ROOT_DIR, "dataset", "Jawa.zip")
-FONT_PATH = "C:/Windows/Fonts/javatext.ttf"
+
+FONT_PATHS = [
+    "C:/Windows/Fonts/javatext.ttf",
+    os.path.join(ROOT_DIR, "fonts", "NotoSansJavanese.ttf"),
+    os.path.join(ROOT_DIR, "fonts", "TuladhaJejegOT-Regular.ttf"),
+]
 
 NGLEGENA = [
     ("ha", "\uA9B2"), ("na", "\uA9A4"), ("ca", "\uA995"), ("ra", "\uA9AB"), ("ka", "\uA98F"),
@@ -41,12 +45,14 @@ SANDHANGAN = [
     ("keret", "\uA9BD"),
     ("pengkal", "\uA9BE"),
 ]
+PADA = [
+    ("pada_adeg", "\uA9CB"),
+    ("pada_lingsa", "\uA9C8"),
+    ("pada_lungsi", "\uA9C9"),
+]
 
-ALL_CLASSES = [n for n, _ in NGLEGENA] + [n for n, _ in PASANGAN] + [n for n, _ in SANDHANGAN]
+ALL_CLASSES = [n for n, _ in NGLEGENA] + [n for n, _ in PASANGAN] + [n for n, _ in SANDHANGAN] + [n for n, _ in PADA]
 CLASS_TO_ID = {name: i for i, name in enumerate(ALL_CLASSES)}
-
-# Beberapa pasangan yang posisinya di sebelah kanan huruf induk (bukan di bawah)
-RIGHT_PASANGAN = {"p_ha", "p_sa", "p_pa"}
 
 
 def tight_bbox(mask_bool, pad=1):
@@ -70,7 +76,6 @@ def render_mask(txt, font, canvas_w=360, canvas_h=260, origin=(90, 50)):
 
 
 def align_base_in_full(base_mask, full_mask):
-    """Temukan posisi geser (dx, dy) mask huruf dasar di dalam mask gabungan."""
     b_box = tight_bbox(base_mask, pad=0)
     if b_box is None:
         return base_mask, b_box
@@ -88,11 +93,32 @@ def align_base_in_full(base_mask, full_mask):
     return shifted, (nx0, ny0, nx0 + w, ny0 + h)
 
 
+def clean_diff_mask(full_mask, occupied_mask, dilate_k=4, min_comp_area=12):
+    dil = cv2.dilate(occupied_mask.astype(np.uint8), np.ones((dilate_k, dilate_k), np.uint8)) > 0
+    diff = full_mask & (~dil)
+    num, lab, stats, _ = cv2.connectedComponentsWithStats(diff.astype(np.uint8))
+    clean = np.zeros_like(diff)
+    for i in range(1, num):
+        if stats[i][4] >= min_comp_area:
+            clean[lab == i] = True
+    if clean.sum() < 10:
+        clean = full_mask & (~occupied_mask)
+    return clean
+
+
+def render_pada_glyph(font, pada_name):
+    ch = dict(PADA)[pada_name]
+    cid = CLASS_TO_ID[pada_name]
+    m, _ = render_mask(ch, font, 240, 220, origin=(60, 40))
+    cb = tight_bbox(m, pad=2)
+    if cb is None:
+        return None, []
+    cx0, cy0, cx1, cy1 = cb
+    patch = (m[cy0:cy1, cx0:cx1].astype(np.uint8)) * 255
+    return patch, [(cid, 0, 0, cx1 - cx0, cy1 - cy0)]
+
+
 def render_syllable_cluster(font, base_idx, mod_type, sub_mod=None):
-    """
-    Merender satu gugus suku kata aksara Jawa dan mengekstrak mask ink +
-    daftar bounding box tingkat atomik [(class_id, x0, y0, x1, y1), ...].
-    """
     b_name, b_ch = NGLEGENA[base_idx]
     b_id = CLASS_TO_ID[b_name]
     cw, ch_dim = 360, 260
@@ -106,29 +132,13 @@ def render_syllable_cluster(font, base_idx, mod_type, sub_mod=None):
         if box_b:
             boxes.append((b_id, *box_b))
 
-    elif mod_type in ("wulu", "suku", "pepet", "layar", "cecak", "wignyan", "pangkon", "pengkal"):
+    elif mod_type in ("wulu", "suku", "pepet", "layar", "cecak", "wignyan", "pangkon", "pengkal", "cakra", "keret"):
         m_ch = dict(SANDHANGAN)[mod_type]
         m_id = CLASS_TO_ID[mod_type]
         full_mask, _ = render_mask(b_ch + m_ch, font, cw, ch_dim)
         shifted_base, box_b = align_base_in_full(m_base, full_mask)
-        diff = full_mask & (~shifted_base)
-        # Bersihkan artefak anti-aliasing 1 piksel di tepi sambungan
-        diff = cv2.morphologyEx(diff.astype(np.uint8), cv2.MORPH_OPEN, np.ones((2, 2), np.uint8)) > 0
-        if diff.sum() < 18:
-            diff = full_mask & (~shifted_base)
-        box_m = tight_bbox(diff)
-        if box_b:
-            boxes.append((b_id, *box_b))
-        if box_m:
-            boxes.append((m_id, *box_m))
-
-    elif mod_type in ("cakra", "keret"):
-        m_ch = dict(SANDHANGAN)[mod_type]
-        m_id = CLASS_TO_ID[mod_type]
-        full_mask, _ = render_mask(b_ch + m_ch, font, cw, ch_dim)
-        shifted_base, box_b = align_base_in_full(m_base, full_mask)
-        diff = full_mask & (~shifted_base)
-        box_m = tight_bbox(diff)
+        diff = clean_diff_mask(full_mask, shifted_base, dilate_k=4 if mod_type in ("suku", "pangkon", "pengkal") else 2)
+        box_m = tight_bbox(diff, pad=2)
         if box_b:
             boxes.append((b_id, *box_b))
         if box_m:
@@ -138,9 +148,8 @@ def render_syllable_cluster(font, base_idx, mod_type, sub_mod=None):
         t_id = CLASS_TO_ID["taling"]
         full_mask, _ = render_mask(b_ch + "\uA9BA", font, cw, ch_dim)
         shifted_base, box_b = align_base_in_full(m_base, full_mask)
-        diff = full_mask & (~shifted_base)
+        diff = clean_diff_mask(full_mask, shifted_base, dilate_k=2)
         if box_b:
-            # Taling selalu berada di sebelah kiri huruf induk
             diff_left = diff.copy()
             diff_left[:, box_b[0]:] = False
             box_t = tight_bbox(diff_left) or tight_bbox(diff)
@@ -153,7 +162,7 @@ def render_syllable_cluster(font, base_idx, mod_type, sub_mod=None):
         r_id = CLASS_TO_ID["tarung"]
         full_mask, _ = render_mask(b_ch + "\uA9BA\uA9B4", font, cw, ch_dim)
         shifted_base, box_b = align_base_in_full(m_base, full_mask)
-        diff = full_mask & (~shifted_base)
+        diff = clean_diff_mask(full_mask, shifted_base, dilate_k=2)
         if box_b:
             diff_left = diff.copy()
             diff_left[:, box_b[0]:] = False
@@ -174,46 +183,48 @@ def render_syllable_cluster(font, base_idx, mod_type, sub_mod=None):
 
         txt = b_ch + p_seq
         m_pair, _ = render_mask(txt, font, cw, ch_dim)
-        shifted_base, box_b = align_base_in_full(m_base, m_pair)
-        diff_p = m_pair & (~shifted_base)
-        box_p = tight_bbox(diff_p)
+        sb_pair, box_b = align_base_in_full(m_base, m_pair)
+        m_pas_only = clean_diff_mask(m_pair, sb_pair, dilate_k=3)
+        box_p = tight_bbox(m_pas_only, pad=2)
 
         full_mask = m_pair
-        if box_b:
-            boxes.append((b_id, *box_b))
-        if box_p:
-            boxes.append((p_id, *box_p))
-
-        # Opsional tambahkan sandhangan pada pasangan! (mis. nki, nku, nko, nkar)
-        if sub_mod in ("wulu", "suku", "pepet", "layar", "cecak", "wignyan"):
+        if sub_mod is None:
+            if box_b:
+                boxes.append((b_id, *box_b))
+            if box_p:
+                boxes.append((p_id, *box_p))
+        elif sub_mod in ("wulu", "suku", "pepet", "layar", "cecak", "wignyan"):
             sm_ch = dict(SANDHANGAN)[sub_mod]
             sm_id = CLASS_TO_ID[sub_mod]
             m_sub, _ = render_mask(txt + sm_ch, font, cw, ch_dim)
-            shifted_pair, _ = align_base_in_full(m_pair, m_sub)
-            diff_sm = m_sub & (~shifted_pair)
-            box_sm = tight_bbox(diff_sm)
+            sb2, box_b2 = align_base_in_full(m_base, m_sub)
+            sp2, box_p2 = align_base_in_full(m_pas_only, m_sub)
+            diff_sm = clean_diff_mask(m_sub, sb2 | sp2, dilate_k=5 if sub_mod == "suku" else 3)
+            box_sm = tight_bbox(diff_sm, pad=2)
             full_mask = m_sub
+            if box_b2:
+                boxes.append((b_id, *box_b2))
+            if box_p2:
+                boxes.append((p_id, *box_p2))
             if box_sm:
                 boxes.append((sm_id, *box_sm))
         elif sub_mod == "taling":
             t_id = CLASS_TO_ID["taling"]
             m_sub, _ = render_mask(txt + "\uA9BA", font, cw, ch_dim)
-            shifted_pair, _ = align_base_in_full(m_pair, m_sub)
-            diff_t = m_sub & (~shifted_pair)
-            # Update koordinat box_b dan box_p terhadap pergeseran taling
-            p_box = tight_bbox(m_pair)
-            sp_box = tight_bbox(shifted_pair)
-            if p_box and sp_box:
-                dx = sp_box[0] - p_box[0]
-                dy = sp_box[1] - p_box[1]
-                boxes = [(cid, x0 + dx, y0 + dy, x1 + dx, y1 + dy) for (cid, x0, y0, x1, y1) in boxes]
-                diff_t[:, sp_box[0]:] = False
-            box_t = tight_bbox(diff_t)
+            sb2, box_b2 = align_base_in_full(m_base, m_sub)
+            sp2, box_p2 = align_base_in_full(m_pas_only, m_sub)
+            diff_t = clean_diff_mask(m_sub, sb2 | sp2, dilate_k=2)
+            if box_b2:
+                diff_t[:, box_b2[0]:] = False
+            box_t = tight_bbox(diff_t, pad=2)
             full_mask = m_sub
+            if box_b2:
+                boxes.append((b_id, *box_b2))
+            if box_p2:
+                boxes.append((p_id, *box_p2))
             if box_t:
                 boxes.append((t_id, *box_t))
 
-    # Crop rapat seluruh gugus agar mudah digabung ke kanvas halaman
     cb = tight_bbox(full_mask, pad=2)
     if cb is None or not boxes:
         return None, []
@@ -230,8 +241,7 @@ def render_syllable_cluster(font, base_idx, mod_type, sub_mod=None):
     return patch, rel_boxes
 
 
-def load_real_nglegena_pool(max_per_class=60):
-    """Muat sampel tulisan tangan nyata Vokal A dari Jawa.zip untuk menjaga generalisasi."""
+def load_real_nglegena_pool(max_per_class=70):
     pool = {name: [] for name, _ in NGLEGENA}
     if not os.path.exists(JAWA_ZIP):
         return pool
@@ -259,181 +269,190 @@ def load_real_nglegena_pool(max_per_class=60):
     return pool
 
 
-def augment_patch(patch, boxes):
-    """Augmentasi ketebalan tinta & variasi kemiringan ringan sambil menjaga keakuratan box."""
+def augment_patch(patch, boxes, target_scale=None):
     h, w = patch.shape
     aug = patch.copy()
-
-    # Variasi ketebalan pulpen (tipis vs tebal)
     r = random.random()
-    if r < 0.25:
+    if r < 0.22:
         aug = cv2.erode(aug, np.ones((2, 2), np.uint8), iterations=1)
-    elif r > 0.72:
+    elif r > 0.74:
         aug = cv2.dilate(aug, np.ones((2, 2), np.uint8), iterations=1)
 
-    # Skala acak dengan mempertahankan rasio kotak
-    scale = random.uniform(0.55, 1.05)
-    nw = max(8, int(round(w * scale)))
-    nh = max(8, int(round(h * scale)))
+    scale = target_scale if target_scale is not None else random.uniform(0.48, 1.05)
+    nw = max(6, int(round(w * scale)))
+    nh = max(6, int(round(h * scale)))
     aug = cv2.resize(aug, (nw, nh), interpolation=cv2.INTER_AREA)
 
     new_boxes = []
     for cid, x0, y0, x1, y1 in boxes:
-        nx0 = x0 * (nw / w)
-        ny0 = y0 * (nh / h)
-        nx1 = x1 * (nw / w)
-        ny1 = y1 * (nh / h)
-        if nx1 - nx0 >= 4 and ny1 - ny0 >= 4:
+        nx0, ny0 = x0 * (nw / w), y0 * (nh / h)
+        nx1, ny1 = x1 * (nw / w), y1 * (nh / h)
+        if nx1 - nx0 >= 3 and ny1 - ny0 >= 3:
             new_boxes.append((cid, nx0, ny0, nx1, ny1))
     return aug, new_boxes
 
 
 def synthesize_page(fonts, real_pool, img_size=416):
-    """Buat 1 halaman realistis (kertas bergaris/polos + bayangan) berisi 2–3 baris aksara."""
-    # Latar kertas realistis (putih bersih, krem buku tulis, atau abu lembut)
     bg_type = random.choice(["white", "cream", "gray"])
     if bg_type == "white":
-        base_val = random.randint(242, 255)
-        canvas = np.full((img_size, img_size, 3), base_val, dtype=np.uint8)
+        canvas = np.full((img_size, img_size, 3), random.randint(242, 255), dtype=np.uint8)
     elif bg_type == "cream":
         canvas = np.zeros((img_size, img_size, 3), dtype=np.uint8)
-        canvas[:, :, 0] = random.randint(215, 232)  # B
-        canvas[:, :, 1] = random.randint(230, 245)  # G
-        canvas[:, :, 2] = random.randint(238, 252)  # R
+        canvas[:, :, 0] = random.randint(215, 232)
+        canvas[:, :, 1] = random.randint(230, 245)
+        canvas[:, :, 2] = random.randint(238, 252)
     else:
-        v = random.randint(218, 242)
-        canvas = np.full((img_size, img_size, 3), v, dtype=np.uint8)
+        canvas = np.full((img_size, img_size, 3), random.randint(220, 242), dtype=np.uint8)
 
-    # Opsional tambahkan garis buku tulis SiDU tipis
-    if random.random() < 0.45:
+    if random.random() < 0.42:
         line_y = random.randint(45, 85)
-        step = random.randint(85, 115)
+        step = random.randint(80, 110)
         line_col = (random.randint(155, 195), random.randint(155, 195), random.randint(150, 190))
         while line_y < img_size - 20:
             cv2.line(canvas, (0, line_y), (img_size, line_y), line_col, 1)
             line_y += step
 
-    # Warna tinta (hitam jelaga atau biru pulpen)
-    if random.random() < 0.78:
-        ink_col = np.array([random.randint(12, 55)] * 3, dtype=np.float32)
+    if random.random() < 0.82:
+        ink_col = np.array([random.randint(8, 52)] * 3, dtype=np.float32)
     else:
         ink_col = np.array([random.randint(85, 145), random.randint(20, 55), random.randint(10, 40)], dtype=np.float32)
 
     all_labels = []
-    num_lines = random.randint(2, 3)
-    y_cursor = random.randint(22, 42)
+    y_cursor = random.randint(18, 38)
 
-    for _ in range(num_lines):
-        if y_cursor > img_size - 70:
+    # Opsional tambahkan teks Latin distraktor di atas halaman (agar model tidak salah deteksi teks Latin!)
+    if random.random() < 0.25:
+        latin_samples = [
+            "Wedang bubuk tanpa gula, aja ngamuk.",
+            "Soal Aksara Jawa Kelas VIII",
+            "Transliterasi Latin -> Hanacaraka",
+            "Mangan sega goreng nganggo tempe.",
+        ]
+        cv2.putText(canvas, random.choice(latin_samples), (14, y_cursor + 12),
+                    cv2.FONT_HERSHEY_SIMPLEX, random.uniform(0.35, 0.52), (40, 40, 45), 1, cv2.LINE_AA)
+        y_cursor += random.randint(28, 42)
+
+    is_continuous_sentence = (random.random() < 0.50)
+    num_lines = random.randint(2, 4)
+
+    for line_i in range(num_lines):
+        if y_cursor > img_size - 65:
             break
-        x_cursor = random.randint(14, 34)
+        font = random.choice(fonts)
+        line_scale = random.uniform(0.55, 0.92) if not is_continuous_sentence else random.uniform(0.45, 0.78)
+        x_cursor = random.randint(10, 26)
         max_row_h = 0
 
-        for _ in range(random.randint(3, 6)):
-            b_idx = random.randrange(len(NGLEGENA))
-            b_name = NGLEGENA[b_idx][0]
-            mode_roll = random.random()
+        tokens_in_line = []
+        if is_continuous_sentence and line_i == 0 and random.random() < 0.7:
+            tokens_in_line.append(("pada", "pada_adeg"))
 
-            if mode_roll < 0.22 and real_pool[b_name]:
-                # Pakai tulisan tangan asli dari Jawa.zip
-                crop = random.choice(real_pool[b_name])
-                target_h = random.randint(36, 58)
-                sc = target_h / max(crop.shape)
-                nw = max(12, int(round(crop.shape[1] * sc)))
-                nh = max(12, int(round(crop.shape[0] * sc)))
-                patch = cv2.resize(crop, (nw, nh), interpolation=cv2.INTER_AREA)
-                p_boxes = [(CLASS_TO_ID[b_name], 0.0, 0.0, float(nw), float(nh))]
-            else:
-                font = random.choice(fonts)
-                r2 = random.random()
-                if r2 < 0.16:
-                    mod_type, sub_mod = "nglegena", None
-                elif r2 < 0.56:
-                    mod_type = random.choice([
-                        "wulu", "suku", "pepet", "taling", "taling_tarung",
-                        "layar", "cecak", "wignyan", "pangkon", "cakra", "keret", "pengkal"
-                    ])
-                    sub_mod = None
-                else:
-                    p_idx = random.randrange(len(PASANGAN))
-                    mod_type = f"pasangan:{p_idx}"
-                    sub_mod = random.choice([None, None, "wulu", "suku", "pepet", "taling", "cecak", "layar", "wignyan"])
+        n_words = random.randint(5, 9) if is_continuous_sentence else random.randint(3, 6)
+        for t_idx in range(n_words):
+            if is_continuous_sentence and t_idx == n_words // 2 and random.random() < 0.45:
+                tokens_in_line.append(("pada", "pada_lingsa"))
+            tokens_in_line.append(("syllable", None))
 
-                patch, rel_boxes = render_syllable_cluster(font, b_idx, mod_type, sub_mod)
+        if is_continuous_sentence and line_i == num_lines - 1 and random.random() < 0.75:
+            tokens_in_line.append(("pada", "pada_lungsi"))
+
+        for kind, val in tokens_in_line:
+            if kind == "pada":
+                patch, rel_boxes = render_pada_glyph(font, val)
                 if patch is None:
                     continue
-                patch, p_boxes = augment_patch(patch, rel_boxes)
+                patch, p_boxes = augment_patch(patch, rel_boxes, target_scale=line_scale)
+            else:
+                b_idx = random.randrange(len(NGLEGENA))
+                b_name = NGLEGENA[b_idx][0]
+                if not is_continuous_sentence and random.random() < 0.20 and real_pool[b_name]:
+                    crop = random.choice(real_pool[b_name])
+                    target_h = random.randint(32, 54)
+                    sc = target_h / max(crop.shape)
+                    nw, nh = max(10, int(round(crop.shape[1] * sc))), max(10, int(round(crop.shape[0] * sc)))
+                    patch = cv2.resize(crop, (nw, nh), interpolation=cv2.INTER_AREA)
+                    p_boxes = [(CLASS_TO_ID[b_name], 0.0, 0.0, float(nw), float(nh))]
+                else:
+                    r2 = random.random()
+                    if r2 < 0.14:
+                        mod_type, sub_mod = "nglegena", None
+                    elif r2 < 0.54:
+                        mod_type = random.choice([
+                            "wulu", "suku", "suku", "pepet", "taling", "taling_tarung",
+                            "layar", "cecak", "wignyan", "pangkon", "cakra", "keret", "pengkal"
+                        ])
+                        sub_mod = None
+                    else:
+                        p_idx = random.randrange(len(PASANGAN))
+                        mod_type = f"pasangan:{p_idx}"
+                        sub_mod = random.choice([None, "wulu", "suku", "suku", "pepet", "taling", "cecak", "layar", "wignyan"])
+                    patch, rel_boxes = render_syllable_cluster(font, b_idx, mod_type, sub_mod)
+                    if patch is None:
+                        continue
+                    patch, p_boxes = augment_patch(patch, rel_boxes, target_scale=line_scale)
 
             ph, pw = patch.shape
-            if x_cursor + pw >= img_size - 10 or y_cursor + ph >= img_size - 8:
+            if x_cursor + pw >= img_size - 8 or y_cursor + ph >= img_size - 6:
                 break
 
-            # Alpha blend tinta ke kertas
             alpha = (patch.astype(np.float32) / 255.0)[..., None]
             roi = canvas[y_cursor:y_cursor + ph, x_cursor:x_cursor + pw].astype(np.float32)
-            blended = roi * (1.0 - alpha) + ink_col * alpha
-            canvas[y_cursor:y_cursor + ph, x_cursor:x_cursor + pw] = np.clip(blended, 0, 255).astype(np.uint8)
+            canvas[y_cursor:y_cursor + ph, x_cursor:x_cursor + pw] = np.clip(roi * (1.0 - alpha) + ink_col * alpha, 0, 255).astype(np.uint8)
 
             for cid, bx0, by0, bx1, by1 in p_boxes:
-                gx0 = x_cursor + bx0
-                gy0 = y_cursor + by0
-                gx1 = x_cursor + bx1
-                gy1 = y_cursor + by1
+                gx0, gy0 = x_cursor + bx0, y_cursor + by0
+                gx1, gy1 = x_cursor + bx1, y_cursor + by1
                 xc = ((gx0 + gx1) / 2.0) / img_size
                 yc = ((gy0 + gy1) / 2.0) / img_size
-                bw = (gx1 - gx0) / img_size
-                bh = (gy1 - gy0) / img_size
-                all_labels.append((cid, xc, yc, bw, bh))
+                bw_n, bh_n = (gx1 - gx0) / img_size, (gy1 - gy0) / img_size
+                all_labels.append((cid, xc, yc, bw_n, bh_n))
 
-            x_cursor += pw + random.randint(8, 22)
+            gap = random.randint(2, 7) if is_continuous_sentence else random.randint(8, 18)
+            x_cursor += pw + gap
             max_row_h = max(max_row_h, ph)
 
-        y_cursor += max(68, max_row_h + random.randint(16, 30))
+        y_cursor += max(56, max_row_h + random.randint(12, 24))
 
-    # Tambah gradien pencahayaan / bayangan ringan (realisme kamera ponsel)
-    if random.random() < 0.65:
-        gx = np.linspace(random.uniform(0.75, 1.0), random.uniform(0.85, 1.05), img_size)
-        gy = np.linspace(random.uniform(0.78, 1.0), random.uniform(0.85, 1.05), img_size)
-        shade = np.outer(gy, gx)[..., None]
-        canvas = np.clip(canvas.astype(np.float32) * shade, 0, 255).astype(np.uint8)
+    if random.random() < 0.6:
+        gx = np.linspace(random.uniform(0.76, 1.0), random.uniform(0.86, 1.05), img_size)
+        gy = np.linspace(random.uniform(0.78, 1.0), random.uniform(0.86, 1.05), img_size)
+        canvas = np.clip(canvas.astype(np.float32) * np.outer(gy, gx)[..., None], 0, 255).astype(np.uint8)
 
-    if random.random() < 0.5:
-        noise = np.random.normal(0, random.uniform(1.5, 5.0), canvas.shape)
+    if random.random() < 0.45:
+        noise = np.random.normal(0, random.uniform(1.5, 4.5), canvas.shape)
         canvas = np.clip(canvas.astype(np.float32) + noise, 0, 255).astype(np.uint8)
 
-    if random.random() < 0.35:
+    if random.random() < 0.30:
         canvas = cv2.GaussianBlur(canvas, (3, 3), 0)
 
     return canvas, all_labels
 
 
-def main(n_train=900, n_val=150):
-    random.seed(42)
-    np.random.seed(42)
+def main(n_train=1400, n_val=240):
+    random.seed(108)
+    np.random.seed(108)
 
     for split in ("train", "val"):
         os.makedirs(os.path.join(OUT_DIR, "images", split), exist_ok=True)
         os.makedirs(os.path.join(OUT_DIR, "labels", split), exist_ok=True)
 
-    fonts = [
-        ImageFont.truetype(FONT_PATH, sz, layout_engine=ImageFont.Layout.RAQM)
-        for sz in (46, 54, 62)
-    ]
-    print("[1/3] Memuat pool tulisan tangan nyata dari Jawa.zip...")
+    fonts = []
+    for p in FONT_PATHS:
+        if os.path.exists(p):
+            for sz in (46, 54):
+                fonts.append(ImageFont.truetype(p, sz, layout_engine=ImageFont.Layout.RAQM))
+    print(f"[1/3] Memuat {len(fonts)} variasi font OpenType RAQM + tulisan tangan Jawa.zip...")
     real_pool = load_real_nglegena_pool(max_per_class=70)
-    total_real = sum(len(v) for v in real_pool.values())
-    print(f"      Termuat {total_real} sampel tulisan tangan nyata.")
+    print(f"      Termuat {sum(len(v) for v in real_pool.values())} sampel tulisan tangan nyata.")
 
     for split, count in (("train", n_train), ("val", n_val)):
-        print(f"[2/3] Menghasilkan {count} citra halaman {split} (Nglegena + Pasangan + Sandhangan)...")
+        print(f"[2/3] Menghasilkan {count} citra halaman {split} (55 kelas · 3 font · scriptio continua)...")
         for i in range(count):
             img, labels = synthesize_page(fonts, real_pool, img_size=416)
-            img_path = os.path.join(OUT_DIR, "images", split, f"aks_{split}_{i:04d}.jpg")
-            lbl_path = os.path.join(OUT_DIR, "labels", split, f"aks_{split}_{i:04d}.txt")
-            cv2.imwrite(img_path, img, [cv2.IMWRITE_JPEG_QUALITY, 92])
-            with open(lbl_path, "w", encoding="utf-8") as f:
-                for cid, xc, yc, bw, bh in labels:
-                    f.write(f"{cid} {xc:.6f} {yc:.6f} {bw:.6f} {bh:.6f}\n")
+            cv2.imwrite(os.path.join(OUT_DIR, "images", split, f"aks_{split}_{i:04d}.jpg"), img, [cv2.IMWRITE_JPEG_QUALITY, 92])
+            with open(os.path.join(OUT_DIR, "labels", split, f"aks_{split}_{i:04d}.txt"), "w", encoding="utf-8") as f:
+                for cid, xc, yc, bw_n, bh_n in labels:
+                    f.write(f"{cid} {xc:.6f} {yc:.6f} {bw_n:.6f} {bh_n:.6f}\n")
 
     yaml_path = os.path.join(OUT_DIR, "data.yaml")
     with open(yaml_path, "w", encoding="utf-8") as f:
@@ -445,7 +464,7 @@ def main(n_train=900, n_val=150):
         for idx, name in enumerate(ALL_CLASSES):
             f.write(f"  {idx}: {name}\n")
 
-    print(f"[3/3] Selesai! Dataset tersimpan di {OUT_DIR} ({len(ALL_CLASSES)} kelas atomik).")
+    print(f"[3/3] Selesai! Dataset 55 kelas tersimpan di {OUT_DIR}.")
 
 
 if __name__ == "__main__":

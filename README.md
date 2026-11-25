@@ -1,9 +1,9 @@
-# AksaraScan v2.0
+# AksaraScan v2.5
 
-**Pemeriksa aksara Jawa (*Nglegena + Pasangan + Sandhangan*) langsung dari kamera / gambar — 100% di browser, tanpa server.**
+**Pemeriksa & penerjemah kalimat Aksara Jawa (*Nglegena + Pasangan + Sandhangan + Tanda Baca Pada*) langsung dari kamera / gambar — 100% di browser, tanpa server.**
 
 Web app client-only bermesin ganda (*Dual-Engine*):
-1. **Engine v2.0 — YOLOv8-Nano ONNX (52 Kelas Atomik)** via `onnxruntime-web` + **Rekonstruktor Ortografi Spasial (`orthography.js`)**: mengenali 20 Aksara Nglegena, 20 Pasangan, dan 12 Sandhangan/Pangkon (*wulu, suku, pepet, taling, tarung, layar, cecak, wignyan, pangkon, cakra, keret, pengkal*), lalu merangkainya otomatis menjadi Unicode Aksara Jawa & transliterasi Latin.
+1. **Engine v2.5 — YOLOv8-Nano ONNX (55 Kelas Atomik · 3 Gaya Font)** via `onnxruntime-web` + **Rekonstruktor Ortografi (`orthography.js`)** + **Pemisah Kata DP & Penerjemah Bahasa Indonesia (`javanese_lexicon.js`)**: mengenali 20 Aksara Nglegena, 20 Pasangan, 12 Sandhangan/Pangkon, dan 3 Tanda Baca *Pada* (`꧋`, `꧈`, `꧉`), lalu merangkainya otomatis menjadi Unicode, kalimat Latin tergabung (*scriptio continua* → kata), dan terjemahan kalimat Bahasa Indonesia.
 2. **Engine v1.0 — Pipeline Pengolahan Citra Klasik + SVM Linear**: grayscale BT.601 → ambang adaptif Otsu → median 3×3 → morfologi → segmentasi CCL → normalisasi 96×96 → **SVM Linear One-vs-Rest** dari bobot float16 Base64.
 
 Privasi penuh: gambar tidak pernah meninggalkan perangkat.
