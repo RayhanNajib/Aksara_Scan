@@ -1,19 +1,24 @@
-# AksaraScan
+# AksaraScan v2.0
 
-**Pemeriksa aksara Jawa (hanacaraka nglegena) langsung dari kamera / gambar — 100% di browser, tanpa server.**
+**Pemeriksa aksara Jawa (*Nglegena + Pasangan + Sandhangan*) langsung dari kamera / gambar — 100% di browser, tanpa server.**
 
-Web app client-only: foto/unggah tulisan tangan → pipeline Computer Vision (grayscale BT.601 → ambang adaptif → median → morfologi → segmentasi CCL → normalisasi 96×96) → **SVM Linear One-vs-Rest** yang berjalan penuh di sisi klien dari bobot float16 Base64. Privasi penuh: gambar tidak pernah meninggalkan perangkat.
+Web app client-only bermesin ganda (*Dual-Engine*):
+1. **Engine v2.0 — YOLOv8-Nano ONNX (52 Kelas Atomik)** via `onnxruntime-web` + **Rekonstruktor Ortografi Spasial (`orthography.js`)**: mengenali 20 Aksara Nglegena, 20 Pasangan, dan 12 Sandhangan/Pangkon (*wulu, suku, pepet, taling, tarung, layar, cecak, wignyan, pangkon, cakra, keret, pengkal*), lalu merangkainya otomatis menjadi Unicode Aksara Jawa & transliterasi Latin.
+2. **Engine v1.0 — Pipeline Pengolahan Citra Klasik + SVM Linear**: grayscale BT.601 → ambang adaptif Otsu → median 3×3 → morfologi → segmentasi CCL → normalisasi 96×96 → **SVM Linear One-vs-Rest** dari bobot float16 Base64.
+
+Privasi penuh: gambar tidak pernah meninggalkan perangkat.
 
 > Tugas Akhir — Muhammad Rayhan Najib (240533600012), Teknik Informasi, Universitas Negeri Malang.
 
 ##  Fitur
 
+- **Mesin Ganda 1-Klik**: beralih bebas antara **YOLOv8-Nano ONNX (Full: Nglegena + Pasangan + Sandhangan)** dan **Pipeline Klasik PCD + SVM (20 Nglegena)**
 - Kamera web/ponsel (HTML5 MediaDevices) + auto-rata 6 frame biar hasil konsisten
--  **Auto-deteksi**: upload / tempel **Ctrl+V** / **seret gambar** ke halaman → langsung dipindai
+- **Auto-deteksi**: upload / tempel **Ctrl+V** / **seret gambar** ke halaman → langsung dipindai
 - **Seleksi area ala Google Lens**: seret kotak pada satu aksara → *Pindai Area Pilihan* (ambang lokal lebih akurat untuk glif kecil)
--  **Koreksi manual (human-in-the-loop)**: klik kotak deteksi → ganti aksara, akurasi akhir milik pengguna
--  **Lab Pipeline 8 tahap**: histogram Otsu, biner, median, morfologi, segmentasi, normalisasi, montase SVM — semua bisa diaudit visual
--  Kamus aksara Jawa lengkap + ekspor hasil JSON
+- **Koreksi manual (human-in-the-loop)**: klik kotak deteksi → ganti aksara (20 kelas di mode SVM, 52 kelas di mode YOLOv8)
+- **Lab Pipeline 8 tahap**: histogram Otsu, biner, median, morfologi, segmentasi, normalisasi, montase — semua bisa diaudit visual
+- Kamus aksara Jawa lengkap + ekspor hasil JSON + contoh uji `sample_4.png` (Pasangan & Sandhangan)
 
 ##  Menjalankan
 
@@ -28,25 +33,25 @@ Butuh: browser modern. Tanpa Node, tanpa backend, tanpa instalasi lain.
 ##  Struktur
 
 ```
-app/web_camscanner/   # aplikasi web (index.html, app.js, styles.css, model.json, PWA)
-training/             # trainer SVM + pembagian segmen dataset
-  split_dataset.py    # -> dataset/split/{train,validation,test} (70/15/15, seed 42)
-  train_svm_v2.py     # augmentasi + Gaussian blur + LinearSVC -> model.json/js
+app/web_camscanner/          # aplikasi web (index.html, app.js, orthography.js, aksara_yolo.onnx, model.json, PWA)
+training/                    # trainer YOLOv8n + SVM + pembagian segmen dataset
+  generate_yolo_dataset.py   # generator hibrid 1.050 halaman (Jawa.zip + OpenType javatext.ttf RAQM)
+  train_yolo.py              # pelatih YOLOv8n (52 kelas) -> app/web_camscanner/aksara_yolo.onnx
+  split_dataset.py           # -> dataset/split/{train,validation,test} (70/15/15, seed 42)
+  train_svm_v2.py            # augmentasi + Gaussian blur + LinearSVC -> model.json/js
 dataset/
-  hanacaraka/         # 1.579 citra tulisan tangan (20 kelas) — CC0, milik orang lain ⚠️
-  split/              # hasil pembagian train/validation/test
-  manifest.csv        # 1 baris per citra: path, kelas, split, lisensi sumber
-docs/                 # PRD, arsitektur, spesifikasi dataset/model, rencana uji
+  hanacaraka/                # 1.579 citra tulisan tangan (20 kelas) — CC0, milik orang lain ⚠️
+  split/                     # hasil pembagian train/validation/test
+  manifest.csv               # 1 baris per citra: path, kelas, split, lisensi sumber
+docs/                        # PRD, arsitektur, spesifikasi dataset/model, rencana uji
 ```
 
 ##  Model
 
-| | |
+| Engine | Detail & Evaluasi |
 |---|---|
-| Arsitektur | LinearSVC one-vs-rest, fitur = canvas biner 96×96 di-Gaussian-blur (σ 2.5) |
-| Bobot | float16 → Base64 dalam `model.json` (~484 KB), inference murni JS |
-| Data latih | 1.100 citra train × 10 varian augmentasi, holdout uji 239 citra asli **tidak pernah dilihat model** |
-| Akurasi | **68.4%** bersih · **53.2%** simulasi foto |
+| **YOLOv8-Nano ONNX (v2.0)** | 52 kelas atomik (`nglegena` + `pasangan` + `sandhangan`), input `416×416` (`12.11 MB` di `aksara_yolo.onnx`), **mAP50 `98.4%`** (Precision `97.08%` · Recall `95.76%`) |
+| **LinearSVC SVM (v1.0)** | 20 Nglegena, fitur kanvas biner 96×96 Gaussian-blur (σ 2.5), float16 Base64 (`~484 KB` di `model.json`), **68.4%** bersih · **53.2%** simulasi foto |
 
 ##  Lisensi & Kredit dataset (PENTING)
 

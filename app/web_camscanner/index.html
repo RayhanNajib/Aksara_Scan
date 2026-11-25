@@ -74,6 +74,13 @@
             <span>1073×1102 px · Pulpen Gel</span>
           </div>
         </div>
+        <div class="demo-card" data-src="./sample_4.png">
+          <img class="demo-card__thumb" src="./sample_4.png" alt="Sampel 4">
+          <div class="demo-card__info">
+            <b>Sampel 4: Pasangan &amp; Sandhangan</b>
+            <span>Kalimat Lengkap · YOLOv8 v2.0</span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -143,8 +150,32 @@
           </div>
         </div>
 
+        <!-- Pengalih Mesin Deteksi -->
+        <div class="engine-bar" id="engineBar">
+          <div class="engine-bar__label">
+            <span>Mesin Pengenalan Aksara</span>
+            <span id="engineStatus">Memeriksa ONNX…</span>
+          </div>
+          <div class="engine-switch">
+            <button type="button" class="engine-btn" id="btnEngineYolo" data-engine="yolo">
+              <b>YOLOv8-Nano ONNX</b>
+              <span>52 Kelas · Nglegena+Sandhangan+Pasangan</span>
+            </button>
+            <button type="button" class="engine-btn active" id="btnEngineSvm" data-engine="svm">
+              <b>Pipeline Klasik SVM</b>
+              <span>20 Nglegena · Silabus PCD Bab 1–9</span>
+            </button>
+          </div>
+          <div class="legend-row" id="yoloLegend" hidden>
+            <span><i class="legend-dot" style="background:#c8963e"></i>Nglegena</span>
+            <span><i class="legend-dot" style="background:#5c8df6"></i>Pasangan</span>
+            <span><i class="legend-dot" style="background:#e88c30"></i>Sandhangan</span>
+            <span><i class="legend-dot" style="background:#d1563b"></i>Ragu</span>
+          </div>
+        </div>
+
         <!-- Pilihan Parameter Pipeline -->
-        <div class="pipeline-options">
+        <div class="pipeline-options" id="pipelineOptions">
           <label class="toggle-label">
             <input type="checkbox" id="optRemoveLines" checked>
             <span>Hapus Garis Buku</span>
@@ -320,7 +351,7 @@
   <!-- Footer -->
   <footer>
     <div>
-      <b>AksaraScan v1.0</b> — Tugas Akhir Pengolahan Citra Digital (PTIN236021)
+      <b>AksaraScan v2.0</b> — Pemindai Aksara Jawa (PCD Klasik + YOLOv8-Nano ONNX)
     </div>
     <div>
       Kelompok 4: Muhammad Rayhan Najib (240533600012) &amp; M. Ikhsan Ridho A. (240533609185)
@@ -330,7 +361,9 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
   <script src="./model.js"></script>
+  <script src="./orthography.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

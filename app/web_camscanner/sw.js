@@ -1,15 +1,20 @@
 // Service Worker for AksaraScan PWA Offline Support
-const CACHE_NAME = 'aksarascan-v5';
+const CACHE_NAME = 'aksarascan-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
+  './orthography.js',
   './app.js',
   './model.json',
+  './model.js',
+  './yolo_meta.json',
+  './aksara_yolo.onnx',
   './manifest.webmanifest',
   './sample_1.png',
   './sample_2.png',
-  './sample_3.png'
+  './sample_3.png',
+  './sample_4.png'
 ];
 
 self.addEventListener('install', (event) => {

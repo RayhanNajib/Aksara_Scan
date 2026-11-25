@@ -35,6 +35,10 @@ AKSARA_DATA.forEach(a => { UNICODE_MAP[a.latin] = a.unicode; });
 // State Aplikasi
 let model = null;
 let modelWeights = null;
+let yoloMeta = null;
+let yoloSession = null;
+let activeEngine = 'svm'; // 'yolo' otomatis aktif bila model ONNX siap
+let yoloReconstructed = null;
 let sourceImage = null;
 let currentDetections = [];
 let currentThreshold = 128;
@@ -115,6 +119,15 @@ async function initApp() {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('./sw.js').catch(e => console.log('SW reg error:', e));
   }
+
+  // Muat YOLOv8-Nano ONNX secara paralel bila dibuka melalui HTTP(S)
+  initYoloEngine();
+
+  // Setup Pengalih Mesin
+  const btnYolo = $('#btnEngineYolo');
+  const btnSvm = $('#btnEngineSvm');
+  if (btnYolo) btnYolo.addEventListener('click', () => setActiveEngine('yolo'));
+  if (btnSvm) btnSvm.addEventListener('click', () => setActiveEngine('svm'));
 
   // Setup Tema
   const savedTheme = localStorage.getItem('aksarascan_theme') || 'dark';
@@ -326,11 +339,11 @@ function loadImageElement(img, label) {
   resetResults();
   // Auto-deteksi: begitu gambar masuk (upload/paste/drop/kamera) langsung scan,
   // persis aplikasi scanner modern. Model belum siap -> tunggu lalu jalan sendiri.
-  if (model) {
+  if (model || yoloSession) {
     setTimeout(() => { if (sourceImage === img) executePipeline(); }, 120);
   } else {
     const wait = setInterval(() => {
-      if (model) { clearInterval(wait); if (sourceImage === img) executePipeline(); }
+      if (model || yoloSession) { clearInterval(wait); if (sourceImage === img) executePipeline(); }
     }, 100);
   }
 }
@@ -379,12 +392,263 @@ function updateProgress(step, text) {
   if (progressFill) progressFill.style.width = `${(step / 8) * 100}%`;
 }
 
+// ============================================================================
+// MESIN DETEKSI YOLOv8-NANO ONNX (NGLEGENA + PASANGAN + SANDHANGAN)
+// ============================================================================
+
+async function initYoloEngine() {
+  const statusEl = $('#engineStatus');
+  const btnYolo = $('#btnEngineYolo');
+  if (typeof ort === 'undefined') {
+    if (statusEl) statusEl.textContent = 'Offline · Mode SVM Aktif';
+    if (btnYolo) btnYolo.disabled = true;
+    return;
+  }
+  if (!location.protocol.startsWith('http')) {
+    if (statusEl) statusEl.textContent = 'file:// · Jalankan HTTP untuk YOLOv8';
+    if (btnYolo) btnYolo.disabled = true;
+    return;
+  }
+  try {
+    if (statusEl) statusEl.textContent = 'Memuat YOLOv8 ONNX…';
+    const metaRes = await fetch('./yolo_meta.json');
+    if (!metaRes.ok) throw new Error('yolo_meta.json belum tersedia');
+    yoloMeta = await metaRes.json();
+
+    ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 2);
+    yoloSession = await ort.InferenceSession.create('./aksara_yolo.onnx', {
+      executionProviders: ['wasm']
+    });
+
+    const m50 = yoloMeta.metrics && yoloMeta.metrics.map50 ? `${yoloMeta.metrics.map50}% mAP50` : '52 Kelas';
+    if (statusEl) statusEl.textContent = `YOLOv8 Siap · ${m50}`;
+    if (btnYolo) btnYolo.disabled = false;
+    setActiveEngine('yolo', false);
+    setupCorrectionModal();
+    if (sourceImage && !btnRun.disabled) executePipeline();
+  } catch (err) {
+    console.warn('YOLOv8 ONNX fallback ke SVM:', err);
+    if (statusEl) statusEl.textContent = 'SVM Aktif (ONNX opsional)';
+    if (btnYolo) btnYolo.disabled = true;
+  }
+}
+
+function updateModelBadge() {
+  if (activeEngine === 'yolo' && yoloMeta) {
+    const m50 = yoloMeta.metrics && yoloMeta.metrics.map50 ? `${yoloMeta.metrics.map50}% mAP50` : '52 Kelas';
+    modelBadge.textContent = `YOLOv8 · ${m50}`;
+    modelBadge.style.color = '#f0d48a';
+  } else if (model) {
+    modelBadge.textContent = `SVM Siap · ${model.accuracy}% Uji`;
+    modelBadge.style.color = 'var(--lontar)';
+  }
+}
+
+function setActiveEngine(mode, reRun = true) {
+  if (mode === 'yolo' && !yoloSession) {
+    alert('Model YOLOv8 ONNX belum siap atau halaman dibuka tanpa HTTP server.');
+    return;
+  }
+  activeEngine = mode;
+  const btnYolo = $('#btnEngineYolo');
+  const btnSvm = $('#btnEngineSvm');
+  const legend = $('#yoloLegend');
+  if (btnYolo) btnYolo.classList.toggle('active', mode === 'yolo');
+  if (btnSvm) btnSvm.classList.toggle('active', mode === 'svm');
+  if (legend) legend.hidden = (mode !== 'yolo');
+
+  updateModelBadge();
+  setupCorrectionModal();
+  if (reRun && sourceImage) executePipeline();
+}
+
+function yoloIoU(a, b) {
+  const ix0 = Math.max(a[0], b[0]), iy0 = Math.max(a[1], b[1]);
+  const ix1 = Math.min(a[2], b[2]), iy1 = Math.min(a[3], b[3]);
+  const iw = Math.max(0, ix1 - ix0), ih = Math.max(0, iy1 - iy0);
+  const inter = iw * ih;
+  if (inter <= 0) return 0;
+  const ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter;
+  return ua > 0 ? inter / ua : 0;
+}
+
+function yoloNms(candidates, sameCatIou = 0.42, crossCatIou = 0.72) {
+  candidates.sort((a, b) => b.confidence - a.confidence);
+  const kept = [];
+  for (const cand of candidates) {
+    let suppress = false;
+    for (const k of kept) {
+      const thr = cand.category === k.category ? sameCatIou : crossCatIou;
+      if (yoloIoU(cand.box, k.box) > thr) { suppress = true; break; }
+    }
+    if (!suppress) kept.push(cand);
+  }
+  return kept;
+}
+
+async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin) {
+  const imgsz = yoloMeta.imgsz || 416;
+  const off = document.createElement('canvas');
+  off.width = imgsz; off.height = imgsz;
+  const octx = off.getContext('2d', { willReadFrequently: true });
+
+  // Temukan kotak pembatas tinta bersih di ROI untuk membuang margin kosong besar
+  let minX = rx + w, minY = ry + h, maxX = rx, maxY = ry;
+  let inkFound = 0;
+  for (let yy = ry; yy < ry + h; yy++) {
+    const row = yy * CW;
+    for (let xx = rx; xx < rx + w; xx++) {
+      if (morphBin[row + xx]) {
+        inkFound++;
+        if (xx < minX) minX = xx;
+        if (xx > maxX) maxX = xx;
+        if (yy < minY) minY = yy;
+        if (yy > maxY) maxY = yy;
+      }
+    }
+  }
+
+  let baseX0 = rx, baseY0 = ry, baseX1 = rx + w, baseY1 = ry + h;
+  if (inkFound > 30) {
+    const pad = 36;
+    baseX0 = Math.max(0, minX - pad);
+    baseY0 = Math.max(0, minY - pad);
+    baseX1 = Math.min(CW, maxX + pad);
+    baseY1 = Math.min(CH, maxY + pad);
+  }
+
+  const bwArea = Math.max(1, baseX1 - baseX0);
+  const bhArea = Math.max(1, baseY1 - baseY0);
+  const tiles = [];
+
+  if (Math.max(bwArea, bhArea) <= 640) {
+    tiles.push([baseX0, baseY0, baseX1, baseY1]);
+  } else {
+    // Pecah area besar menjadi petak tumpang-tindih agar glif kecil tetap beresolusi optimal
+    const ts = 500;
+    const step = Math.round(ts * 0.72);
+    for (let ty = baseY0; ty < baseY1; ) {
+      const tyEnd = Math.min(baseY1, ty + ts);
+      const tyStart = (tyEnd === baseY1 && tyEnd - ty < ts * 0.5) ? Math.max(baseY0, tyEnd - ts) : ty;
+      for (let tx = baseX0; tx < baseX1; ) {
+        const txEnd = Math.min(baseX1, tx + ts);
+        const txStart = (txEnd === baseX1 && txEnd - tx < ts * 0.5) ? Math.max(baseX0, txEnd - ts) : tx;
+        tiles.push([txStart, tyStart, txEnd, tyEnd]);
+        if (txEnd >= baseX1) break;
+        tx += step;
+      }
+      if (tyEnd >= baseY1) break;
+      ty += step;
+      if (tiles.length >= 9) break;
+    }
+  }
+
+  const nc = yoloMeta.classes.length;
+  const confThr = yoloMeta.conf_thresh || 0.26;
+  const inpName = yoloSession.inputNames[0];
+  const plane = imgsz * imgsz;
+  const chw = new Float32Array(3 * plane);
+  const natScaleX = sourceImage.naturalWidth / CW;
+  const natScaleY = sourceImage.naturalHeight / CH;
+  const cands = [];
+
+  for (let tIdx = 0; tIdx < tiles.length; tIdx++) {
+    const [tx0, ty0, tx1, ty1] = tiles[tIdx];
+    const tw = Math.max(1, tx1 - tx0), th = Math.max(1, ty1 - ty0);
+    updateProgress(6, `Tahap 6 · Inferensi YOLOv8 ONNX (${tIdx + 1}/${tiles.length})…`);
+
+    octx.fillStyle = 'rgb(114, 114, 114)';
+    octx.fillRect(0, 0, imgsz, imgsz);
+    const scale = Math.min(imgsz / tw, imgsz / th);
+    const nw = Math.round(tw * scale), nh = Math.round(th * scale);
+    const padX = Math.floor((imgsz - nw) / 2), padY = Math.floor((imgsz - nh) / 2);
+
+    octx.drawImage(sourceImage, tx0 * natScaleX, ty0 * natScaleY, tw * natScaleX, th * natScaleY, padX, padY, nw, nh);
+    const rgba = octx.getImageData(0, 0, imgsz, imgsz).data;
+    for (let i = 0; i < plane; i++) {
+      const p = i * 4;
+      chw[i] = rgba[p] / 255.0;
+      chw[plane + i] = rgba[p + 1] / 255.0;
+      chw[2 * plane + i] = rgba[p + 2] / 255.0;
+    }
+
+    const tensor = new ort.Tensor('float32', chw, [1, 3, imgsz, imgsz]);
+    const results = await yoloSession.run({ [inpName]: tensor });
+    const outTensor = results[yoloSession.outputNames[0]];
+    const numAnchors = outTensor.dims[2];
+    const raw = outTensor.data;
+
+    for (let a = 0; a < numAnchors; a++) {
+      let bestCls = -1, bestScore = confThr;
+      for (let c = 0; c < nc; c++) {
+        const sc = raw[(4 + c) * numAnchors + a];
+        if (sc > bestScore) { bestScore = sc; bestCls = c; }
+      }
+      if (bestCls < 0) continue;
+
+      const cx = raw[a], cy = raw[numAnchors + a], bw = raw[2 * numAnchors + a], bh = raw[3 * numAnchors + a];
+      const x0 = Math.max(0, (cx - bw / 2 - padX) / scale + tx0);
+      const y0 = Math.max(0, (cy - bh / 2 - padY) / scale + ty0);
+      const x1 = Math.min(CW, (cx + bw / 2 - padX) / scale + tx0);
+      const y1 = Math.min(CH, (cy + bh / 2 - padY) / scale + ty0);
+      if (x1 - x0 < 3 || y1 - y0 < 3) continue;
+
+      if (sel) {
+        const gx = (x0 + x1) / 2, gy = (y0 + y1) / 2;
+        if (gx < sel.x0 || gx > sel.x1 || gy < sel.y0 || gy > sel.y1) continue;
+      }
+
+      const label = yoloMeta.classes[bestCls];
+      const category = yoloMeta.categories[bestCls];
+      cands.push({
+        classIdx: bestCls,
+        label,
+        category,
+        unicode: yoloMeta.unicode[label] || '',
+        confidence: bestScore,
+        isUncertain: bestScore < 0.45,
+        box: [Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1)]
+      });
+    }
+  }
+
+  let kept = yoloNms(cands, 0.42, 0.72);
+  kept.sort((a, b) => (a.box[1] - b.box[1]) || (a.box[0] - b.box[0]));
+
+  kept.forEach((det, idx) => {
+    det.index = idx;
+    const [bx0, by0, bx1, by1] = det.box;
+    const bw = Math.max(1, bx1 - bx0), bh = Math.max(1, by1 - by0);
+    const sz = model ? model.size : 96;
+    const norm = new Float32Array(sz * sz);
+    const sc = (sz - 16) / Math.max(bw, bh);
+    const nw2 = Math.max(1, Math.round(bw * sc)), nh2 = Math.max(1, Math.round(bh * sc));
+    const ox = Math.floor((sz - nw2) / 2), oy = Math.floor((sz - nh2) / 2);
+    for (let yy = 0; yy < nh2; yy++) {
+      const sy = Math.min(CH - 1, Math.max(0, by0 + Math.floor(yy / sc)));
+      for (let xx = 0; xx < nw2; xx++) {
+        const sx = Math.min(CW - 1, Math.max(0, bx0 + Math.floor(xx / sc)));
+        norm[(oy + yy) * sz + ox + xx] = morphBin[sy * CW + sx] ? 1 : 0;
+      }
+    }
+    det.normCanvas = norm;
+  });
+
+  currentDetections = kept;
+  if (window.AksaraOrthography) {
+    yoloReconstructed = window.AksaraOrthography.reconstructJavaneseText(kept);
+  } else {
+    yoloReconstructed = null;
+  }
+  cacheSvmMontage(kept, model ? model.size : 96);
+}
+
 function executePipeline(roi) {
-  if (!sourceImage || !model) return;
+  if (!sourceImage || (!model && !yoloSession)) return;
   btnRun.disabled = true;
   showScanFx(roi ? 'Memindai area pilihan…' : 'Menganalisis…');
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       const CW = mainCanvas.width;
       const CH = mainCanvas.height;
@@ -451,46 +715,57 @@ function executePipeline(roi) {
       const morphOn = $('#optMorph').checked;
       const morph = morphOn ? applyMorphology(filtered, w, h) : filtered;
       cacheLabStage('morphology', morph, w, h, 'bin');
-
-      // Tahap 5 & 6: Segmentasi Baris & Karakter
-      updateProgress(5, 'Tahap 5 & 6: Segmentasi Baris & Karakter (CCL)...');
-      const segments = segmentDocument(morph, w, h, roi ? Math.max(CW, CH) : 0);
-      cacheLabStage('segmentation', overlaySegmentation(morph, w, h, segments), w, h, 'bin');
-
-      // Tahap 7 & 8: Normalisasi 96x96 & SVM Linear
-      updateProgress(7, 'Tahap 7 & 8: Normalisasi Glif 96×96 & Klasifikasi SVM...');
-      let detections = [];
-      for (let i = 0; i < segments.length; i++) {
-        const seg = segments[i];
-        const norm = normCrop(seg.crop, seg.cw, seg.ch, model.size, model.inner);
-        if (norm) {
-          const smooth = model.blurSigma ? smoothFeatures(norm.out, model.size, model.blurSigma) : norm.out;
-          const res = classifyGlif(smooth, modelWeights, model);
-          detections.push({
-            ...res,
-            box: seg.box,
-            normCanvas: norm.out,
-            index: i
-          });
-        }
-      }
-
-      if (rx || ry) {
-        for (const d of detections) {
-          d.box = [d.box[0] + rx, d.box[1] + ry, d.box[2] + rx, d.box[3] + ry];
-        }
-      }
-      if (sel) {
-        // Hanya glif yang PUSATNYA di dalam seleksi asli yang dilaporkan.
-        detections = detections.filter(d => {
-          const cx = (d.box[0] + d.box[2]) / 2, cy = (d.box[1] + d.box[3]) / 2;
-          return cx >= sel.x0 && cx <= sel.x1 && cy >= sel.y0 && cy <= sel.y1;
-        });
-        detections.forEach((d, i) => { d.index = i; });
-      }
-      currentDetections = detections;
       labStages.binary = roiFullBin(morph, CW, CH, rx, ry, w, h);
-      cacheSvmMontage(detections, model.size);
+
+      if (activeEngine === 'yolo' && yoloSession) {
+        yoloReconstructed = null;
+        await executeYoloPipeline(CW, CH, rx, ry, w, h, sel, labStages.binary);
+        const segForLab = currentDetections.map(d => ({
+          box: [Math.max(0, d.box[0] - rx), Math.max(0, d.box[1] - ry), Math.min(w - 1, d.box[2] - rx), Math.min(h - 1, d.box[3] - ry)]
+        }));
+        cacheLabStage('segmentation', overlaySegmentation(morph, w, h, segForLab), w, h, 'bin');
+      } else {
+        yoloReconstructed = null;
+        // Tahap 5 & 6: Segmentasi Baris & Karakter
+        updateProgress(5, 'Tahap 5 & 6: Segmentasi Baris & Karakter (CCL)...');
+        const segments = segmentDocument(morph, w, h, roi ? Math.max(CW, CH) : 0);
+        cacheLabStage('segmentation', overlaySegmentation(morph, w, h, segments), w, h, 'bin');
+
+        // Tahap 7 & 8: Normalisasi 96x96 & SVM Linear
+        updateProgress(7, 'Tahap 7 & 8: Normalisasi Glif 96×96 & Klasifikasi SVM...');
+        let detections = [];
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          const norm = normCrop(seg.crop, seg.cw, seg.ch, model.size, model.inner);
+          if (norm) {
+            const smooth = model.blurSigma ? smoothFeatures(norm.out, model.size, model.blurSigma) : norm.out;
+            const res = classifyGlif(smooth, modelWeights, model);
+            detections.push({
+              ...res,
+              category: 'nglegena',
+              box: seg.box,
+              normCanvas: norm.out,
+              index: i
+            });
+          }
+        }
+
+        if (rx || ry) {
+          for (const d of detections) {
+            d.box = [d.box[0] + rx, d.box[1] + ry, d.box[2] + rx, d.box[3] + ry];
+          }
+        }
+        if (sel) {
+          // Hanya glif yang PUSATNYA di dalam seleksi asli yang dilaporkan.
+          detections = detections.filter(d => {
+            const cx = (d.box[0] + d.box[2]) / 2, cy = (d.box[1] + d.box[3]) / 2;
+            return cx >= sel.x0 && cx <= sel.x1 && cy >= sel.y0 && cy <= sel.y1;
+          });
+          detections.forEach((d, i) => { d.index = i; });
+        }
+        currentDetections = detections;
+        cacheSvmMontage(detections, model.size);
+      }
 
       // Selesai
       updateProgress(8, 'Selesai!');
@@ -506,6 +781,7 @@ function executePipeline(roi) {
       hideScanFx();
     } finally {
       btnRun.disabled = false;
+      updateModelBadge();
     }
   }, 40);
 }
@@ -1147,22 +1423,36 @@ function redrawMainCanvas() {
     mainCtx.drawImage(sourceImage, 0, 0, w, h);
   }
 
-  // Overlay Kotak Deteksi Karakter
+  // Overlay Kotak Deteksi Karakter (Berwarna per Kategori)
   if ($('#showBoxes').checked && currentDetections.length) {
     mainCtx.lineWidth = Math.max(1.5, w / 600);
-    mainCtx.font = `bold ${Math.max(12, Math.round(w / 75))}px 'Plus Jakarta Sans', sans-serif`;
+    mainCtx.font = `bold ${Math.max(11, Math.round(w / 80))}px 'Plus Jakarta Sans', sans-serif`;
 
-    currentDetections.forEach((det, idx) => {
+    currentDetections.forEach((det) => {
       const [x0, y0, x1, y1] = det.box;
       const bw = x1 - x0;
       const bh = y1 - y0;
 
-      mainCtx.strokeStyle = det.isUncertain ? '#d1563b' : '#c8963e';
+      let strokeCol = '#c8963e';
+      let tagBg = '#1f2a44';
+      if (det.isUncertain) {
+        strokeCol = '#d1563b';
+        tagBg = '#d1563b';
+      } else if (det.category === 'pasangan') {
+        strokeCol = '#5c8df6';
+        tagBg = '#284587';
+      } else if (det.category === 'sandhangan') {
+        strokeCol = '#e88c30';
+        tagBg = '#7c430d';
+      }
+
+      mainCtx.strokeStyle = strokeCol;
       mainCtx.strokeRect(x0, y0, bw, bh);
 
-      // Label mini di atas kotak
-      mainCtx.fillStyle = det.isUncertain ? '#d1563b' : '#1f2a44';
-      mainCtx.fillRect(x0, Math.max(0, y0 - 18), 34, 18);
+      // Label mini pas lebar teks di atas kotak
+      const tw = Math.ceil(mainCtx.measureText(det.label).width) + 8;
+      mainCtx.fillStyle = tagBg;
+      mainCtx.fillRect(x0, Math.max(0, y0 - 17), tw, 17);
       mainCtx.fillStyle = '#f4ead5';
       mainCtx.fillText(det.label, x0 + 4, Math.max(12, y0 - 4));
     });
@@ -1175,8 +1465,16 @@ function renderOutputs() {
     return;
   }
 
-  const javaneseText = currentDetections.map(d => d.unicode).join(' ');
-  const latinText = currentDetections.map(d => d.label).join(' ');
+  let javaneseText = '';
+  let latinText = '';
+  if (activeEngine === 'yolo' && yoloReconstructed) {
+    javaneseText = yoloReconstructed.unicodeText;
+    latinText = yoloReconstructed.latinText;
+  } else {
+    javaneseText = currentDetections.map(d => d.unicode).join(' ');
+    latinText = currentDetections.map(d => d.label).join(' ');
+  }
+
   const avgConf = Math.round(
     (currentDetections.reduce((a, b) => a + b.confidence, 0) / currentDetections.length) * 100
   );
@@ -1193,17 +1491,20 @@ function renderOutputs() {
   // Grid Karakter Glif
   const grid = $('#glyphsGrid');
   grid.replaceChildren();
+  const normSize = model ? model.size : 96;
 
   currentDetections.forEach((det, idx) => {
     const card = document.createElement('div');
     card.className = `glyph-card ${det.isUncertain ? 'uncertain' : ''}`;
     card.title = `Ketuk untuk mengoreksi aksara #${idx + 1}`;
+    if (det.category === 'pasangan') card.style.borderColor = '#5c8df6';
+    else if (det.category === 'sandhangan') card.style.borderColor = '#e88c30';
 
     const c = document.createElement('canvas');
-    c.width = model.size;
-    c.height = model.size;
+    c.width = normSize;
+    c.height = normSize;
     const ctx = c.getContext('2d');
-    const id = ctx.createImageData(model.size, model.size);
+    const id = ctx.createImageData(normSize, normSize);
     for (let i = 0, p = 0; i < det.normCanvas.length; i++, p += 4) {
       const v = det.normCanvas[i] ? 0 : 255;
       id.data[p] = v; id.data[p + 1] = v; id.data[p + 2] = v; id.data[p + 3] = 255;
@@ -1228,7 +1529,8 @@ function renderOutputs() {
   });
 }
 
-// Modal Koreksi Manual 20 Aksara
+// Modal Koreksi Manual (20 Nglegena di mode SVM; 52 Kelas di mode YOLOv8)
+let modalListenersBound = false;
 function setupCorrectionModal() {
   const modal = $('#correctionModal');
   modal.hidden = true;
@@ -1236,16 +1538,35 @@ function setupCorrectionModal() {
   const grid = $('#correctionGrid');
   grid.replaceChildren();
 
-  AKSARA_DATA.forEach(a => {
+  const items = [];
+  if (activeEngine === 'yolo' && yoloMeta) {
+    yoloMeta.classes.forEach((clsName, idx) => {
+      items.push({
+        latin: clsName,
+        unicode: yoloMeta.unicode[clsName] || '',
+        category: yoloMeta.categories[idx]
+      });
+    });
+  } else {
+    AKSARA_DATA.forEach(a => items.push({ latin: a.latin, unicode: a.unicode, category: 'nglegena' }));
+  }
+
+  items.forEach(a => {
     const btn = document.createElement('button');
     btn.className = 'correction-btn';
+    if (a.category === 'pasangan') btn.style.borderColor = 'rgba(92,141,246,0.45)';
+    else if (a.category === 'sandhangan') btn.style.borderColor = 'rgba(232,140,48,0.45)';
     btn.innerHTML = `<span class="aksara-glyph">${a.unicode}</span><span class="aksara-name">${a.latin}</span>`;
     btn.addEventListener('click', () => {
       if (selectedGlyphIndex >= 0 && selectedGlyphIndex < currentDetections.length) {
         currentDetections[selectedGlyphIndex].label = a.latin;
         currentDetections[selectedGlyphIndex].unicode = a.unicode;
+        currentDetections[selectedGlyphIndex].category = a.category;
         currentDetections[selectedGlyphIndex].confidence = 1.0;
         currentDetections[selectedGlyphIndex].isUncertain = false;
+        if (activeEngine === 'yolo' && window.AksaraOrthography) {
+          yoloReconstructed = window.AksaraOrthography.reconstructJavaneseText(currentDetections);
+        }
         renderOutputs();
         redrawMainCanvas();
       }
@@ -1254,8 +1575,11 @@ function setupCorrectionModal() {
     grid.append(btn);
   });
 
-  $('#closeModal').addEventListener('click', closeCorrectionModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeCorrectionModal(); });
+  if (!modalListenersBound) {
+    $('#closeModal').addEventListener('click', closeCorrectionModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeCorrectionModal(); });
+    modalListenersBound = true;
+  }
 }
 
 function closeCorrectionModal() {
@@ -1454,16 +1778,20 @@ function renderDictionary() {
 // Ekspor hasil deteksi sebagai JSON (PRD: Salin Unicode, Salin Latin, Unduh JSON).
 function downloadJson() {
   if (!currentDetections.length) return;
+  const isYolo = (activeEngine === 'yolo' && yoloMeta);
   const payload = {
     aplikasi: 'AksaraScan',
-    versi: '1.0.0',
+    versi: '2.0.0',
     sumber: lastSourceName || null,
-    model: { algoritma: 'SVM Linear OvR', jumlahKelas: model.classes.length, akurasiUji: model.accuracy },
+    model: isYolo
+      ? { algoritma: 'YOLOv8-Nano ONNX', jumlahKelas: yoloMeta.classes.length, mAP50: yoloMeta.metrics?.map50 ?? null }
+      : { algoritma: 'SVM Linear OvR', jumlahKelas: model.classes.length, akurasiUji: model.accuracy },
     rataRataKeyakinan: currentDetections.reduce((a, b) => a + b.confidence, 0) / currentDetections.length,
-    teksUnicode: currentDetections.map(d => d.unicode).join(' '),
-    transliterasiLatin: currentDetections.map(d => d.label).join(' '),
+    teksUnicode: $('#outJavanese').textContent,
+    transliterasiLatin: $('#outLatin').textContent,
     deteksi: currentDetections.map(d => ({
       index: d.index + 1,
+      kategori: d.category || 'nglegena',
       label: d.label,
       unicode: d.unicode,
       confidence: d.confidence,

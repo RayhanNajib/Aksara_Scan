@@ -256,8 +256,103 @@ main {
 
 .demo-strip__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+}
+
+@media (max-width: 1120px) {
+  .demo-strip__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Pengalih Mode Mesin (Engine v2.0 YOLOv8 vs v1.0 SVM Klasik) */
+.engine-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin: 14px 0 10px;
+}
+
+.engine-bar__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--prada);
+}
+
+.engine-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.engine-btn {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-dim);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.engine-btn b {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-main);
+}
+
+.engine-btn span {
+  display: block;
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  opacity: 0.85;
+}
+
+.engine-btn.active {
+  background: var(--wulung);
+  border-color: var(--prada);
+  color: #f4ead5;
+}
+
+.engine-btn.active b {
+  color: #f4ead5;
+}
+
+.engine-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.legend-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 4px;
 }
 
 .demo-card {
