@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5BC78"/>
+      <stop offset="100%" stop-color="#C8963E"/>
+    </linearGradient>
+  </defs>
+  <rect x="5" y="5" width="90" height="90" rx="20" fill="#1A2030" stroke="#C8963E" stroke-width="3.5"/>
+  <!-- Scanner viewfinder corners -->
+  <path d="M 16 30 L 16 16 L 30 16" fill="none" stroke="#E5BC78" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 84 30 L 84 16 L 70 16" fill="none" stroke="#E5BC78" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 16 70 L 16 84 L 30 84" fill="none" stroke="#E5BC78" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 84 70 L 84 84 L 70 84" fill="none" stroke="#E5BC78" stroke-width="3" stroke-linecap="round"/>
+  <!-- Aksara Jawa Glyph Ha -->
+  <text x="50" y="65" font-family="'Javanese Text', 'Noto Sans Javanese', 'Segoe UI Historic', serif" font-size="44" font-weight="bold" fill="url(#goldGrad)" text-anchor="middle">ꦲ</text>
+</svg>

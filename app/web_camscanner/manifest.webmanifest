@@ -1,21 +1,26 @@
 {
-  "name": "AksaraScan — Pemindai Aksara Jawa",
+  "name": "AksaraScan",
   "short_name": "AksaraScan",
-  "description": "Pemindai Aksara Jawa Berbasis Web dengan Segmentasi Spasial, Morfologi, dan SVM Linear",
+  "description": "Pemindai Aksara Jawa Berbasis Web dengan Dual Engine YOLOv8 dan Morfologi Citra SVM",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1F2A44",
   "theme_color": "#C8963E",
   "icons": [
     {
-      "src": "./sample_2.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./sample_2.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }
