@@ -1,6 +1,9 @@
 {
   "outputDirectory": "app/web_camscanner",
   "framework": null,
+  "rewrites": [
+    { "source": "/app/web_camscanner/(.*)", "destination": "/$1" }
+  ],
   "headers": [
     {
       "source": "/sw.js",
