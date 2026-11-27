@@ -65,3 +65,21 @@ Dokumen ini merangkum seluruh sumber dataset citra, korpus teks/kamus Jawa-Indon
 - **`ultralytics` (saat ini `8.4.218`)**: berlisensi **AGPL-3.0** — memicu kewajiban *copyleft* AGPL terhadap aplikasi web/model bila didistribusikan di luar lisensi Enterprise.
 - **RT-DETRv2 / D-FINE (via PyTorch / Hugging Face `transformers`)**: kode berlisensi **Apache-2.0**, arsitektur *anchor-free & NMS-free* (menghilangkan masalah NMS antara *nglegena* vs *pasangan* yang bertumpuk!), mendukung ekspor langsung ke ONNX.
 - **YOLOX (Megvii / Apache-2.0)**: desain *anchor-free decoupled head* berlisensi **Apache-2.0**, bobot ringan (`YOLOX-Nano` / `YOLOX-Tiny` / `YOLOX-S`) kompatibel luas dengan `onnxruntime-web`.
+
+---
+
+## 5. Referensi Teori & Repositori Praproses Lanjutan, Penolak Teks Latin, & Pencocokan Referensi (v4.0)
+
+Untuk menjawab keluhan deteksi aksara pada foto buram, latar garis tembok/buku tulis, tinta pulpen berwarna, variasi lengkungan penulis, serta penyaringan teks Latin/non-aksara, arsitektur v4.0 merujuk teori dan repositori terbuka berikut:
+
+1. **Penghapusan Garis Buku/Tembok & Koreksi Ambang pada Goresan Melengkung**:
+   - **Tanaka et al. (ICDAR)** — *"Threshold Correction of Document Image Binarization for Ruled-line Extraction"*: mengoreksi binerisasi lokal (Sauvola) menggunakan fitur kelurusan lokal sehingga garis lurus (buku/tembok) dapat dilemahkan tanpa memutus lengkungan glif.
+   - **Gold & Zesch** — *"CNN-Based Ruled Line Removal in Handwritten Documents"* ([catalpa-cl/ruled-line-removal-in-handwritten-documents](https://github.com/catalpa-cl/ruled-line-removal-in-handwritten-documents)).
+   - **Morphological Top-Hat / Bottom-Hat + Binerisasi Adaptif Dokumen**: [rixmape/binarize-architectural-drawings](https://github.com/rixmape/binarize-architectural-drawings) & [opensuh/DocumentBinarization](https://github.com/opensuh/DocumentBinarization).
+2. **Pemisahan Tinta Multi-Warna (*Colored Pen Separation*)**:
+   - Transformasi ruang warna **CIELAB** (`L*, a*, b*`) dan jarak warna kromatik (`ΔE` terhadap estimasi latar kertas dominan) memisahkan tinta pulpen biru/merah/hijau serta pensil tipis dari latar kertas kuning, noda, atau bayangan bergradien lebih andal ketimbang konversi gray-luminance polos.
+3. **Pemisahan Skrip Latin vs Jawa & Penolakan Non-Teks**:
+   - **Epshtein, Ofek, & Wexler (CVPR 2010)** — *"Detecting Text in Natural Scenes with Stroke Width Transform (SWT)"* ([mypetyak/StrokeWidthTransform](https://github.com/mypetyak/StrokeWidthTransform)): menganalisis konsistensi ketebalan goresan lokal (*stroke width consistency*) untuk membedakan aksara vs retakan tembok/garis pinggir.
+   - **Identifikasi Skrip Multi-Aksara & Hard Negative Mining**: merujuk [google-research/nisaba](https://github.com/google-research/nisaba) (keluarga skrip turunan Brāhmī) + pelatihan contoh campuran Latin-Jawa beranotasi selektif & patch penolak `non_aksara_distractors` di Stage-2 Metric Verifier.
+4. **Invariansi Lengkungan (*Elastic Deformation*) & Pencocokan Prototipe**:
+   - **Thin-Plate Spline (TPS) Spatial Perturbation**: memodelkan variasi lengkungan goresan non-rigid antar penulis saat pelatihan agar detektor dan embedding Stage-2 (*MobileNetV3 + ArcFace / Cosine Prototype Matching*) toleran terhadap pergeseran lekuk huruf tanpa "asal mirip".

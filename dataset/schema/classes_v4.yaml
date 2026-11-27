@@ -1,0 +1,111 @@
+# AksaraScan v4.0 — Skema Kelas Kanonik Bertingkat (`dataset/schema/classes_v4.yaml`)
+# Tervalidasi terhadap blok Unicode Javanese (U+A980..U+A9DF).
+# Aturan aktivasi Tier 2 & Tier 3: wajib memiliki >= 100 kotak nyata teranotasi
+# dari >= 5 penulis/cluster independen sebelum diaktifkan sebagai kelas deteksi.
+
+version: "4.0.0-draft"
+unicode_block: "U+A980..U+A9DF"
+activation_policy:
+  min_real_boxes: 100
+  min_writers_or_clusters: 5
+  rule: "Kelas Tier 2/3 yang belum memenuhi ambang tetap berstatus deferred agar detektor tidak melatih kelas hantu atau mengandalkan sintetis sepihak."
+
+# Tier 1: 55 kelas inti kompatibel v2.5 / v3.1 (AKTIF)
+tier1_active:
+  - { id: 0,  name: "ha",         unicode: "\uA9B2", category: "nglegena",   position: "base" }
+  - { id: 1,  name: "na",         unicode: "\uA9A4", category: "nglegena",   position: "base" }
+  - { id: 2,  name: "ca",         unicode: "\uA995", category: "nglegena",   position: "base" }
+  - { id: 3,  name: "ra",         unicode: "\uA9AB", category: "nglegena",   position: "base" }
+  - { id: 4,  name: "ka",         unicode: "\uA98F", category: "nglegena",   position: "base" }
+  - { id: 5,  name: "da",         unicode: "\uA9A2", category: "nglegena",   position: "base" }
+  - { id: 6,  name: "ta",         unicode: "\uA9A0", category: "nglegena",   position: "base" }
+  - { id: 7,  name: "sa",         unicode: "\uA9B1", category: "nglegena",   position: "base" }
+  - { id: 8,  name: "wa",         unicode: "\uA9AE", category: "nglegena",   position: "base" }
+  - { id: 9,  name: "la",         unicode: "\uA9AD", category: "nglegena",   position: "base" }
+  - { id: 10, name: "pa",         unicode: "\uA9A5", category: "nglegena",   position: "base" }
+  - { id: 11, name: "dha",        unicode: "\uA99D", category: "nglegena",   position: "base" }
+  - { id: 12, name: "ja",         unicode: "\uA997", category: "nglegena",   position: "base" }
+  - { id: 13, name: "ya",         unicode: "\uA9AA", category: "nglegena",   position: "base" }
+  - { id: 14, name: "nya",        unicode: "\uA99A", category: "nglegena",   position: "base" }
+  - { id: 15, name: "ma",         unicode: "\uA9A9", category: "nglegena",   position: "base" }
+  - { id: 16, name: "ga",         unicode: "\uA992", category: "nglegena",   position: "base" }
+  - { id: 17, name: "ba",         unicode: "\uA9A7", category: "nglegena",   position: "base" }
+  - { id: 18, name: "tha",        unicode: "\uA99B", category: "nglegena",   position: "base" }
+  - { id: 19, name: "nga",        unicode: "\uA994", category: "nglegena",   position: "base" }
+  - { id: 20, name: "p_ha",       unicode: "\uA9C0\uA9B2", category: "pasangan", position: "pasangan_right" }
+  - { id: 21, name: "p_na",       unicode: "\uA9C0\uA9A4", category: "pasangan", position: "pasangan_below" }
+  - { id: 22, name: "p_ca",       unicode: "\uA9C0\uA995", category: "pasangan", position: "pasangan_below" }
+  - { id: 23, name: "p_ra",       unicode: "\uA9C0\uA9AB", category: "pasangan", position: "pasangan_below" }
+  - { id: 24, name: "p_ka",       unicode: "\uA9C0\uA98F", category: "pasangan", position: "pasangan_below" }
+  - { id: 25, name: "p_da",       unicode: "\uA9C0\uA9A2", category: "pasangan", position: "pasangan_below" }
+  - { id: 26, name: "p_ta",       unicode: "\uA9C0\uA9A0", category: "pasangan", position: "pasangan_below" }
+  - { id: 27, name: "p_sa",       unicode: "\uA9C0\uA9B1", category: "pasangan", position: "pasangan_right" }
+  - { id: 28, name: "p_wa",       unicode: "\uA9C0\uA9AE", category: "pasangan", position: "pasangan_below" }
+  - { id: 29, name: "p_la",       unicode: "\uA9C0\uA9AD", category: "pasangan", position: "pasangan_below" }
+  - { id: 30, name: "p_pa",       unicode: "\uA9C0\uA9A5", category: "pasangan", position: "pasangan_right" }
+  - { id: 31, name: "p_dha",      unicode: "\uA9C0\uA99D", category: "pasangan", position: "pasangan_below" }
+  - { id: 32, name: "p_ja",       unicode: "\uA9C0\uA997", category: "pasangan", position: "pasangan_below" }
+  - { id: 33, name: "p_ya",       unicode: "\uA9C0\uA9AA", category: "pasangan", position: "pasangan_below" }
+  - { id: 34, name: "p_nya",      unicode: "\uA9C0\uA99A", category: "pasangan", position: "pasangan_below" }
+  - { id: 35, name: "p_ma",       unicode: "\uA9C0\uA9A9", category: "pasangan", position: "pasangan_below" }
+  - { id: 36, name: "p_ga",       unicode: "\uA9C0\uA992", category: "pasangan", position: "pasangan_below" }
+  - { id: 37, name: "p_ba",       unicode: "\uA9C0\uA9A7", category: "pasangan", position: "pasangan_below" }
+  - { id: 38, name: "p_tha",      unicode: "\uA9C0\uA99B", category: "pasangan", position: "pasangan_below" }
+  - { id: 39, name: "p_nga",      unicode: "\uA9C0\uA994", category: "pasangan", position: "pasangan_below" }
+  - { id: 40, name: "wulu",       unicode: "\uA9B6", category: "sandhangan", position: "above" }
+  - { id: 41, name: "suku",       unicode: "\uA9B8", category: "sandhangan", position: "below" }
+  - { id: 42, name: "pepet",      unicode: "\uA9BC", category: "sandhangan", position: "above" }
+  - { id: 43, name: "taling",     unicode: "\uA9BA", category: "sandhangan", position: "left" }
+  - { id: 44, name: "tarung",     unicode: "\uA9B4", category: "sandhangan", position: "right" }
+  - { id: 45, name: "layar",      unicode: "\uA982", category: "sandhangan", position: "above" }
+  - { id: 46, name: "cecak",      unicode: "\uA981", category: "sandhangan", position: "above" }
+  - { id: 47, name: "wignyan",    unicode: "\uA983", category: "sandhangan", position: "right" }
+  - { id: 48, name: "pangkon",    unicode: "\uA9C0", category: "sandhangan", position: "right" }
+  - { id: 49, name: "cakra",      unicode: "\uA9BF", category: "sandhangan", position: "below" }
+  - { id: 50, name: "keret",      unicode: "\uA9BD", category: "sandhangan", position: "below" }
+  - { id: 51, name: "pengkal",    unicode: "\uA9BE", category: "sandhangan", position: "right" }
+  - { id: 52, name: "pada_adeg",  unicode: "\uA9CB", category: "pada",       position: "pada" }
+  - { id: 53, name: "pada_lingsa",unicode: "\uA9C8", category: "pada",       position: "pada" }
+  - { id: 54, name: "pada_lungsi",unicode: "\uA9C9", category: "pada",       position: "pada" }
+
+# Tier 2: Vokal khusus, Swara mandiri, Rekan, & Angka Jawa (siap diaktifkan jika memenuhi ambang)
+tier2_deferred:
+  - { name: "pa_cerek",  unicode: "\uA989", category: "vokal_khusus", position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "nga_lelet", unicode: "\uA98A", category: "vokal_khusus", position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "swara_a",   unicode: "\uA984", category: "swara",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "swara_i",   unicode: "\uA986", category: "swara",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "swara_u",   unicode: "\uA988", category: "swara",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "swara_e",   unicode: "\uA98C", category: "swara",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "swara_o",   unicode: "\uA98E", category: "swara",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "cecak_telu",unicode: "\uA9B3", category: "rekan",        position: "above",status: "deferred_insufficient_real_writers" }
+  - { name: "angka_0",   unicode: "\uA9D0", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_1",   unicode: "\uA9D1", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_2",   unicode: "\uA9D2", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_3",   unicode: "\uA9D3", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_4",   unicode: "\uA9D4", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_5",   unicode: "\uA9D5", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_6",   unicode: "\uA9D6", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_7",   unicode: "\uA9D7", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "angka_8",   unicode: "\uA9D8", category: "angka",        position: "base", status: "deferred_insufficient_real_writers" }
+  - { id_note: "pada_pangkat disiapkan utk pembatas angka", name: "angka_9", unicode: "\uA9D9", category: "angka", position: "base", status: "deferred_insufficient_real_writers" }
+
+# Tier 3: Seluruh 9 Aksara Murda Unicode + Da Mahaprana (112x muncul di setilanaji)
+tier3_deferred:
+  - { name: "m_ka",        unicode: "\uA991", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_ga",        unicode: "\uA993", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_ca",        unicode: "\uA996", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_nya",       unicode: "\uA998", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_na",        unicode: "\uA99F", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_ta",        unicode: "\uA9A1", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_pa",        unicode: "\uA9A6", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_ba",        unicode: "\uA9A8", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "m_sa",        unicode: "\uA9AF", category: "murda",     position: "base", status: "deferred_insufficient_real_writers" }
+  - { name: "da_mahaprana",unicode: "\uA9A3", category: "mahaprana", position: "base", status: "deferred_insufficient_real_writers" }
+
+# Kelas penolak Stage-2 & latar belakang murni detektor (TIDAK diberi kotak YOLO; melatih Stage-2 agar menolak bukan-aksara)
+non_aksara_distractors:
+  - "latin_printed"
+  - "latin_handwritten"
+  - "digits_latin"
+  - "ruled_or_wall_lines"
+  - "paper_stain_or_crease"
