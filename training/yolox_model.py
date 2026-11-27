@@ -461,6 +461,16 @@ def compute_yolox_loss(raw, grids, strides, targets_list, num_classes=55, label_
             bce_cls = bce_cls * w_m
         total_cls = total_cls + bce_cls.sum()
 
+    if num_fg == 0:
+        neg_denom = max(16.0, float(B) * 16.0)
+        obj_loss = total_obj / neg_denom if torch.is_tensor(total_obj) else raw.sum() * 0.0
+        return obj_loss, {
+            "reg": 0.0,
+            "obj": float(obj_loss.detach()),
+            "cls": 0.0,
+            "fg": 0,
+        }
+
     denom = max(1, num_fg)
     return (total_reg + total_obj + total_cls) / denom, {
         "reg": float(total_reg.detach() / denom) if torch.is_tensor(total_reg) else 0.0,

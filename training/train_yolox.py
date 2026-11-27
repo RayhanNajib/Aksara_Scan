@@ -42,15 +42,18 @@ def set_seed(seed):
 
 
 class MultiSourceYoloDataset(Dataset):
-    """Dataset loader terpadu membaca folder YOLO standar dan/atau manifes JSONL real_train/real_val."""
+    """Dataset loader terpadu membaca manifes JSONL v4 (termasuk negatif murni 0-box) & folder YOLO standar."""
 
-    def __init__(self, sources, split="train", imgsz=960, augment=True, mosaic_prob=0.15, multi_scale=True):
+    def __init__(self, sources, split="train", imgsz=640, augment=True, mosaic_prob=0.15, multi_scale=True, allow_empty=True):
         self.imgsz = imgsz
         self.augment = augment
         self.mosaic_prob = mosaic_prob
         self.multi_scale = multi_scale
-        self.samples = []  # list of (img_path, [(cid, xc, yc, bw, bh), ...])
+        self.allow_empty = allow_empty
+        self.samples = []  # list of (img_path, [(cid, xc, yc, bw, bh), ...], source_tag)
         self.class_counts = Counter()
+        self.neg_count = 0
+        self.source_counts = Counter()
 
         for src in sources:
             src_abs = src if os.path.isabs(src) else os.path.join(ROOT_DIR, src)
@@ -60,24 +63,40 @@ class MultiSourceYoloDataset(Dataset):
                         if not line.strip():
                             continue
                         r = json.loads(line)
+                        if "split" in r and r.get("split") != split:
+                            continue
+                        if r.get("qa_status") == "reject":
+                            continue
                         ip = r["image"] if os.path.isabs(r["image"]) else os.path.join(ROOT_DIR, r["image"])
+                        if not os.path.exists(ip):
+                            continue
                         lp = r.get("label")
                         if lp:
                             lp = lp if os.path.isabs(lp) else os.path.join(ROOT_DIR, lp)
                         boxes = []
-                        if r.get("boxes") and isinstance(r["boxes"][0], dict) and "bbox" in r["boxes"][0]:
+                        if "boxes" in r and isinstance(r["boxes"], list):
                             for b in r["boxes"]:
-                                boxes.append((int(b["cid"]), *map(float, b["bbox"])))
+                                if isinstance(b, dict) and "bbox" in b and "cid" in b:
+                                    cid = int(b["cid"])
+                                    if 0 <= cid < len(CLASSES_55):
+                                        boxes.append((cid, *map(float, b["bbox"])))
                         elif lp and os.path.exists(lp):
                             with open(lp, "r", encoding="utf-8") as lf:
                                 for ln in lf:
                                     ps = ln.strip().split()
                                     if len(ps) >= 5:
-                                        boxes.append((int(float(ps[0])), *map(float, ps[1:5])))
-                        if boxes and os.path.exists(ip):
-                            self.samples.append((ip, boxes))
-                            for b in boxes:
-                                self.class_counts[b[0]] += 1
+                                        cid = int(float(ps[0]))
+                                        if 0 <= cid < len(CLASSES_55):
+                                            boxes.append((cid, *map(float, ps[1:5])))
+                        if boxes or self.allow_empty:
+                            tag = str(r.get("source") or os.path.basename(src_abs))
+                            self.samples.append((ip, boxes, tag))
+                            self.source_counts[tag] += 1
+                            if boxes:
+                                for b in boxes:
+                                    self.class_counts[b[0]] += 1
+                            else:
+                                self.neg_count += 1
             elif os.path.isdir(src_abs):
                 idx_dedup = os.path.join(src_abs, "index_deduped.jsonl")
                 if os.path.exists(idx_dedup):
@@ -89,40 +108,55 @@ class MultiSourceYoloDataset(Dataset):
                             if r.get("split") != split:
                                 continue
                             ip = os.path.join(ROOT_DIR, r["image"])
-                            boxes = [(int(b["cid"]), *map(float, b["bbox"])) for b in r.get("boxes", [])]
-                            if boxes and os.path.exists(ip):
-                                self.samples.append((ip, boxes))
-                                for b in boxes:
-                                    self.class_counts[b[0]] += 1
+                            if not os.path.exists(ip):
+                                continue
+                            boxes = [(int(b["cid"]), *map(float, b["bbox"])) for b in r.get("boxes", []) if 0 <= int(b["cid"]) < len(CLASSES_55)]
+                            if boxes or self.allow_empty:
+                                tag = os.path.basename(src_abs)
+                                self.samples.append((ip, boxes, tag))
+                                self.source_counts[tag] += 1
+                                if boxes:
+                                    for b in boxes:
+                                        self.class_counts[b[0]] += 1
+                                else:
+                                    self.neg_count += 1
                 else:
                     idir = os.path.join(src_abs, "images", split)
                     ldir = os.path.join(src_abs, "labels", split)
                     if os.path.isdir(idir):
+                        tag = os.path.basename(src_abs)
                         for fn in sorted(os.listdir(idir)):
                             if not fn.lower().endswith((".jpg", ".jpeg", ".png")):
                                 continue
                             stem = os.path.splitext(fn)[0]
                             ip = os.path.join(idir, fn)
                             lp = os.path.join(ldir, stem + ".txt")
-                            if not os.path.exists(lp):
-                                continue
                             boxes = []
-                            with open(lp, "r", encoding="utf-8") as lf:
-                                for ln in lf:
-                                    ps = ln.strip().split()
-                                    if len(ps) >= 5:
-                                        boxes.append((int(float(ps[0])), *map(float, ps[1:5])))
-                            if boxes:
-                                self.samples.append((ip, boxes))
-                                for b in boxes:
-                                    self.class_counts[b[0]] += 1
+                            if os.path.exists(lp):
+                                with open(lp, "r", encoding="utf-8") as lf:
+                                    for ln in lf:
+                                        ps = ln.strip().split()
+                                        if len(ps) >= 5:
+                                            cid = int(float(ps[0]))
+                                            if 0 <= cid < len(CLASSES_55):
+                                                boxes.append((cid, *map(float, ps[1:5])))
+                            if boxes or self.allow_empty:
+                                self.samples.append((ip, boxes, tag))
+                                self.source_counts[tag] += 1
+                                if boxes:
+                                    for b in boxes:
+                                        self.class_counts[b[0]] += 1
+                                else:
+                                    self.neg_count += 1
 
     def __len__(self):
         return len(self.samples)
 
     def _load_letterboxed(self, idx, target_sz):
-        ip, boxes = self.samples[idx]
+        ip, boxes, _tag = self.samples[idx]
         bgr = cv2.imread(ip)
+        if bgr is None:
+            bgr = np.full((target_sz, target_sz, 3), 240, dtype=np.uint8)
         rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         ih, iw = rgb.shape[:2]
 
@@ -147,11 +181,18 @@ class MultiSourceYoloDataset(Dataset):
                 abs_boxes.append([cid, cx_px, cy_px, bw_px, bh_px])
 
         if self.augment:
-            # Brightness/contrast/HSV ringan; TANPA fliplr/flipud!
+            # Photometric + defocus ringan; TANPA fliplr/flipud!
             if random.random() < 0.5:
-                alpha = random.uniform(0.82, 1.18)
-                beta = random.uniform(-18, 18)
+                alpha = random.uniform(0.80, 1.20)
+                beta = random.uniform(-20, 20)
                 canvas = np.clip(canvas.astype(np.float32) * alpha + beta, 0, 255).astype(np.uint8)
+            if random.random() < 0.25:
+                # Pergeseran kanal warna pena (biru/merah/gelap)
+                tint = np.array([random.uniform(0.88, 1.12) for _ in range(3)], dtype=np.float32)
+                canvas = np.clip(canvas.astype(np.float32) * tint, 0, 255).astype(np.uint8)
+            if random.random() < 0.15:
+                k = random.choice([3, 5])
+                canvas = cv2.GaussianBlur(canvas, (k, k), random.uniform(0.4, 1.1))
             if random.random() < 0.4 and abs_boxes:
                 ang = random.uniform(-4.0, 4.0)
                 sh = random.uniform(-2.0, 2.0)
@@ -242,48 +283,94 @@ def quantize_onnx_int8_with_gate(fp32_onnx, int8_onnx):
 
 
 def export_onnx_fp16(fp32_onnx, fp16_onnx, imgsz):
-    """Konversi bobot ONNX ke FP16 dengan tipe IO tetap FP32 (< 20 MB untuk browser ORT-WASM)."""
+    """Simpan bobot ONNX besar dalam FLOAT16 + Cast FLOAT32 (< 20 MB & 100% kompatibel ORT-Web WASM)."""
     try:
         import onnx
-        from onnxconverter_common import float16
-        model_fp32 = onnx.load(fp32_onnx)
-        model_fp16 = float16.convert_float_to_float16(model_fp32, keep_io_types=True)
-        onnx.save(model_fp16, fp16_onnx)
+        from onnx import TensorProto, helper, numpy_helper
+
+        model = onnx.load(fp32_onnx)
+        graph = model.graph
+        new_inits = []
+        cast_nodes = []
+        for init in graph.initializer:
+            arr = numpy_helper.to_array(init)
+            if init.data_type == TensorProto.FLOAT and arr.size >= 16:
+                fp16_name = init.name + "__fp16_store"
+                new_inits.append(numpy_helper.from_array(arr.astype(np.float16), name=fp16_name))
+                cast_nodes.append(helper.make_node("Cast", inputs=[fp16_name], outputs=[init.name], to=TensorProto.FLOAT))
+            else:
+                new_inits.append(init)
+        del graph.initializer[:]
+        graph.initializer.extend(new_inits)
+        for n in reversed(cast_nodes):
+            graph.node.insert(0, n)
+        onnx.save(model, fp16_onnx)
+
         sz_mb = os.path.getsize(fp16_onnx) / (1024 * 1024)
         s32 = ort.InferenceSession(fp32_onnx, providers=["CPUExecutionProvider"])
         s16 = ort.InferenceSession(fp16_onnx, providers=["CPUExecutionProvider"])
         inp = np.random.RandomState(42).rand(1, 3, imgsz, imgsz).astype(np.float32)
         diff = float(np.max(np.abs(s32.run(None, {"images": inp})[0] - s16.run(None, {"images": inp})[0])))
-        print(f"[EXPORT FP16] {fp16_onnx} ({sz_mb:.2f} MB) | max |FP32 - FP16| = {diff:.2e}")
+        print(f"[EXPORT FP16-WEIGHTS] {fp16_onnx} ({sz_mb:.2f} MB) | max |FP32 - FP16| = {diff:.2e}")
         return sz_mb
     except Exception as e:
         print(f"[WARN FP16] Konversi FP16 gagal ({e})")
         return None
 
 
+def _source_curriculum_mult(tag, is_neg, stage):
+    t = tag.lower()
+    if is_neg:
+        return 1.5 if stage >= 2 else 1.2
+    if stage == 1:
+        if "synth" in t or "syllable" in t:
+            return 1.6
+        if "teacher" in t:
+            return 2.0
+        return 0.9
+    if "teacher" in t:
+        return 2.5
+    if "syllable" in t:
+        return 2.0
+    if "hanacaraka" in t:
+        return 1.8
+    if "synth" in t:
+        return 0.75
+    return 1.0
+
+
 def train(args):
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
-    print(f"[YOLOX TRAIN] variant={args.variant} | use_p2={args.use_p2} | imgsz={args.imgsz} | stage={args.stage} | seed={args.seed} | device={device}")
+    use_amp = bool(args.amp and device.type == "cuda")
+    use_p2 = not args.no_p2
+    print(f"[YOLOX TRAIN] variant={args.variant} | use_p2={use_p2} | imgsz={args.imgsz} | stage={args.stage} | seed={args.seed} | device={device} | amp={use_amp}")
 
-    train_ds = MultiSourceYoloDataset(args.train_sources, split="train", imgsz=args.imgsz, augment=True, mosaic_prob=args.mosaic, multi_scale=True)
-    val_ds = MultiSourceYoloDataset(args.val_sources, split="val", imgsz=args.imgsz, augment=False, mosaic_prob=0.0, multi_scale=False)
-    print(f"  Samples: train={len(train_ds)} | val={len(val_ds)}")
+    train_ds = MultiSourceYoloDataset(
+        args.train_sources, split="train", imgsz=args.imgsz,
+        augment=True, mosaic_prob=args.mosaic, multi_scale=True, allow_empty=args.allow_empty_negatives
+    )
+    val_ds = MultiSourceYoloDataset(
+        args.val_sources, split="val", imgsz=args.imgsz,
+        augment=False, mosaic_prob=0.0, multi_scale=False, allow_empty=args.allow_empty_negatives
+    )
+    print(f"  Samples: train={len(train_ds)} (neg={train_ds.neg_count}) | val={len(val_ds)} (neg={val_ds.neg_count})")
+    print(f"  Sources train={dict(train_ds.source_counts)}")
     if len(train_ds) == 0:
         raise RuntimeError("Dataset latih kosong!")
 
-    # Sample weight per gambar agar kelas langka (sandhangan/pasangan) terwakili seimbang
+    # Sample weight per gambar: balance kelas langka + negatif murni + bobot kurikulum stage
     cls_w = build_class_weights(train_ds.class_counts, num_classes=len(CLASSES_55)).to(device)
     sample_weights = []
-    for _, boxes in train_ds.samples:
-        w = max(float(cls_w[b[0]].item()) for b in boxes)
-        sample_weights.append(w)
+    for _, boxes, tag in train_ds.samples:
+        base_w = max(float(cls_w[b[0]].item()) for b in boxes) if boxes else 1.0
+        sample_weights.append(base_w * _source_curriculum_mult(tag, not bool(boxes), args.stage))
     sampler = WeightedRandomSampler(sample_weights, num_samples=len(train_ds), replacement=True)
 
     train_loader = DataLoader(train_ds, batch_size=args.batch, sampler=sampler, collate_fn=collate_fn, num_workers=args.workers)
     val_loader = DataLoader(val_ds, batch_size=args.batch, shuffle=False, collate_fn=collate_fn, num_workers=args.workers) if len(val_ds) > 0 else None
 
-    model = AksaraYOLOX(num_classes=len(CLASSES_55), variant=args.variant, use_p2=args.use_p2).to(device)
+    model = AksaraYOLOX(num_classes=len(CLASSES_55), variant=args.variant, use_p2=use_p2).to(device)
     if args.resume and os.path.exists(args.resume):
         ckpt = torch.load(args.resume, map_location=device)
         state = ckpt.get("model", ckpt)
@@ -292,41 +379,56 @@ def train(args):
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr0, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max(1, args.epochs), eta_min=args.lr0 * 0.05)
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp) if use_amp else None
 
     out_dir = args.out_dir if os.path.isabs(args.out_dir) else os.path.join(ROOT_DIR, args.out_dir)
     os.makedirs(out_dir, exist_ok=True)
     best_val_loss = float("inf")
     best_ckpt = os.path.join(out_dir, f"{args.variant}_img{args.imgsz}_s{args.seed}_best.pt")
+    history = []
 
     for ep in range(1, args.epochs + 1):
         # Close mosaic pada close_mosaic epoch terakhir (Fase 3b/6)
-        if ep > max(1, args.epochs - args.close_mosaic):
+        if ep > max(1, args.epochs - args.close_mosaic) and args.epochs > args.close_mosaic:
             train_ds.mosaic_prob = 0.0
 
         model.train()
         model.export_onnx = False
-        tr_loss_acc = 0.0
+        tr_loss_acc, tr_reg_acc, tr_obj_acc, tr_cls_acc = 0.0, 0.0, 0.0, 0.0
+        n_tr_steps = 0
         t0 = time.time()
         for step, (imgs, tgts) in enumerate(train_loader):
             imgs = imgs.to(device)
             tgts = [t.to(device) for t in tgts]
             optimizer.zero_grad()
-            raw, grids, strides = model(imgs)
-            loss, _ = compute_yolox_loss(raw, grids, strides, tgts, num_classes=len(CLASSES_55), label_smoothing=0.03, class_weights=cls_w)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
-            optimizer.step()
+            with torch.amp.autocast("cuda", enabled=use_amp):
+                raw, grids, strides = model(imgs)
+                loss, parts = compute_yolox_loss(raw, grids, strides, tgts, num_classes=len(CLASSES_55), label_smoothing=0.03, class_weights=cls_w)
+            if use_amp and scaler is not None:
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+                optimizer.step()
             tr_loss_acc += float(loss.detach().cpu())
+            tr_reg_acc += parts["reg"]
+            tr_obj_acc += parts["obj"]
+            tr_cls_acc += parts["cls"]
+            n_tr_steps += 1
             if args.max_steps_per_epoch > 0 and (step + 1) >= args.max_steps_per_epoch:
                 break
 
         scheduler.step()
-        tr_loss = tr_loss_acc / max(1, min(len(train_loader), args.max_steps_per_epoch or len(train_loader)))
+        denom_tr = max(1, n_tr_steps)
+        tr_loss = tr_loss_acc / denom_tr
 
         val_loss = tr_loss
         if val_loader:
             model.train(False)
-            # Gunakan compute_yolox_loss dengan raw head (export_onnx=False, temporarily call neck+head)
             v_acc, v_cnt = 0.0, 0
             with torch.no_grad():
                 for v_step, (imgs, tgts) in enumerate(val_loader):
@@ -341,29 +443,54 @@ def train(args):
             val_loss = v_acc / max(1, v_cnt)
 
         dt = time.time() - t0
-        print(f"  Epoch {ep:03d}/{args.epochs} | train_loss={tr_loss:.4f} | val_loss={val_loss:.4f} | lr={scheduler.get_last_lr()[0]:.6f} | {dt:.1f}s")
+        cur_lr = scheduler.get_last_lr()[0]
+        print(f"  Epoch {ep:03d}/{args.epochs} | train_loss={tr_loss:.4f} (reg={tr_reg_acc/denom_tr:.2f}, obj={tr_obj_acc/denom_tr:.2f}, cls={tr_cls_acc/denom_tr:.2f}) | val_loss={val_loss:.4f} | lr={cur_lr:.6f} | {dt:.1f}s")
+        history.append({
+            "epoch": ep,
+            "train_loss": round(tr_loss, 5),
+            "reg_loss": round(tr_reg_acc / denom_tr, 5),
+            "obj_loss": round(tr_obj_acc / denom_tr, 5),
+            "cls_loss": round(tr_cls_acc / denom_tr, 5),
+            "val_loss": round(val_loss, 5),
+            "lr": float(cur_lr),
+            "elapsed_s": round(dt, 2),
+        })
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save({"model": model.state_dict(), "variant": args.variant, "imgsz": args.imgsz, "use_p2": args.use_p2, "seed": args.seed}, best_ckpt)
+            torch.save({"model": model.state_dict(), "variant": args.variant, "imgsz": args.imgsz, "use_p2": use_p2, "seed": args.seed, "epoch": ep, "val_loss": best_val_loss}, best_ckpt)
+
+    hist_path = os.path.join(out_dir, f"{args.variant}_img{args.imgsz}_s{args.seed}_history.json")
+    with open(hist_path, "w", encoding="utf-8") as hf:
+        json.dump({
+            "variant": args.variant, "use_p2": use_p2, "imgsz": args.imgsz, "stage": args.stage,
+            "seed": args.seed, "device": str(device), "epochs_run": args.epochs,
+            "max_steps_per_epoch": args.max_steps_per_epoch, "best_val_loss": best_val_loss,
+            "train_samples": len(train_ds), "val_samples": len(val_ds), "history": history,
+        }, hf, indent=2)
+    print(f"[HISTORY SAVED] {hist_path}")
 
     # Muat terbaik & ekspor ONNX
     ckpt = torch.load(best_ckpt, map_location="cpu")
     model.load_state_dict(ckpt["model"])
     onnx_path = os.path.join(out_dir, f"{args.variant}_img{args.imgsz}_s{args.seed}.onnx")
     sz_mb, max_diff = export_and_verify_onnx(model, args.imgsz, onnx_path)
-    if sz_mb > 20.0:
+    if sz_mb > 20.0 or args.export_fp16:
         fp16_path = os.path.join(out_dir, f"{args.variant}_img{args.imgsz}_s{args.seed}_fp16.onnx")
         fp16_mb = export_onnx_fp16(onnx_path, fp16_path, args.imgsz)
-        if not fp16_mb or fp16_mb > 20.0:
+        if (not fp16_mb or fp16_mb > 20.0) or args.export_int8:
             int8_path = os.path.join(out_dir, f"{args.variant}_img{args.imgsz}_s{args.seed}_int8.onnx")
             quantize_onnx_int8_with_gate(onnx_path, int8_path)
+    elif args.export_int8:
+        int8_path = os.path.join(out_dir, f"{args.variant}_img{args.imgsz}_s{args.seed}_int8.onnx")
+        quantize_onnx_int8_with_gate(onnx_path, int8_path)
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--variant", default="yolox-tiny", choices=["yolox-nano", "yolox-tiny", "yolox-s"])
     p.add_argument("--use-p2", action="store_true", default=True)
-    p.add_argument("--imgsz", type=int, default=960)
+    p.add_argument("--no-p2", action="store_true", help="Nonaktifkan cabang P2 stride-4 untuk ablasion")
+    p.add_argument("--imgsz", type=int, default=640)
     p.add_argument("--stage", type=int, default=1)
     p.add_argument("--epochs", type=int, default=100)
     p.add_argument("--close-mosaic", type=int, default=15)
@@ -373,9 +500,24 @@ if __name__ == "__main__":
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--workers", type=int, default=0)
     p.add_argument("--cpu", action="store_true")
+    p.add_argument("--amp", action="store_true", help="Aktifkan CUDA AMP mixed precision")
+    p.add_argument("--export-fp16", action="store_true", help="Selalu ekspor varian _fp16.onnx (weight storage)")
+    p.add_argument("--export-int8", action="store_true", help="Selalu ekspor varian _int8.onnx dinamis")
+    p.add_argument("--allow-empty-negatives", action="store_true", default=True)
     p.add_argument("--resume", default="")
     p.add_argument("--max-steps-per-epoch", type=int, default=0, help="Batasi langkah per epoch untuk smoke test cepat")
-    p.add_argument("--train-sources", nargs="+", default=["dataset/external/synth_v2", "dataset/external/converted_yolo/jawa_zip", "dataset/external/converted_yolo/hanacaraka"])
-    p.add_argument("--val-sources", nargs="+", default=["dataset/external/synth_v2"])
-    p.add_argument("--out-dir", default="runs_yolox")
+    p.add_argument("--train-sources", nargs="+", default=[
+        "dataset/external/manifests_v4/synth_v4.jsonl",
+        "dataset/external/manifests_v4/hanacaraka_v4.jsonl",
+        "dataset/external/manifests_v4/jawa_zip_v4.jsonl",
+        "dataset/external/manifests_v4/jawa_syllables_v4.jsonl",
+        "dataset/external/manifests_v4/setilanaji_teacher_v4.jsonl",
+    ])
+    p.add_argument("--val-sources", nargs="+", default=[
+        "dataset/external/manifests_v4/synth_v4.jsonl",
+        "dataset/external/manifests_v4/hanacaraka_v4.jsonl",
+        "dataset/external/manifests_v4/jawa_zip_v4.jsonl",
+        "dataset/external/manifests_v4/jawa_syllables_v4.jsonl",
+    ])
+    p.add_argument("--out-dir", default="runs_yolox/v4_stage1")
     train(p.parse_args())

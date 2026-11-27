@@ -70,3 +70,27 @@
   - Siap masuk Gerbang 1 untuk review Rayhan sebelum **Fase 2 (`v4/fase-2-model`)**.
 - **Berikutnya:**
   - Meminta persetujuan Rayhan pada Gerbang 1 & menentukan jalur GPU / target metrik awal untuk Fase 2 (`YOLOX P2` + `aksara_embed.onnx` + `reference_prototypes.json` + ablasi Track B).
+
+---
+
+## Fase 2 — Pelatihan Track A1/A2, Bank Prototipe Referensi, & Ablasi C0..C3 (Branch `v4/fase-2-model`)
+- **Dikerjakan (ringkas):**
+  - **Kompatibilitas Chromium ORT-Web 1.20.1 WASM** (`eval/bench_phase2_wasm.mjs`, `eval/reports/phase2_wasm_bench.json`): seluruh model berjalan mulus di browser single-thread (`coi=false`, 0 op error), termasuk skema konversi murni-ONNX **FP16 Weight Storage** (`CAST` di awal graf tanpa `onnxconverter-common`): `yolox-tiny P2 640px` menyusut menjadi **`10.79 MB`** (`p50=1228 ms`), `960px` menjadi **`11.09 MB`** (`p50=2768 ms`), varian INT8 `640/960` (`5.74 / 6.07 MB`, `791 / 1765 ms`), `yolox-nano P2 640px` (`3.95 MB`, `285 ms`), serta **`aksara_embed.onnx` (`0.77 MB`, `1 ms` batch 1 / `13 ms` batch 16)**.
+  - **Peningkatan Trainer Detektor YOLOX P2 & Bundel GPU Multi-Platform (Pengganti Colab)**: `training/train_yolox.py` & `training/yolox_model.py` ditingkatkan agar menerima manifes `v4`, sampel negatif murni `0-box` (Latin/garis tembok), bobot kurikulum bertahap, pengaman batch `num_fg=0`, log `history.json`, serta konversi FP16/INT8. Dijalankan *smoke test* CPU nyata 2 epoch (`runs_yolox/v4_smoke/`, `max|PT-ORT|=6.10e-5`, `FP16W=10.79 MB`). Dibuat pula jalur pelatihan GPU bebas Google Colab (`training/GPU_ALTERNATIVES_RUNBOOK.md`, `training/AksaraScan_v4_GPU_MultiPlatform.ipynb`, dan `tools/build_gpu_bundle.py`: `208.1 MB` raw `train+val`, mengecualikan `254` data `heldout`).
+  - **Penambangan Hard Negative Persegi & Pelatihan Penuh Stage-2 Metric Verifier (CPU 12-core)**: ditambang `2.889` crop persegi dari FP detektor `split="train"` + karakter Latin SIL OFL (`tools/datasets/mine_stage2_hard_negatives.py`; diaudit ulang oleh `check_leakage.py` across `21.457` rekaman: `PASS_ZERO_LEAKAGE`). `training/train_stage2_embedder.py` melatih model `56` kelas (`16` epoch, `23.261` crop latih) hingga konvergen (`app/web_camscanner/aksara_embed.onnx`, `0.77 MB`), lalu `training/build_reference_prototypes.py` membangun `app/web_camscanner/reference_prototypes.json` (`176` prototipe across `56` kelas, `251.5 KB`, 100% dari split `train`).
+  - **Kalibrasi Tersekat di `val` & Uji Ablasi Bootstrap `eval/eval_phase2_ablation.py`**: `stage2_calibration.json` dibekukan semata pada `val` (bebas dari `writer_id` heldout) lalu diuji pada `eval/heldout_real/` (`n=42`), `eval/failures/` (`n=8`), dan regresi bersih `synth_v2 val` (`n=40`).
+
+- **Hasil terukur (Gerbang 2):**
+  - **Stage-2 Val Terisolasi (`n=4.278` crop `val`)**: akurasi blended Aksara **`85.73%`**, akurasi tulisan tangan nyata **`90.51%`** (`hw_syllables` **`94.29%`**), **`non_aksara_f1` = `92.62%`** (`recall 97.52%`, `neg_latin_sq_win` `97.24%`, `neg_fullpage_subcrop` `97.41%`).
+  - **Kalibrasi `val`**: `NegFP/gambar` pada halaman negatif murni turun dari `9.21` (`C0`) -> **`3.83` (`C2`)** (`-58.4%`); akurasi kotak multi-domain naik `69.12% -> 69.94%`.
+  - **`eval/heldout_real/` (`n=42`, `SHA256SUMS.lock` `43` berkas, `mismatches=0`)**:
+    - `C0 (v3.1)`: `CER = 37.36%` `[30.48, 44.70]`, `GF1 = 53.50%` `[44.75, 61.68]`, `BoxClsAcc = 63.33%`
+    - **`C2 (+ Stage-2 & Prototipe)`**: **`CER = 34.48%`** `[28.06, 40.99]` (**`-2.88%`**), **`GF1 = 55.97%`** `[47.90, 63.60]` (**`+2.47%`**), **`BoxClsAcc = 64.17%`**; `nusaaksara` turun `CER 51.96% -> 46.62%` (`-5.34%`).
+    - `C1 (YOLOX 2-epoch CPU smoke)`: `CER = 100.00%` (validasi pipa & ekspor ONNX saja; bobot penuh menunggu eksekusi GPU cloud).
+    - `C3 (+ Track B CRNN existing)`: `CRNN` mandiri `val CER = 65.08%`, gerbang menolak penggantian sehingga `C3 == C2`.
+  - **`eval/failures/` (`n=8`)**: `C0` (`CER 27.81% / GF1 85.67%`) -> **`C2` (`CER 20.24% / GF1 86.92%`, `-7.57%` CER)** dengan peningkatan besar pada `handwriting_chart_with_latin_labels` (`GF1 68.18% -> 77.27%`) dan `handwriting_latin_distractor_border` (`CER 155.56% -> 100.00%`).
+  - **Penjaga Regresi `synth_v2/val` bersih (`n=40`)**: `C0` (`CER 23.16% / GF1 81.94%`) -> `C2` (`CER 23.54% / GF1 81.81%`, delta `< 0.4%`).
+
+- **Keputusan & Berikutnya (Gerbang 2):**
+  - Berhenti di **Gerbang 2** untuk melaporkan hasil kepada Rayhan, menyerahkan paket notebook GPU alternatif non-Colab, dan meminta konfirmasi target metrik perbaikan sebelum integrasi penuh JS/enhancer **Fase 3 (`v4/fase-3-enhancer`)**.
+

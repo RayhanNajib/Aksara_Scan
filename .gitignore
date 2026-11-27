@@ -13,3 +13,6 @@ eval/artifacts/
 eval/reports/*_imgs/
 *.tmp
 aksarascan_colab_bundle.zip
+dist_gpu/
+runs_stage2/*.pt
+runs_stage2/*.onnx
