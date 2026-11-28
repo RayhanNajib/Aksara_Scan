@@ -107,10 +107,10 @@ def main():
     if args.dry_run:
         return
 
-    out_abs = args.out if os.path.isabs(args.out) else os.path.join(ROOT_DIR, args.out)
+    out_abs = os.path.abspath(args.out) if (os.path.isabs(args.out) or args.out.replace("\\", "/").startswith("Aksara_Scan/")) else os.path.join(ROOT_DIR, args.out)
     os.makedirs(os.path.dirname(out_abs), exist_ok=True)
     if args.format == "zip" or out_abs.endswith(".zip"):
-        with zipfile.ZipFile(out_abs, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+        with zipfile.ZipFile(out_abs, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=1) as zf:
             for src, arc, payload in entries:
                 if payload is not None:
                     zf.writestr(arc, payload)
