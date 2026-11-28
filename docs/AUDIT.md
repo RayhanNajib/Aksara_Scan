@@ -137,3 +137,25 @@ Sesuai aturan pelaporan *"jika klaim tidak cocok dengan isi repo, percayai repo 
      - **`IndoNLP/nusax` & `indonlp/NusaX-MT`** (kode `Apache-2.0`, dataset `CC-BY-SA-4.0`) serta **`IndoNLP/nusa-writes` / `indonlp/nusatranslation_mt`** (`Apache-2.0`).
      - **`nsulistiyawan/sastra-jawa`** (`MIT`), **`masnormen/carakanjs`** (`MIT`), **`junwatu/aksara.js`** (`MIT`), **`hermansh-id/Aksara-Jawa-OCR`** (`MIT`).
      - Perlu konfirmasi lisensi (`PERLU_KONFIRMASI` pada Fase 1): `NusaAksara/NusaAksara` (tidak mencantumkan field lisensi pada kartu Hugging Face), `RayFox52/Aksara-jawa-carakan-murda`, `SEACrowd/korpus_nusantara` (`Unknown`), dan dataset Kaggle/Roboflow yang belum diverifikasi kartu lisensinya secara lokal.
+
+---
+
+## 6. Resolusi Audit Akhir v4.0 (Fase 5 — 2026-11-28)
+
+Pembaruan status setiap temuan audit awal v2.5 (`492b7bc`) setelah penyelesaian Fase 1–5 (`v4/fase-5-eval`):
+
+1. **Font Proprieter (`javatext.ttf`) — SELESAI DIBERSIHKAN:**
+   - Generator sintetis `tools/synth_v2/generate_v2.py` dan `tools/generate_v4_elastic_hw.py` hanya memakai **11 font Jawa SIL OFL 1.1 + 1 Apache-2.0** (`dataset/external/fonts/`) serta **3 font Latin SIL OFL 1.1** (`dataset/external/fonts_latin_ofl/`).
+   - Antarmuka web `app/web_camscanner/` mem-bundel lokal **4 font SIL OFL 1.1** (`vendor/fonts/`) dan menghilangkan 100% panggilan Google Fonts CDN. Skrip lama `training/generate_yolo_dataset.py` dipertahankan hanya sebagai arsip riwayat v2.0.
+2. **Jalur Latih & Dependensi AGPL (`ultralytics`, PyMuPDF, dsb.) — BERSIH DI JALUR V4 (DENGAN CATATAN JUJUR STAGE-1):**
+   - `training/requirements.txt` dan seluruh skrip pelatihan/sintesis v4 (`training/yolox_model.py`, `training/train_yolox.py`, `training/train_stage2_embedder.py`, `training/build_reference_prototypes.py`, `training/train_crnn_track_b.py`, `tools/generate_v4_elastic_hw.py`) **100% bebas `ultralytics` / PyMuPDF / kode AGPL-3.0** (seluruhnya `MIT / Apache-2.0 / BSD-3`).
+   - Artefak baru v4 (`aksara_embed.onnx`, `reference_prototypes.json`, `stage2_calibration.json`, `vendor/ort/`, `vendor/fonts/`) 100% bebas AGPL dan **100% bebas data `NusaAksara`** (`NusaAksara` CC BY-SA 4.0 dipakai ketat sebagai **HANYA-EVALUASI**).
+   - **Kejujuran bobot Stage-1 terpasang (`app/web_camscanner/aksara_yolo.onnx`, `12.70 MB`):** Karena lingkungan pengembangan lokal tidak memiliki GPU CUDA (`CPU only`), pelatihan penuh 80+40 epoch `AksaraYOLOX P2` (Apache-2.0) tidak dapat diselesaikan secara lokal (baru *smoke test* 2-epoch CPU & verifikasi WASM `10.79 MB` FP16). Maka bobot Stage-1 `aksara_yolo.onnx` (era v3.1 Ultralytics AGPL-3.0) tetap aktif sementara sebagai proposer kotak hingga `training/AksaraScan_v4_GPU_MultiPlatform.ipynb` dijalankan penuh di GPU cloud untuk menggantikannya. Skrip arsip `training/train_yolo.py` & `training/finetune_v3_blur.py` berstatus warisan non-produksi.
+3. **Kebocoran Dataset & Atribusi CC BY 4.0 — SELESAI DIAUDIT:**
+   - `tools/check_leakage.py` memverifikasi `21.457` rekaman across 9 manifes v4 dengan hasil **`PASS_ZERO_LEAKAGE`** (`0` overlap penulis, kluster, SHA-256, maupun near-duplicate).
+   - `eval/heldout_real/SHA256SUMS.lock` (`43` berkas) terverifikasi `mismatches=0` dan tidak pernah dipakai untuk tuning model/kalibrasi.
+   - Atribusi eksplisit **CC BY 4.0** (Ihsan, 2024, Mendeley Data `doi:10.17632/vfj32bpjsf.1`), **CC0-1.0** (Hanacaraka `vzrenggamani`), **Apache-2.0** (`setilanaji/aksara-jawa-ocr`), **CC BY-SA 4.0** (`NusaAksara`, evaluasi-only), **MIT** (ONNX Runtime Web), dan **SIL OFL 1.1** tampil penuh pada tab `Tentang` dan `dataset/LICENSES.md`.
+4. **Titik Kehilangan Informasi Pipeline v2.5/v3.1 — DIPERBAIKI DI V4.0:**
+   - Pre-Scan Enhancer adaptif Worker (`image_enhancer.js` + `enhancer_worker.js`) menganalisis blur, pencahayaan tak merata, garis lurus >= 55% lebar, & tinta berwarna (`CIELAB`), memotong ketergantungan buta pada binerisasi polos.
+   - `app.js` mempertahankan distribusi `topK` & integrasi Stage-2 Metric Verifier (`stage2_verifier.js`), sementara `orthography.js` memperbaiki bug `'ꦟ' ('\uA99F') -> 'na'` dan memanfaatkan lattice `topK` di Dekoder Beam.
+   - Aset ONNX Runtime Web `1.20.1` dibundel lokal di `vendor/ort/` dengan cache offline penuh di `sw.js` (`0` CDN external requests).

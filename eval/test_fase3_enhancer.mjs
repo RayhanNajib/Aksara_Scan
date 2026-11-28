@@ -446,7 +446,8 @@ async function runBrowserSuite() {
     await ctxFb.close();
 
     // --- TEST C: Full Offline PWA Mode via Service Worker ---
-    console.log('\n=== [4/4] Uji Mode Offline Penuh (Service Worker aksarascan-v15) ===');
+    const swCacheName = (fs.readFileSync(path.join(WEB_DIR, 'sw.js'), 'utf-8').match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/) || [])[1] || 'aksarascan-v15';
+    console.log(`\n=== [4/4] Uji Mode Offline Penuh (Service Worker ${swCacheName}) ===`);
     const ctxOff = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     const pageOff = await ctxOff.newPage();
     await pageOff.route('**/*', (route) => {
@@ -457,16 +458,16 @@ async function runBrowserSuite() {
     });
     await pageOff.goto(`${url}/index.html`, { waitUntil: 'load' });
     await pageOff.waitForFunction(() => (document.querySelector('#engineStatus')?.textContent || '').includes('Stage-2'), null, { timeout: 45000 });
-    // Pastikan cache aksarascan-v15 sudah penuh di Service Worker CacheStorage sebelum memutus jaringan!
-    const swReady = await pageOff.evaluate(async () => {
+    // Pastikan cache SW aktif terisi penuh di Service Worker CacheStorage sebelum memutus jaringan!
+    const swReady = await pageOff.evaluate(async (expectedCache) => {
       if (!('serviceWorker' in navigator)) return { ok: false, reason: 'no SW' };
       const reg = await navigator.serviceWorker.ready;
-      const cache = await caches.open('aksarascan-v15');
+      const cache = await caches.open(expectedCache);
       const keys = await cache.keys();
-      return { ok: Boolean(reg && reg.active && keys.length >= 25), cacheCount: keys.length };
-    });
+      return { ok: Boolean(reg && reg.active && keys.length >= 25), cacheName: expectedCache, cacheCount: keys.length };
+    }, swCacheName);
     console.log('  SW cache pre-offline:', swReady);
-    assert.ok(swReady.ok, `Service worker & cache aksarascan-v15 harus terisi (${JSON.stringify(swReady)})`);
+    assert.ok(swReady.ok, `Service worker & cache ${swCacheName} harus terisi (${JSON.stringify(swReady)})`);
 
     await ctxOff.setOffline(true);
     await pageOff.reload({ waitUntil: 'domcontentloaded' });

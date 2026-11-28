@@ -153,4 +153,25 @@
 - **Keputusan & Berikutnya (Gerbang 4):**
   - Berhenti di **Gerbang 4** untuk mempresentasikan hasil perombakan UI/UX dan meminta persetujuan Rayhan sebelum memulai **Fase 5 (`v4/fase-5-eval`: Audit Otomatis, Benchmark Jujur v3.1 vs v4.0, Analisis Kesalahan, Regresi, & Pra-Rilis Vercel)**.
 
+---
+
+## Fase 5 — Audit Akhir, Benchmark Browser v3.1 vs v4.0, Regresi, & Pra-Rilis (Branch `v4/fase-5-eval`)
+- **Dikerjakan (ringkas):**
+  - **Benchmark Live Browser WASM 4-Mode (`eval/eval_phase5_browser.mjs` + `eval/eval_phase5_analyze.py`):** Mengevaluasi commit baseline historis **`eb19337` (`v3_1`)** secara langsung dari Git object store melawan **`v4_enh_only`**, **`v4_stage2_only`**, dan **`v4_full`** di **Chromium `151.0.7922.34` (`ORT-Web 1.20.1`)** pada `119` citra (`heldout_real n=42`, `failures n=8`, `synth_v2_val_clean n=40`, `distractors_v4_val n=29`) dengan Bootstrap `B = 2000`, `seed = 42`.
+  - **Analisis Kesalahan & Galeri Terburuk (`eval/reports/phase5_benchmark.json`, `eval/reports/phase5_worst20.html`):** Mengukur matriks konfusi across `52` citra beranotasi kotak (`1.960` GT kotak, sorotan `da/sa`, `ka/na`, `tha/ca`, `ha/ra`), taksonomi kegagalan across `50` citra nyata (`620` GT grafem), serta menyusun galeri visual 20 kasus gagal terburuk beserta inspeksi gambarnya (`hr_hw_10`, `diag_07`, `hr_hw_02`, `diag_08`, dll.).
+  - **Perluasan Suite E2E & Audit Pra-Rilis (`eval/test_e2e_assertions.mjs` + `eval/eval_phase5_prerelease.mjs`):** Memperluas asersi positif ke seluruh matriks **Desktop (`1440×900`) & Mobile (`390×844`) × Tema Gelap & Terang**, Batch Multi-Halaman, Fallback Stage-1, dan PWA Offline (`aksarascan-v16`, `38` entri CacheStorage). Mengaudit server statis paritas [`vercel.json`](../vercel.json) (`42` berkas = `28.64 MB`, muat pertama `318 ms DCL` / `1186 ms ONNX+Stage2`).
+  - **Sinkronisasi Lisensi & Dokumentasi Rilis:** Memutakhirkan atribusi **CC BY 4.0** & status jujur Stage-1 warisan di tab `Tentang` ([`index.html`](../app/web_camscanner/index.html)), [`dataset/LICENSES.md`](../dataset/LICENSES.md), [`docs/AUDIT.md`](AUDIT.md), [`DATASET_CREDITS.md`](../DATASET_CREDITS.md), [`MODEL_CARD.md`](../MODEL_CARD.md), [`README.md`](../README.md), dan menerbitkan [`docs/BENCHMARK_V4.md`](BENCHMARK_V4.md).
+
+- **Hasil terukur (Gerbang 5):**
+  - **`heldout_real` (`n=42`, `SHA256SUMS.lock` `43` berkas, `mismatches=0`):** Browser CER **`34.31% → 30.07%`** (`-4.24 pp`), Grapheme F1 **`59.64% → 62.81%`** (`+3.17 pp`), Word Acc **`29.80% → 31.61%`**, p50 **`947.4 ms`**, p95 **`1817.4 ms`**.
+  - **Subset Foto Buram Nyata (`n=5`):** CER **`34.00% → 26.00%`** (`-8.00 pp`), GF1 **`70.05% → 76.88%`** (`+6.83 pp`).
+  - **`failures` (`n=8`):** CER **`32.78% → 22.75%`** (`-10.03 pp`), GF1 **`84.81% → 88.51%`** (`+3.70 pp`), Word Acc folded **`29.79% → 33.85%`**.
+  - **Penjaga Regresi `synth_v2_val_clean` (`n=40`):** CER **`21.42% → 21.06%`**, GF1 **`82.06% → 83.45%`**, Word Acc folded `12.43% → 12.22%` (regresi minor `-0.21 pp`, plus regresi lokal di `setilanaji +0.41 pp`, `wall_lines_shadow +5.0 pp`, dan `sharp_clean +5.0 pp` dilaporkan jujur).
+  - **Distraktor Non-Aksara (`n=29`):** FP/gambar turun **`7.69 → 2.76` (`-64.1%`)**.
+  - **Audit Kebocoran & Lisensi:** `check_leakage.py` across `21.457` rekaman **`PASS_ZERO_LEAKAGE`**; `0` font proprieter; `0` AGPL di seluruh jalur/artefak baru v4 (dengan pencatatan jujur bahwa bobot Stage-1 terpasang `aksara_yolo.onnx` masih berstatus transisi warisan sampai `AksaraYOLOX-P2` Apache-2.0 dilatih di GPU).
+  - **Suite Uji Terakhir Pasca-Edit (`node eval/test_e2e_assertions.mjs`, `test_fase3_enhancer.mjs`, `test_fase4_ui.mjs`, `eval_phase5_prerelease.mjs`):** Semuanya **PASS** (`0` console error, `0` permintaan jaringan eksternal, Service Worker `aksarascan-v16`).
+
+- **Keputusan & Berikutnya (Gerbang 5 — Rilis v4.0):**
+  - Seluruh kriteria Gerbang 5 terverifikasi tuntas. Menunggu persetujuan akhir Rayhan untuk menggabungkan branch rilis v4.0 ke `main` & push ke GitHub/Vercel (atau melanjutkan pelatihan GPU `AksaraYOLOX-P2` opsional untuk menggantikan bobot Stage-1 warisan).
+
 

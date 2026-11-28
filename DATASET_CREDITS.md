@@ -60,7 +60,13 @@ Seluruh sumber berikut diverifikasi lisensinya pada **25 November 2026** (daftar
 | **Javanese ConceptNet (`DGurgurov/javanese_conceptnet`)** | D. Gurgurov | https://huggingface.co/datasets/DGurgurov/javanese_conceptnet | **MIT** | 2026-11-25 | `train_cn_jv.csv` (171 KB); referensi kosakata & grafem Jawa |
 | **Public-Domain Javanese Primer Index (`blajar-maca-jawa-1996`)** | S. Harms / Wikisource | https://huggingface.co/datasets/thesimonharms/public-javanese-dataset | **CC-BY-SA 3.0** / **MIT** | 2026-11-25 | `sources.yaml` & `WS_lesson_index.clean.json` untuk referensi tata baca |
 
-## 3. Segmentation of the data (lecturer requirement)
+## 2c. Perluasan v4.0 (Split Writer-Disjoint, NusaAksara Eval-Only, & Distraktor)
+
+- Seluruh pembagian split v4 dikendalikan oleh `dataset/external/manifests_v4/` dan lolos pemeriksaan zero-leakage (`tools/check_leakage.py`, `21.457` rekaman, `0` tumpang tindih).
+- **`NusaAksara` (ACL 2025, CC BY-SA 4.0)**: `48` cuplikan (`18` di set terkunci `eval/heldout_real/`) digunakan secara ketat sebagai **HANYA-EVALUASI** tanpa ikut melatih bobot/prototipe model MIT.
+- **`synth_v4` & `non_aksara_distractors_v4`**: `1.050` citra sintetis deforma TPS + `1.050` patch distraktor Latin/garis tembok menggunakan **11 font Jawa SIL OFL 1.1 + 1 Apache-2.0** dan **3 font Latin SIL OFL 1.1** (`Caveat`, `Plus Jakarta Sans`, `Newsreader`). Detail lengkap tersimpan di [dataset/LICENSES.md](dataset/LICENSES.md) dan [docs/DATASET_V4.md](docs/DATASET_V4.md).
+
+## 3. Segmentation of the data (legacy v1 & v4 summary)
 
 The 1,579 hanacaraka images are deterministically split per class
 (`training/split_dataset.py`, seed 42):
@@ -78,11 +84,13 @@ Held-out test metrics of the shipped model (`app/web_camscanner/model.json`):
 **68.4%** on clean binarized test segments, **53.2%** on photo-simulated
 variants (blur/noise/rotation/illumination).
 
-## 4. Fonts
+## 4. Fonts & Runtime Bundle (v4.0 Self-Hosted Offline)
 
-- **Noto Sans Javanese** (Google Fonts) renders the aksara output.
-  License: SIL Open Font License 1.1. Loaded at runtime from Google's CDN;
-  the font files are *not* redistributed in this repository.
+- **Self-Hosted UI & Aksara Fonts (`app/web_camscanner/vendor/fonts/`, `994 KB`)**:
+  - `NotoSansJavanese.ttf` & `NotoSansJavanese-Bold.ttf` — **SIL Open Font License 1.1** (`notofonts/javanese`)
+  - `PlusJakartaSans-Regular.ttf` — **SIL Open Font License 1.1**
+  - `Newsreader-Regular.ttf` — **SIL Open Font License 1.1**
+- Seluruh font dibundel langsung secara lokal di repositori dan di-precache oleh Service Worker untuk operasi PWA offline penuh (**0 permintaan CDN eksternal** saat muat maupun inferensi). Font proprieter `javatext.ttf` tidak digunakan di mana pun pada jalur produksi maupun pelatihan v4.
 
 ## 5. What this repository owns
 

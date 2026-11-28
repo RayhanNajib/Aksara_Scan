@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-11-28T02:23:57.701Z",
+  "vercelConfig": {
+    "outputDirectory": "app/web_camscanner",
+    "rewriteVerified": true,
+    "swNoCacheVerified": true,
+    "note": "Uji pra-rilis lokal setara aturan vercel.json (Vercel live preview URL mengikuti push ke remote GitHub yang tertaut)."
+  },
+  "serviceWorker": {
+    "cacheName": "aksarascan-v16",
+    "declaredAssetsCount": 38,
+    "verifiedOfflineCacheEntries": 38
+  },
+  "deployedAssets": {
+    "totalFiles": 42,
+    "totalBytes": 28644127,
+    "totalMB_decimal": 28.64,
+    "totalMiB_binary": 27.32,
+    "byCategory": {
+      "onnx_models": {
+        "files": 2,
+        "bytes": 13506446,
+        "mb_decimal": 13.51,
+        "mib_binary": 12.88
+      },
+      "ort_wasm_runtime": {
+        "files": 3,
+        "bytes": 11716934,
+        "mb_decimal": 11.72,
+        "mib_binary": 11.17
+      },
+      "prototypes_and_lm_data": {
+        "files": 6,
+        "bytes": 1561777,
+        "mb_decimal": 1.56,
+        "mib_binary": 1.49
+      },
+      "fonts_sil_ofl": {
+        "files": 4,
+        "bytes": 994144,
+        "mb_decimal": 0.99,
+        "mib_binary": 0.95
+      },
+      "samples_and_icons": {
+        "files": 12,
+        "bytes": 515448,
+        "mb_decimal": 0.52,
+        "mib_binary": 0.49
+      },
+      "app_code_styles": {
+        "files": 13,
+        "bytes": 346911,
+        "mb_decimal": 0.35,
+        "mib_binary": 0.33
+      },
+      "misc_repo_files": {
+        "files": 2,
+        "bytes": 2467,
+        "mb_decimal": 0,
+        "mib_binary": 0
+      }
+    },
+    "largestFiles": [
+      {
+        "rel": "aksara_yolo.onnx",
+        "bytes": 12702315
+      },
+      {
+        "rel": "vendor/ort/ort-wasm-simd-threaded.wasm",
+        "bytes": 11246032
+      },
+      {
+        "rel": "aksara_embed.onnx",
+        "bytes": 804131
+      },
+      {
+        "rel": "model.js",
+        "bytes": 492438
+      },
+      {
+        "rel": "model.json",
+        "bytes": 492413
+      },
+      {
+        "rel": "vendor/fonts/Newsreader-Regular.ttf",
+        "bytes": 451664
+      },
+      {
+        "rel": "vendor/ort/ort.min.js",
+        "bytes": 446284
+      },
+      {
+        "rel": "javanese_lm_data.js",
+        "bytes": 312048
+      },
+      {
+        "rel": "reference_prototypes.json",
+        "bytes": 257552
+      },
+      {
+        "rel": "vendor/fonts/NotoSansJavanese.ttf",
+        "bytes": 252904
+      }
+    ]
+  },
+  "coldFirstLoad": {
+    "domContentLoadedMs": 318,
+    "loadEventMs": 326,
+    "ttfbMs": 16,
+    "windowLoadWallMs": 331,
+    "fullOnnxPlusStage2ReadyMs": 1186,
+    "httpRequestsObserved": 30,
+    "transferredBytesObserved": 27888687,
+    "transferredMB_decimal": 27.89,
+    "externalRequestsCount": 0,
+    "consoleErrorsCount": 0
+  }
+}
