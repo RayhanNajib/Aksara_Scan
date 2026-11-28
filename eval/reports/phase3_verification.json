@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-28T02:23:39.924Z",
+  "generatedAt": "2026-11-28T03:04:01.146Z",
   "unit": {
     "blurMonotonic": true,
     "sharpMae": 0,
@@ -15,24 +15,26 @@
         "ridgeCount": 720
       }
     },
-    "suppressedLinePixels": 630
+    "suppressedLinePixels": 630,
+    "thinRuledSuppressedPixels": 666,
+    "latinContextPruned": 2
   },
   "browser": {
     "workerPerf": {
-      "totalMs": 422,
+      "totalMs": 370,
       "longTasks": []
     },
     "blurComparison": {
-      "meanCerRaw": 15,
+      "meanCerRaw": 26.67,
       "meanCerEnh": 15,
       "items": [
         {
           "id": "hr_hw_02_motion_blur",
           "blurBefore": "sedang",
-          "cerWithoutEnhancer": 60,
+          "cerWithoutEnhancer": 40,
           "cerWithEnhancer": 60,
-          "stage2Verified": 12,
-          "stage2Rejected": 1
+          "stage2Verified": 15,
+          "stage2Rejected": 2
         },
         {
           "id": "hr_hw_04_defocus_blur",
@@ -45,7 +47,7 @@
         {
           "id": "diag_04_shadow",
           "blurBefore": "sedang",
-          "cerWithoutEnhancer": 0,
+          "cerWithoutEnhancer": 66.67,
           "cerWithEnhancer": 0,
           "stage2Verified": 9,
           "stage2Rejected": 0

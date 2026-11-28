@@ -1,6 +1,8 @@
-# Panduan Alternatif GPU Notebook Gratis & Stabil (Pengganti Google Colab) — AksaraScan v4.0
+# Panduan Alternatif GPU Notebook Gratis & GPU Lokal (GTX 1650 4GB) — AksaraScan v4.0
 
-Mesin lokal hanya menjalankan CPU (`CUDA = False`), sehingga Stage-2 Metric Embedder dilatih langsung di CPU (`<= 3 MB`), sedangkan pelatihan penuh multi-epoch detektor **YOLOX-Tiny P2** (`640px` / `960px`, `100` epoch, `--amp`) dirancang agar bisa dijalankan di **platform GPU cloud mana pun** tanpa terkunci Google Colab.
+Di lingkungan Python Windows bawaan (`torch +cpu`), **Stage-2 Metric Embedder** dilatih langsung di CPU (`0.77 MB`), sedangkan pelatihan penuh **AksaraYOLOX-P2 (Apache-2.0)** (`640px` / `960px`, `--amp`) dapat dijalankan di:
+1. **GPU Cloud Gratis** (**Kaggle `T4 x2`** / **Lightning AI `T4/L4`**) via `training/AksaraScan_v4_GPU_MultiPlatform.ipynb`, atau
+2. **GPU Laptop Lokal (`NVIDIA GeForce GTX 1650 4 GB VRAM`)** memakai mode `--batch 8 --grad-accum 2 --amp` (**syarat disk Windows: kosongkan minimal `15 GB` di `C:`** sebelum memasang wheel PyTorch CUDA `~2.53 GB` terkompresi / `~5.5 GB` terekstrak).
 
 > **Keamanan Kebocoran Data (Strict Zero Leakage):**
 > Skrip `tools/build_gpu_bundle.py` hanya membungkus split `train` & `val` (`~189.5 MB` tidak terkompresi / `< 180 MB` zip). Data `test_heldout` (`hanacaraka`), `eval/heldout_real/`, dan `nusaaksara_eval_only_v4` **sengaja tidak dimasukkan** ke bundel GPU.
@@ -97,11 +99,42 @@ kaggle kernels push -p training/
 
 ---
 
-### Langkah 3 — Uji & Pasang Model ke Lokal Sebelum Merilis
-Setelah mengunduh hasil `.onnx` (`*_fp16.onnx`, `< 12 MB`) dari GPU cloud:
-1. Salin `yolox-tiny_img640_s42_fp16.onnx` (dan opsional `960`) ke `runs_yolox/v4_gpu/` atau `app/web_camscanner/aksara_yolo.onnx`.
-2. Jalankan harness evaluasi & gerbang ablasion lokal pada `eval/heldout_real/`:
+### Langkah 2C — Opsi GPU Lokal (`NVIDIA GeForce GTX 1650 4 GB VRAM`, Driver >= 580)
+> **Peringatan Ruang Disk:** Instalasi `torch` CUDA (`cu124`) di Windows membutuhkan `~2.53 GB` unduhan + `~5.5 GB` ruang terpasang (`~8 GB` total selama unpack `pip`). Pastikan drive `C:` memiliki **>= 15 GB ruang kosong** sebelum menjalankan langkah ini.
+
+```bash
+# 1. Pasang PyTorch CUDA 12.4 (hanya setelah memastikan ruang kosong C: >= 15 GB)
+pip install --upgrade --index-url https://download.pytorch.org/whl/cu124 torch torchvision
+
+# 2. Latih Stage-1 YOLOX-Tiny P2 aman untuk VRAM 4 GB (--batch 8 --grad-accum 2 = effective batch 16)
+python -u training/train_yolox.py \
+  --variant yolox-tiny --imgsz 640 --stage 1 \
+  --epochs 80 --close-mosaic 15 \
+  --batch 8 --grad-accum 2 --lr0 0.001 --mosaic 0.25 \
+  --seed 42 --amp --export-fp16 \
+  --out-dir runs_yolox/v4_stage1_tiny640
+
+# 3. Fine-tune Stage-2 nyata ber-LR rendah
+python -u training/train_yolox.py \
+  --variant yolox-tiny --imgsz 640 --stage 2 \
+  --epochs 40 --close-mosaic 10 \
+  --batch 6 --grad-accum 2 --lr0 0.00025 --mosaic 0.10 \
+  --seed 42 --amp --export-fp16 \
+  --resume runs_yolox/v4_stage1_tiny640/yolox-tiny_img640_s42_best.pt \
+  --out-dir runs_yolox/v4_stage2_tiny640
+```
+
+---
+
+### Langkah 3 — Validasi & Pasang Model Drop-In (`install_yolox_release.py`)
+Setelah memperoleh `.onnx` (`*_fp16.onnx`, `< 12 MB`) dari GPU cloud maupun pelatihan lokal GTX 1650:
+1. Validasi I/O ONNX dan pasang atomik ke aplikasi Web (otomatis membuat backup di `models/backups/` serta memperbarui `imgsz`, `detector_arch`, `license="Apache-2.0"`, dan `sha256` di `app/web_camscanner/yolo_meta.json`):
    ```bash
-   python eval/eval_phase2_ablation.py --detector runs_yolox/v4_gpu/yolox-tiny_img640_s42_fp16.onnx
+   python tools/install_yolox_release.py --onnx runs_yolox/v4_stage2_tiny640/yolox-tiny_img640_s42_fp16.onnx
    ```
-3. Pastikan ukuran `< 20 MB`, lolos `node eval/test_e2e_assertions.mjs`, dan tidak ada regresi pada `eval/heldout_real/` sebelum commit!
+2. Naikkan versi cache di `app/web_camscanner/sw.js`, lalu jalankan evaluasi penuh & gerbang pra-rilis:
+   ```bash
+   python eval/eval_phase2_ablation.py --detector app/web_camscanner/aksara_yolo.onnx
+   node eval/eval_phase5_browser.mjs && python -u eval/eval_phase5_analyze.py && node eval/eval_phase5_prerelease.mjs
+   ```
+3. Pastikan ukuran ONNX Stage-1 `< 20 MB`, lolos `node eval/test_e2e_assertions.mjs`, `node eval/test_fase3_enhancer.mjs`, dan `python tools/check_leakage.py`!

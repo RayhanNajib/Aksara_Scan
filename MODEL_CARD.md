@@ -6,10 +6,10 @@
 1. **Pre-Scan Adaptive Enhancer (`app/web_camscanner/image_enhancer.js`, `enhancer_worker.js`)**:
    - Berjalan off-thread melalui Web Worker (*Transferable* `ArrayBuffer`, `0` *long task* >= 100 ms di main thread).
    - Menilai tingkat ketajaman (`estimateBlur`: gradien kontras-ternormalisasi + lebar tepi Marziliano dwi-sumbu X/Y + simetri aksial), ink warna CIELAB (`coloredInkRatio`), serta kelurusan garis buku/dinding >= 55% lebar citra (`lineClutterScore`).
-   - Melakukan *passthrough* nir-destruktif pada foto tajam (`MAE = 0`), perataan bayangan lokal, peredaman garis lurus panjang dengan perlindungan persimpangan `±3 px`, CLAHE adaptif terbatas pada latar redup, serta penajaman TV-bounded + Richardson-Lucy (dibatasi blur berat simetris).
+   - Melakukan *passthrough* nir-destruktif pada foto tajam (`MAE = 0`), perataan bayangan lokal, peredaman garis lurus panjang dengan perlindungan persimpangan `±3 px` tanpa mendistorsi garis pastel tipis, penguatan lembut goresan tipis `1 px` (`reinforceUltrathinInk` + masker proposal `scanMask`), CLAHE adaptif terbatas pada latar redup, serta penajaman TV-bounded + Richardson-Lucy.
 2. **Detektor Tahap 1 (`app/web_camscanner/aksara_yolo.onnx`, `12.70 MB` FP32)**:
    - YOLOv8n `416 px`, `55` kelas Tier 1 (diperoleh dari baseline v3.1).
-   - **Detektor Pengganti Bebas AGPL-3.0 siap GPU (`AksaraYOLOX-P2`)**: Arsitektur custom di [`training/yolox_model.py`](training/yolox_model.py) + [`training/train_yolox.py`](training/train_yolox.py) (**Apache-2.0 / MIT**, 0 `ultralytics`) + ekspor **FP16 Weight Storage ONNX** (`10.79 MB` @ `640 px` tervalidasi WASM `1228 ms` p50). Belum menjadi model produksi karena lingkungan lokal berstatus CPU-only (baru menjalankan *smoke test* 2-epoch); siap dilatih via [`training/AksaraScan_v4_GPU_MultiPlatform.ipynb`](training/AksaraScan_v4_GPU_MultiPlatform.ipynb).
+   - **Detektor Pengganti Bebas AGPL-3.0 siap GPU (`AksaraYOLOX-P2`)**: Arsitektur custom di [`training/yolox_model.py`](training/yolox_model.py) + [`training/train_yolox.py`](training/train_yolox.py) (**Apache-2.0 / MIT**, 0 `ultralytics`, mendukung `--grad-accum 2` untuk GPU laptop VRAM 4 GB GTX 1650) + ekspor **FP16 Weight Storage ONNX** (`10.79 MB` @ `640 px` tervalidasi ORT-Web WASM `1228 ms` p50) + installer atomik [`tools/install_yolox_release.py`](tools/install_yolox_release.py). Belum menjadi model produksi karena Python lokal masih CPU-only (disk `C:` sisa `7.95 GB` belum cukup untuk ekstrak wheel CUDA `~5.5 GB`); siap dilatih via [`training/AksaraScan_v4_GPU_MultiPlatform.ipynb`](training/AksaraScan_v4_GPU_MultiPlatform.ipynb).
 3. **Stage-2 Reference Prototype Metric Verifier (`aksara_embed.onnx`, `0.80 MB` FP32)**:
    - Depthwise-Separable ConvNet + Squeeze-Excite + Spatial Quadrant Mixer dengan **Sub-Center Cosine Margin Head (3 sub-pusat × 56 kelas)**, dijalankan di browser via [`app/web_camscanner/stage2_verifier.js`](app/web_camscanner/stage2_verifier.js) (`1 ms` batch-1 / `13 ms` batch-16 di WASM).
    - Dilatih penuh di CPU pada `23.261` crop split `train` + `2.889` patch *hard negative* Latin/garis dinding (`split="train"`). Akurasi validasi terisolasi (`n=4.278`): **`90.51%`** tulisan tangan nyata, **`non_aksara_f1 = 92.62%`**.
@@ -37,15 +37,15 @@ Diukur pada **Chromium `151.0.7922.34` (`ORT-Web 1.20.1`)**, bootstrap `B = 2000
 
 | Set Uji | `n` | CER `v3.1 (eb19337)` | CER `v4.0 Full` | GF1 `v3.1 → v4.0` | Latensi `v4.0` p50 |
 |---|---:|---:|---:|---|---|
-| **`eval/heldout_real/`** | `42` | `34.31%` `[26.26, 42.49]` | **`30.07%`** `[23.30, 37.17]` | `59.64% → 62.81%` | `947.4 ms` |
-| **Subset Foto Buram Nyata** | `5` | `34.00%` `[12.00, 56.00]` | **`26.00%`** `[8.00, 44.00]` | `70.05% → 76.88%` | `1637.7 ms` |
-| **`eval/failures/`** | `8` | `32.78%` `[4.73, 67.51]` | **`22.75%`** `[3.38, 45.83]` | `84.81% → 88.51%` | `1967.3 ms` |
-| **Regresi Bersih (`synth_v2_val`)** | `40` | `21.42%` `[15.95, 27.04]` | **`21.06%`** `[15.58, 26.56]` | `82.06% → 83.45%` | `1253.9 ms` |
-| **Distraktor Murni (`synth_v4_val_neg`)** | `29` | `7.69` FP/gambar | **`2.76` FP/gambar** | Bersih `27.6% → 44.8%` | `526.4 ms` |
+| **`eval/heldout_real/`** | `42` | `34.31%` `[26.26, 42.49]` | **`28.68%`** `[22.24, 34.99]` | `59.64% → 63.52%` | `957.1 ms` |
+| **Subset Foto Buram Nyata** | `5` | `34.00%` `[12.00, 56.00]` | **`30.00%`** | `70.05% → 75.93%` | — |
+| **`eval/failures/`** | `8` | `32.78%` `[4.73, 67.51]` | **`2.01%`** `[0.00, 4.79]` | `84.81% → 98.72%` | `2855.1 ms` |
+| **Regresi Bersih (`synth_v2_val`)** | `40` | `21.42%` `[15.95, 27.04]` | **`20.67%`** `[14.97, 26.81]` | `82.06% → 82.79%` | `1219.6 ms` |
+| **Distraktor Murni (`synth_v4_val_neg`)** | `29` | `7.69` FP/gambar | **`1.52` FP/gambar** | Bersih `27.6% → 41.4%` | `942.6 ms` |
 
 ---
 
 ## Privasi, Lisensi, & Keterbatasan
 - **`0` permintaan jaringan eksternal** saat pemuatan halaman maupun inferensi (ORT-Web `1.20.1` dan `4` font SIL OFL 1.1 di-host mandiri di `app/web_camscanner/vendor/`); terjemahan daring baku **MATI**.
-- **Kebersihan Lisensi ([`docs/AUDIT.md`](docs/AUDIT.md), [`dataset/LICENSES.md`](dataset/LICENSES.md)):** Seluruh jalur pelatihan v4 & artefak baru bebas font proprieter (`javatext.ttf` dieliminasi total) dan bebas kode AGPL-3.0; `NusaAksara` (`CC BY-SA 4.0`) digunakan ketat sebagai **HANYA-EVALUASI**. Detektor Stage-1 terpasang (`aksara_yolo.onnx`) masih berstatus transisi warisan v3.1 sampai bobot `AksaraYOLOX P2` (Apache-2.0) dilatih penuh di GPU.
-- **Keterbatasan Utama:** Goresan pensil/pena `1 px` sangat tipis di kertas bergaris biru dapat terlewat oleh proposer Stage-1 (contoh `hr_hw_10`), sandhangan `< 12 px` (`wulu/cecak/layar`) pada foto naskah rapat dibatasi resolusi Stage-1 `416 px`, dan label Latin cetak tepat di atas aksara tetap rentan salah dibaca sebagai sandhangan vokal (`diag_08`).
+- **Kebersihan Lisensi ([`docs/AUDIT.md`](docs/AUDIT.md), [`dataset/LICENSES.md`](dataset/LICENSES.md)):** Seluruh jalur pelatihan v4 & artefak baru bebas font proprieter (`javatext.ttf` dieliminasi total) dan bebas kode AGPL-3.0; `NusaAksara` (`CC BY-SA 4.0`) digunakan ketat sebagai **HANYA-EVALUASI**. Detektor Stage-1 terpasang (`aksara_yolo.onnx`) masih berstatus transisi warisan v3.1 sampai bobot `AksaraYOLOX-P2` (Apache-2.0) dilatih penuh di GPU dan dipasang lewat [`tools/install_yolox_release.py`](tools/install_yolox_release.py).
+- **Keterbatasan Utama:** Goresan `1 px` di atas kertas bergaris biru (`hr_hw_10`: `100% → 10%` CER) dan label Latin di atas aksara (`diag_08`: `80% → 5%` CER; `diag_01`: `37.84% → 0%`) kini sebagian besar pulih, namun sandhangan `< 12 px` (`wulu/cecak/layar`) pada foto naskah rapat (`NusaAksara`) masih dibatasi resolusi Stage-1 `416 px`, dan aksara langka di luar Tier 1 (`ꦉ`, `ꦊ`, `ꦣ`, `꧇`, Murda) menunggu perluasan data latih.

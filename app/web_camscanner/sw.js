@@ -1,5 +1,5 @@
 // Service Worker for AksaraScan v4.0 PWA Offline Support
-const CACHE_NAME = 'aksarascan-v16';
+const CACHE_NAME = 'aksarascan-v17';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

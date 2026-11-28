@@ -24,6 +24,8 @@
     w_cls: 0.65,
     base_conf_min: 0.25,
     recover_s2_min: 1.01,
+    recover_sandhangan_min: 0.70,
+    recover_sandhangan_proto_min: 0.56,
     relabel_delta: 0.08,
     relabel_s2_min: 0.45,
     neg_reject_thr_lo: 0.48,
@@ -212,6 +214,206 @@
   }
 
   /**
+   * Penekan konteks baris Latin/distraktor dan pasangan mikro kembar tepat di atas aksara besar:
+   *  1) Jika >=2 kotak ditolak sebagai non_aksara membentuk baris horizontal (bentang >= 50 px),
+   *     kotak kecil tersisa di pita Y yang sama ikut ditekan bila bukan aksara besar meyakinkan.
+   *  2) Dua tanda kecil (h < 0.48 * medianBaseH) berdampingan sejajar di atas satu aksara besar
+   *     (mis. label "ca/ta/sa/ga" di atas huruf tulisan tangan) ditolak sebagai spillover Latin.
+   */
+  function pruneLatinContextAndTwinLabels(detections, rejectedBoxes) {
+    if (!detections.length) return { detections, contextRejected: 0 };
+
+    const SUPERSCRIPT_MARKS = new Set(['wulu', 'pepet', 'cecak', 'layar']);
+    const baseHeights = detections
+      .filter((d) => (d.category === 'nglegena' || d.category === 'pasangan') && d.box && (d.box[3] - d.box[1]) >= 28)
+      .map((d) => d.box[3] - d.box[1])
+      .sort((a, b) => a - b);
+    const medianBaseH = baseHeights.length ? baseHeights[Math.floor(baseHeights.length / 2)] : 0;
+
+    // 1. Kumpulkan pita baris horizontal dari kotak yang sudah ditolak Stage-2 sebagai non_aksara
+    const strips = [];
+    if (rejectedBoxes && rejectedBoxes.length >= 2) {
+      const used = new Uint8Array(rejectedBoxes.length);
+      for (let i = 0; i < rejectedBoxes.length; i++) {
+        if (used[i]) continue;
+        const seed = rejectedBoxes[i];
+        const cluster = [seed];
+        used[i] = 1;
+        for (let j = i + 1; j < rejectedBoxes.length; j++) {
+          if (used[j]) continue;
+          const cand = rejectedBoxes[j];
+          if (Math.abs(cand.cy - seed.cy) <= Math.max(seed.h, cand.h, 14) * 0.72) {
+            cluster.push(cand);
+            used[j] = 1;
+          }
+        }
+        if (cluster.length >= 2) {
+          const minX = Math.min(...cluster.map((c) => c.x0));
+          const maxX = Math.max(...cluster.map((c) => c.x1));
+          const meanH = cluster.reduce((a, b) => a + b.h, 0) / cluster.length;
+          const meanCy = cluster.reduce((a, b) => a + b.cy, 0) / cluster.length;
+          if ((maxX - minX) >= 50 && meanH <= 48 && (!medianBaseH || medianBaseH < 42 || meanH < medianBaseH * 0.68)) {
+            strips.push({ minX, maxX, meanH, meanCy });
+          }
+        }
+      }
+    }
+
+    const dropIdx = new Set();
+
+    if (strips.length) {
+      for (let i = 0; i < detections.length; i++) {
+        const d = detections[i];
+        if (!d.box) continue;
+        const dw = Math.max(1, d.box[2] - d.box[0]);
+        const dh = Math.max(1, d.box[3] - d.box[1]);
+        const dcy = (d.box[1] + d.box[3]) * 0.5;
+        if (medianBaseH >= 42 && dh >= medianBaseH * 0.62) continue;
+        if ((d.category === 'nglegena' || d.category === 'pasangan') && d.confidence >= 0.85 && (d.nonAksaraProb || 0) < 0.05) continue;
+
+        for (const st of strips) {
+          if (Math.abs(dcy - st.meanCy) > Math.max(dh, st.meanH) * 0.60) continue;
+          if (d.box[2] < st.minX - dw * 3.5 || d.box[0] > st.maxX + dw * 3.5) continue;
+          if (dh > Math.max(st.meanH * 1.45, 36)) continue;
+          const lowCert = (d.nonAksaraProb || 0) >= 0.025 || d.confidence < 0.88 || (d.protoSim !== undefined && d.protoSim < 0.76);
+          if (lowCert) {
+            dropIdx.add(i);
+            break;
+          }
+        }
+      }
+    }
+
+    // 2. Penjaga pasangan mikro kembar sejajar di atas huruf dasar tinggi (label 2-huruf Latin seperti "ga", "ca", "nya")
+    if (medianBaseH >= 44) {
+      const largeBases = detections.filter((d) =>
+        (d.category === 'nglegena' || d.category === 'pasangan') && d.box && (d.box[3] - d.box[1]) >= Math.max(42, medianBaseH * 0.65)
+      );
+      for (let i = 0; i < detections.length; i++) {
+        if (dropIdx.has(i) || !detections[i].box) continue;
+        const a = detections[i];
+        const aw = a.box[2] - a.box[0], ah = a.box[3] - a.box[1];
+        if (ah > Math.min(34, medianBaseH * 0.48)) continue;
+        const acy = (a.box[1] + a.box[3]) * 0.5;
+
+        for (let j = i + 1; j < detections.length; j++) {
+          if (dropIdx.has(j) || !detections[j].box) continue;
+          const b = detections[j];
+          const bw = b.box[2] - b.box[0], bh = b.box[3] - b.box[1];
+          if (bh > Math.min(34, medianBaseH * 0.48)) continue;
+          const bcy = (b.box[1] + b.box[3]) * 0.5;
+          if (Math.abs(acy - bcy) > Math.max(ah, bh, 10) * 0.45) continue;
+
+          const left = a.box[0] <= b.box[0] ? a : b;
+          const right = left === a ? b : a;
+          const gap = right.box[0] - left.box[2];
+          if (gap < -Math.max(aw, bw) || gap > Math.max(aw, bw) * 0.90) continue;
+
+          const pairX0 = left.box[0], pairX1 = right.box[2];
+          const pairY1 = Math.max(a.box[3], b.box[3]);
+          const maxH = Math.max(ah, bh);
+          const aboveLarge = largeBases.some((lb) => {
+            const lbW = lb.box[2] - lb.box[0];
+            const xOverlap = pairX1 >= lb.box[0] - lbW * 0.35 && pairX0 <= lb.box[2] + lbW * 0.35;
+            return xOverlap && lb.box[1] >= pairY1 - 10 && (lb.box[1] - pairY1) <= maxH * 3.2;
+          });
+          if (!aboveLarge) continue;
+
+          const bothSuperscript = SUPERSCRIPT_MARKS.has(a.label) && SUPERSCRIPT_MARKS.has(b.label);
+          const weakEvidence = Math.max(a.nonAksaraProb || 0, b.nonAksaraProb || 0) >= 0.04 ||
+            Math.min(a.protoSim ?? 1, b.protoSim ?? 1) < 0.58 ||
+            Math.min(a.confidence, b.confidence) < 0.60;
+          if (bothSuperscript || weakEvidence) {
+            dropIdx.add(i);
+            dropIdx.add(j);
+          }
+        }
+      }
+
+      // 3. Penjaga baris header label Latin di atas huruf besar (tabel/diagram tulisan tangan):
+      //    Pada data v4 bersih (n=3413), 98% sandhangan atas menempel erat (gap/baseH <= 0.158),
+      //    sedangkan label Latin tabel berbaris horizontal dengan jarak vertikal lebar >= 0.18 * baseH
+      //    dan TIDAK berbagi pita Y dengan nglegena/pasangan berukuran penuh.
+      if (largeBases.length >= 4) {
+        const smallCands = [];
+        for (let i = 0; i < detections.length; i++) {
+          if (dropIdx.has(i) || !detections[i].box) continue;
+          const d = detections[i];
+          const dw = d.box[2] - d.box[0], dh = d.box[3] - d.box[1];
+          const dcy = (d.box[1] + d.box[3]) * 0.5;
+          if (dh > Math.min(36, medianBaseH * 0.45)) continue;
+          if ((d.category === 'nglegena' || d.category === 'pasangan') && dh > medianBaseH * 0.38 && d.confidence >= 0.72) continue;
+
+          // Pastikan tidak berada pada pita Y yang sama dengan aksara besar mana pun (bukan glif sebaris)
+          const sharesInlineBase = largeBases.some((lb) => {
+            const lbCy = (lb.box[1] + lb.box[3]) * 0.5;
+            return Math.abs(lbCy - dcy) <= Math.max(dh, 20) * 0.85;
+          });
+          if (sharesInlineBase) continue;
+
+          // Cari aksara dasar besar tepat di bawah kandidat mikro ini
+          let bestBase = null;
+          let bestGap = 1e9;
+          for (const lb of largeBases) {
+            const lbW = lb.box[2] - lb.box[0];
+            const lbH = lb.box[3] - lb.box[1];
+            const xOverlap = d.box[2] >= lb.box[0] - lbW * 0.35 && d.box[0] <= lb.box[2] + lbW * 0.35;
+            const gap = lb.box[1] - d.box[3];
+            if (xOverlap && gap >= Math.max(10, lbH * 0.17) && gap <= Math.max(dh * 3.8, lbH * 0.95)) {
+              if (gap < bestGap) {
+                bestGap = gap;
+                bestBase = { lb, gapRatio: gap / Math.max(1, lbH) };
+              }
+            }
+          }
+          if (bestBase) {
+            smallCands.push({ idx: i, det: d, cy: dcy, h: dh, x0: d.box[0], x1: d.box[2], gapRatio: bestBase.gapRatio });
+          }
+        }
+
+        if (smallCands.length >= 2) {
+          const usedSC = new Uint8Array(smallCands.length);
+          for (let a = 0; a < smallCands.length; a++) {
+            if (usedSC[a]) continue;
+            usedSC[a] = 1;
+            const grp = [smallCands[a]];
+            for (let b = a + 1; b < smallCands.length; b++) {
+              if (usedSC[b]) continue;
+              if (Math.abs(smallCands[b].cy - smallCands[a].cy) <= Math.max(smallCands[a].h, smallCands[b].h, 14) * 0.72) {
+                usedSC[b] = 1;
+                grp.push(smallCands[b]);
+              }
+            }
+            if (grp.length >= 2) {
+              const gMinX = Math.min(...grp.map((g) => g.x0));
+              const gMaxX = Math.max(...grp.map((g) => g.x1));
+              const gMeanCy = grp.reduce((s, g) => s + g.cy, 0) / grp.length;
+              const gRatios = grp.map((g) => g.gapRatio).sort((u, v) => u - v);
+              const medGapRatio = gRatios[Math.floor(gRatios.length / 2)];
+              const hasRejOnRow = (rejectedBoxes || []).some((rb) => Math.abs(rb.cy - gMeanCy) <= 18 && rb.h <= 42);
+              if ((gMaxX - gMinX) >= 90 && (medGapRatio >= 0.22 || hasRejOnRow)) {
+                for (const g of grp) dropIdx.add(g.idx);
+              }
+            } else if (grp.length === 1) {
+              const g = grp[0];
+              const rbSameRow = (rejectedBoxes || []).some((rb) => Math.abs(rb.cy - g.cy) <= 18 && rb.h <= 42);
+              if (rbSameRow && g.gapRatio >= 0.25 && g.h <= medianBaseH * 0.40 && g.det.confidence < 0.82) {
+                dropIdx.add(g.idx);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!dropIdx.size) return { detections, contextRejected: 0 };
+    return {
+      detections: detections.filter((_, idx) => !dropIdx.has(idx)),
+      contextRejected: dropIdx.size,
+    };
+  }
+
+  /**
    * Verifikasi kandidat deteksi Tahap-1 menggunakan aksara_embed.onnx + reference_prototypes.json.
    * Menolak distraktor Latin/tembok (kelas #55) & memperbarui topK + referenceMatches[].
    */
@@ -262,6 +464,7 @@
     toVerify.forEach((item, row) => idxMap.set(item.origIdx, { row, isAmbig: item.isAmbig }));
 
     const keptOut = [];
+    const rejectedBoxes = [];
     let relabeled = 0, rejectedNonAksara = 0, abstained = 0;
 
     for (let i = 0; i < candidates.length; i++) {
@@ -307,6 +510,14 @@
       const negThr = d.confidence >= 0.55 ? cfg.neg_reject_thr_hi : cfg.neg_reject_thr_lo;
       if (s2NegProb >= negThr || negBinCls >= cfg.neg_hard_thr) {
         rejectedNonAksara++;
+        if (d.box) {
+          rejectedBoxes.push({
+            x0: d.box[0], y0: d.box[1], x1: d.box[2], y1: d.box[3],
+            w: d.box[2] - d.box[0], h: d.box[3] - d.box[1],
+            cx: (d.box[0] + d.box[2]) * 0.5, cy: (d.box[1] + d.box[3]) * 0.5,
+            s2NegProb, detConf: d.confidence,
+          });
+        }
         continue;
       }
 
@@ -334,7 +545,15 @@
 
       const s2CombBest = cfg.w_cls * pS2[bestC] + (1.0 - cfg.w_cls) * pProto[bestC];
       if (d.confidence < cfg.base_conf_min) {
-        if (Math.max(s2CombBest, pS2[bestC]) < cfg.recover_s2_min) {
+        const okGeneralRecover = Math.max(s2CombBest, pS2[bestC]) >= cfg.recover_s2_min;
+        const okDiacriticRecover = (
+          d.category === 'sandhangan' &&
+          bestC === d.classIdx &&
+          s2CombBest >= (cfg.recover_sandhangan_min || 0.70) &&
+          protoMaxSim[bestC] >= (cfg.recover_sandhangan_proto_min || 0.56) &&
+          s2NegProb <= 0.14
+        );
+        if (!okGeneralRecover && !okDiacriticRecover) {
           continue;
         }
       }
@@ -397,14 +616,18 @@
       keptOut.push(d2);
     }
 
+    const ctxPrune = pruneLatinContextAndTwinLabels(keptOut, rejectedBoxes);
+    rejectedNonAksara += ctxPrune.contextRejected;
+
     const stage2Ms = Math.round(performance.now() - t0);
     return {
-      detections: keptOut,
+      detections: ctxPrune.detections,
       stats: {
         active: true,
         verified: toVerify.length,
         relabeled,
         rejectedNonAksara,
+        contextRejected: ctxPrune.contextRejected,
         abstained,
         stage2Ms,
       },
@@ -430,5 +653,6 @@
     verifyDetections,
     getStatus,
     getBank,
+    pruneLatinContextAndTwinLabels,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -265,11 +265,49 @@ function runUnitTests() {
   assert.ok(enhBlue.report.suppressedLinePixels > 250, 'Garis buku memanjang harus terdeteksi & diredam');
   assert.ok(enhBlue.report.blurBefore.coloredInkRatio > 0.02, 'Tinta biru kromatik harus terdeteksi');
 
+  // 5. Uji penajaman goresan pensil/pena 1 px di atas garis biru tipis (tak boleh merusak garis buku yg ditekan)
+  const thinOnly = makeSyntheticStrokes(240, 120, { thinStroke: true, withRuledLines: false });
+  const thinRuled = makeSyntheticStrokes(240, 120, { thinStroke: true, withRuledLines: true });
+  const enhThinRuled = Enhancer.enhance(thinRuled, { autoSharpen: true, removeLines: true });
+  const ccThinRef = measureStrokeContinuity(thinOnly, 32);
+  const ccThinAfter = measureStrokeContinuity(enhThinRuled.imageData, 32);
+  console.log('  Thin 1px + ruled lines test:', {
+    suppressedPx: enhThinRuled.report.suppressedLinePixels,
+    strokeInkRef: ccThinRef.inkPixels,
+    inkAfter: ccThinAfter.inkPixels,
+    ridgeRef: ccThinRef.ridgeCount,
+    ridgeAfter: ccThinAfter.ridgeCount,
+  });
+  assert.ok(enhThinRuled.report.suppressedLinePixels > 200, 'Garis buku di balik goresan 1px harus tetap terdeteksi');
+  assert.ok(ccThinAfter.ridgeCount >= ccThinRef.ridgeCount * 0.90, 'Goresan 1px tipis harus tetap utuh pasca penekanan garis');
+
+  // 6. Uji unit pruneLatinContextAndTwinLabels (Stage-2 context filter)
+  require(path.join(WEB_DIR, 'stage2_verifier.js'));
+  const pruneFn = globalThis.AksaraStage2?.pruneLatinContextAndTwinLabels;
+  assert.equal(typeof pruneFn, 'function', 'pruneLatinContextAndTwinLabels harus terekspos');
+  const synthDets = [
+    { label: 'ha', category: 'nglegena', confidence: 0.94, box: [70, 170, 180, 245] },
+    { label: 'na', category: 'nglegena', confidence: 0.92, box: [270, 172, 378, 248] },
+    { label: 'ca', category: 'nglegena', confidence: 0.95, box: [500, 175, 595, 248] },
+    { label: 'ra', category: 'nglegena', confidence: 0.91, box: [715, 180, 778, 250] },
+    // Label Latin jauh di atas aksara besar (harus ditolak sebagai header chart)
+    { label: 'wulu', category: 'sandhangan', confidence: 0.65, box: [315, 118, 350, 138] },
+    { label: 'wulu', category: 'sandhangan', confidence: 0.66, box: [528, 119, 562, 139] },
+    // Wulu asli menempel erat di atas 'ha' pada pita sebaris (wajib DIPERTAHANKAN!)
+    { label: 'wulu', category: 'sandhangan', confidence: 0.86, box: [110, 148, 136, 172] },
+  ];
+  const pruned = pruneFn(synthDets, [{ x0: 85, y0: 118, x1: 125, y1: 138, w: 40, h: 20, cx: 105, cy: 128 }]);
+  console.log('  Latin overhead label pruning test:', { kept: pruned.detections.length, rejected: pruned.contextRejected });
+  assert.equal(pruned.contextRejected, 2, 'Hanya 2 label overhead jauh yg ditolak');
+  assert.ok(pruned.detections.some((d) => d.label === 'wulu' && d.box[1] === 148), 'Wulu asli menempel erat tidak boleh terhapus');
+
   return {
     blurMonotonic: true,
     sharpMae: Number(maeSharp.toFixed(3)),
     continuity: { before: ccBefore, after: ccAfter },
     suppressedLinePixels: enhBlue.report.suppressedLinePixels,
+    thinRuledSuppressedPixels: enhThinRuled.report.suppressedLinePixels,
+    latinContextPruned: pruned.contextRejected,
   };
 }
 

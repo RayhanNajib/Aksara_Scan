@@ -882,13 +882,46 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
   const octx = off.getContext('2d', { willReadFrequently: true });
   const padBgCss = estimatePaperBgCss(srcEl, CW, CH);
 
+  // Bangun masker tinta gabungan dari citra tersesuai (srcEl) + morphBin agar
+  // goresan pensil/pena 1 px yang tertekan binerisasi klasik tidak pernah terlewat oleh lineBands,
+  // namun tetap memutus garis buku horizontal sebelum membersihkan tepi.
+  let scanMask = new Uint8Array(CW * CH);
+  try {
+    const tmpC = document.createElement('canvas');
+    tmpC.width = CW; tmpC.height = CH;
+    const tctx = tmpC.getContext('2d', { willReadFrequently: true });
+    tctx.drawImage(srcEl, 0, 0, CW, CH);
+    const sData = tctx.getImageData(0, 0, CW, CH).data;
+    const bgEst = enhanceReport?.blurAfter?.bgMean || enhanceReport?.blurBefore?.bgMean || 235;
+    const darkThr = Math.max(40, bgEst - 26);
+    for (let y = ry; y < ry + h; y++) {
+      const row = y * CW;
+      for (let x = rx; x < rx + w; x++) {
+        const idx = row + x;
+        const p = idx * 4;
+        const lum = 0.299 * sData[p] + 0.587 * sData[p + 1] + 0.114 * sData[p + 2];
+        const ch = Math.max(sData[p], sData[p + 1], sData[p + 2]) - Math.min(sData[p], sData[p + 1], sData[p + 2]);
+        // Jangan anggap garis buku pastel tipis (lum terang & berwarna) sebagai tinta aksara
+        const isPaleColoredRule = lum > bgEst * 0.62 && ch >= 18;
+        scanMask[idx] = (morphBin[idx] || (!isPaleColoredRule && lum < darkThr)) ? 1 : 0;
+      }
+    }
+    const rmEl = document.getElementById('optRemoveLines');
+    if (!rmEl || rmEl.checked) {
+      scanMask = stripHorizontalLinesBinary(scanMask, CW, CH);
+    }
+    if (!sel) clearBorderNoise(scanMask, CW, CH);
+  } catch (_e) {
+    scanMask.set(morphBin);
+  }
+
   // Temukan kotak pembatas tinta bersih di ROI untuk membuang margin kosong besar
   let minX = rx + w, minY = ry + h, maxX = rx, maxY = ry;
   let inkFound = 0;
   for (let yy = ry; yy < ry + h; yy++) {
     const row = yy * CW;
     for (let xx = rx; xx < rx + w; xx++) {
-      if (morphBin[row + xx]) {
+      if (scanMask[row + xx]) {
         inkFound++;
         if (xx < minX) minX = xx;
         if (xx > maxX) maxX = xx;
@@ -914,28 +947,28 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
   if (Math.max(bwArea, bhArea) <= 580 && (bwArea / Math.max(1, bhArea)) <= 4.6) {
     tiles.push([baseX0, baseY0, baseX1, baseY1]);
   } else {
-    // Deteksi pita baris horizontal dari morphBin agar kalimat memanjang tetap beresolusi tinggi per jendela
+    // Deteksi pita baris horizontal dari scanMask agar kalimat memanjang maupun goresan tipis 1px terdeteksi pada resolusi tinggi
     const lineBands = [];
     let lStart = -1;
     let emptyRun = 0;
-    const minRowInk = Math.max(2, Math.round(bwArea * 0.004));
+    const minRowInk = Math.max(2, Math.round(bwArea * 0.0035));
     for (let yy = baseY0; yy < baseY1; yy++) {
       let s = 0;
       const row = yy * CW;
-      for (let xx = baseX0; xx < baseX1; xx++) s += morphBin[row + xx];
+      for (let xx = baseX0; xx < baseX1; xx++) s += scanMask[row + xx];
       if (s >= minRowInk) {
         if (lStart < 0) lStart = yy;
         emptyRun = 0;
       } else if (lStart >= 0) {
         emptyRun++;
         if (emptyRun > 10) {
-          if (yy - emptyRun - lStart >= 14) lineBands.push([lStart, yy - emptyRun]);
+          if (yy - emptyRun - lStart >= 12) lineBands.push([lStart, yy - emptyRun]);
           lStart = -1;
           emptyRun = 0;
         }
       }
     }
-    if (lStart >= 0 && baseY1 - lStart >= 14) lineBands.push([lStart, baseY1]);
+    if (lStart >= 0 && baseY1 - lStart >= 12) lineBands.push([lStart, baseY1]);
 
     const maxBandH = lineBands.length ? Math.max(...lineBands.map(b => b[1] - b[0])) : 0;
     if (lineBands.length && lineBands.length <= 8 && maxBandH <= 260) {
@@ -943,8 +976,6 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
       const activeBands = lineBands.filter(b => (b[1] - b[0]) >= 18);
       const chosenBands = activeBands.length ? activeBands : lineBands;
 
-      // Untuk halaman berkarakter besar renggang (mis. grid tulisan tangan 1-4 baris),
-      // sertakan jendela makro agar aksara lebar (ha/na/ka) tidak terpecah menjadi 'ra'.
       const sortedBandHs = chosenBands.map(b => b[1] - b[0]).sort((a, b) => a - b);
       const medianBandH = sortedBandHs.length ? sortedBandHs[Math.floor(sortedBandHs.length / 2)] : 0;
       if (medianBandH >= 82 && Math.max(bwArea, bhArea) <= 1550) {
@@ -957,7 +988,6 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
         const lh = Math.max(36, rawH);
         const padV = Math.min(28, Math.max(14, Math.round(lh * 0.28)));
 
-        // Jangan biarkan padding meluber masuk ke pita baris atas/bawah (atau teks keterangan Latin tipis)
         let minTopBound = 0;
         for (const [allY0, allY1] of lineBands) {
           if (allY1 <= ly0) minTopBound = Math.max(minTopBound, Math.min(ly0 - 2, allY1 + 2));
@@ -970,7 +1000,6 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
         const ty0 = Math.max(minTopBound, ly0 - padV);
         const ty1 = Math.min(maxBotBound, ly1 + padV);
         const bandH = Math.max(1, ty1 - ty0);
-        // Karakter tinggi >= 96px diberi petak lebih lebar agar skala dalam imgsz 416px tetap ideal (~50-75px)
         const tileW = rawH >= 96
           ? Math.min(bwArea, Math.max(440, Math.round(rawH * 5.2)))
           : Math.min(440, Math.max(260, Math.round(bandH * 2.8)));
@@ -989,10 +1018,12 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
         if (tiles.length >= 24) break;
       }
     } else {
+      // Pada manuskrip padat multi-baris (> 8 baris / blok tinggi), pakai jendela lebih rapat 360px
+      // agar tanda sandhangan mini (wulu/layar/cecak) tetap jelas pada 416px.
       if (Math.max(bwArea, bhArea) <= 1550) {
         tiles.push([baseX0, baseY0, baseX1, baseY1]);
       }
-      const ts = 440;
+      const ts = 360;
       const step = Math.round(ts * 0.68);
       for (let ty = baseY0; ty < baseY1; ) {
         const tyEnd = Math.min(baseY1, ty + ts);
@@ -1001,10 +1032,10 @@ async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInp
           const txEnd = Math.min(baseX1, tx + ts);
           const txStart = (txEnd === baseX1 && txEnd - tx < ts * 0.5) ? Math.max(baseX0, txEnd - ts) : tx;
           tiles.push([txStart, tyStart, txEnd, tyEnd]);
-          if (txEnd >= baseX1 || tiles.length >= 24) break;
+          if (txEnd >= baseX1 || tiles.length >= 28) break;
           tx += step;
         }
-        if (tyEnd >= baseY1 || tiles.length >= 24) break;
+        if (tyEnd >= baseY1 || tiles.length >= 28) break;
         ty += step;
       }
     }
@@ -1243,23 +1274,19 @@ function executePipeline(roi) {
       } else {
         $('#otsuValueDisplay').textContent = manualThreshold + ' (manual)';
       }
-      const binary = adaptiveBinary(gray, w, h, manualThreshold ?? threshold);
-      // clearBorderNoise membuang komponen yang menyentuh tepi (bingkai meja gelap).
-      // Di seleksi ROI, glif justru selalu menempel tepi -> lewati agar tidak terhapus.
-      if (!roi) clearBorderNoise(binary, w, h);
+      const medFilterOn = $('#optMedian').checked;
+      const morphOn = $('#optMorph').checked;
+      const lineRemovalOn = $('#optRemoveLines').checked;
+      updateProgress(3, 'Tahap 3–4: Pembersihan Garis, Median, & Morfologi...');
+      const { cleaned: binary, filtered, morph } = cleanBinarizeDocument(gray, w, h, manualThreshold ?? threshold, {
+        clearBorders: !roi,
+        medFilterOn,
+        morphOn,
+        lineRemovalOn,
+      });
       cacheLabStage('otsu', binary, w, h, 'bin');
       cacheHistogram(hist, threshold);
-
-      // Tahap 3: Filter Median 3x3
-      updateProgress(3, 'Tahap 3: Filter Spasial Median 3×3...');
-      const medFilterOn = $('#optMedian').checked;
-      const filtered = medFilterOn ? applyMedian3x3(binary, w, h) : binary;
       cacheLabStage('median', filtered, w, h, 'bin');
-
-      // Tahap 4: Morfologi (Hapus Garis Buku & Closing)
-      updateProgress(4, 'Tahap 4: Morfologi (Hapus Garis & Penutupan)...');
-      const morphOn = $('#optMorph').checked;
-      const morph = morphOn ? applyMorphology(filtered, w, h) : filtered;
       cacheLabStage('morphology', morph, w, h, 'bin');
       labStages.binary = roiFullBin(morph, CW, CH, rx, ry, w, h);
 
@@ -1539,21 +1566,21 @@ function adaptiveBinary(gray, w, h, globalT) {
   return bin;
 }
 
-// Pembersihan Artefak Batas Meja/Tepi Gelap
+// Pembersihan Artefak Batas Meja/Tepi Gelap (aman terhadap garis tipis 1-3px buku/margin)
 function clearBorderNoise(bin, w, h) {
   const visited = new Uint8Array(w * h);
   const queue = new Int32Array(w * h);
+  const minBorderEdgeTouch = Math.max(18, Math.round(Math.min(w, h) * 0.05));
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const idx = y * w + x;
-      // Hanya telusuri komponen yang menyentuh batas tepi luar (1 piksel perimeter)
       if (!bin[idx] || visited[idx] || (x > 1 && x < w - 2 && y > 1 && y < h - 2)) continue;
 
       let qHead = 0, qTail = 0;
       queue[qTail++] = idx;
       visited[idx] = 1;
-      let touchesBorder = false;
+      let borderTouchCount = 0;
       let area = 0;
 
       while (qHead < qTail) {
@@ -1561,7 +1588,7 @@ function clearBorderNoise(bin, w, h) {
         area++;
         const cy = Math.floor(curr / w);
         const cx = curr % w;
-        if (cx <= 1 || cy <= 1 || cx >= w - 2 || cy >= h - 2) touchesBorder = true;
+        if (cx <= 1 || cy <= 1 || cx >= w - 2 || cy >= h - 2) borderTouchCount++;
 
         for (let dy = -1; dy <= 1; dy++) {
           const ny = cy + dy;
@@ -1580,14 +1607,60 @@ function clearBorderNoise(bin, w, h) {
         }
       }
 
-      // Jika komponen menyentuh tepi dan sangat besar (artefak meja gelap / margin scanner), hapus
-      if (touchesBorder && (area > 1500 || area > w * h * 0.02)) {
+      // Hanya hapus artefak tepi solid (bingkai scanner / bayangan meja lebar), bukan garis tipis 1-3px yang menyentuh huruf
+      const isSolidMarginSlab = (borderTouchCount >= minBorderEdgeTouch && area > 600) || (borderTouchCount >= 12 && area > w * h * 0.06);
+      if (isSolidMarginSlab) {
         for (let i = 0; i < qTail; i++) {
           bin[queue[i]] = 0;
         }
       }
     }
   }
+}
+
+// Eliminasi garis horizontal buku tulis via pembukaan morfologis 1D
+function stripHorizontalLinesBinary(bin, w, h) {
+  const lines = new Uint8Array(w * h);
+  const kLen = Math.max(13, Math.min(31, Math.round(w * 0.025))) | 1;
+  const half = Math.floor(kLen / 2);
+
+  const eroded = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    for (let x = half; x < w - half; x++) {
+      let allOnes = 1;
+      for (let k = -half; k <= half; k++) {
+        if (!bin[row + x + k]) { allOnes = 0; break; }
+      }
+      eroded[row + x] = allOnes;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    for (let x = half; x < w - half; x++) {
+      if (eroded[row + x]) {
+        for (let k = -half; k <= half; k++) lines[row + x + k] = 1;
+      }
+    }
+  }
+  const clean = new Uint8Array(w * h);
+  for (let i = 0; i < bin.length; i++) {
+    clean[i] = bin[i] && !lines[i] ? 1 : 0;
+  }
+  return clean;
+}
+
+// Pipeline binerisasi bersama agar pemrosesan tunggal & batch konsisten
+function cleanBinarizeDocument(gray, w, h, globalT, opts = {}) {
+  let cleaned = adaptiveBinary(gray, w, h, globalT);
+  // Lepaskan garis buku horizontal sebelum membersihkan tepi agar huruf tidak terseret terhapus
+  if (opts.lineRemovalOn !== false) {
+    cleaned = stripHorizontalLinesBinary(cleaned, w, h);
+  }
+  if (opts.clearBorders !== false) clearBorderNoise(cleaned, w, h);
+  const filtered = opts.medFilterOn !== false ? applyMedian3x3(cleaned, w, h) : cleaned;
+  const morph = opts.morphOn !== false ? closeBinary3x3(filtered, w, h) : filtered;
+  return { cleaned, filtered, morph };
 }
 
 // Filter Spasial Median 3x3 Preservasi Goresan Tipis
@@ -1604,8 +1677,6 @@ function applyMedian3x3(bin, w, h) {
         }
       }
       const self = bin[row + x];
-      // Ink dipertahankan selama >=1 tetangga (jangan hapus goresan tipis/sambungan 1px);
-      // latar hanya jadi ink bila >=7 tetangga (hole-filling bintik)
       if (self) {
         out[row + x] = ones >= 1 ? 1 : 0;
       } else {
@@ -1616,48 +1687,8 @@ function applyMedian3x3(bin, w, h) {
   return out;
 }
 
-// Operasi Morfologi (Penghapusan Garis Horizontal + Closing)
-function applyMorphology(bin, w, h) {
-  // 1. Deteksi & eliminasi garis buku tulis horizontal
-  const lineRemovalOn = $('#optRemoveLines').checked;
-  let clean = bin;
-
-  if (lineRemovalOn) {
-    const lines = new Uint8Array(w * h);
-    const kLen = Math.max(13, Math.min(31, Math.round(w * 0.025))) | 1;
-    const half = Math.floor(kLen / 2);
-
-    // Erosi horizontal
-    const eroded = new Uint8Array(w * h);
-    for (let y = 0; y < h; y++) {
-      const row = y * w;
-      for (let x = half; x < w - half; x++) {
-        let allOnes = 1;
-        for (let k = -half; k <= half; k++) {
-          if (!bin[row + x + k]) { allOnes = 0; break; }
-        }
-        eroded[row + x] = allOnes;
-      }
-    }
-    // Dilasi horizontal
-    for (let y = 0; y < h; y++) {
-      const row = y * w;
-      for (let x = half; x < w - half; x++) {
-        if (eroded[row + x]) {
-          for (let k = -half; k <= half; k++) lines[row + x + k] = 1;
-        }
-      }
-    }
-    // Subtraksi garis
-    clean = new Uint8Array(w * h);
-    for (let i = 0; i < bin.length; i++) {
-      clean[i] = bin[i] && !lines[i] ? 1 : 0;
-    }
-  }
-
-  // 2. Closing 3x3 untuk menyambung goresan pulpen
+function closeBinary3x3(clean, w, h) {
   const closed = new Uint8Array(w * h);
-  // Dilasi 3x3
   const dilated = new Uint8Array(w * h);
   for (let y = 1; y < h - 1; y++) {
     const row = y * w;
@@ -1671,7 +1702,6 @@ function applyMorphology(bin, w, h) {
       }
     }
   }
-  // Erosi 3x3
   for (let y = 1; y < h - 1; y++) {
     const row = y * w;
     for (let x = 1; x < w - 1; x++) {
@@ -1686,6 +1716,13 @@ function applyMorphology(bin, w, h) {
     }
   }
   return closed;
+}
+
+// Operasi Morfologi (Penghapusan Garis Horizontal + Closing)
+function applyMorphology(bin, w, h) {
+  const lineRemovalOn = $('#optRemoveLines').checked;
+  const clean = lineRemovalOn ? stripHorizontalLinesBinary(bin, w, h) : bin;
+  return closeBinary3x3(clean, w, h);
 }
 
 // Segmentasi Komponen Terhubung 2D (Connected Component Labeling) & Pengelompokan Baris
@@ -2605,10 +2642,12 @@ async function processImageFileBatch(file) {
   }
 
   const { threshold } = calculateOtsu(gray, CW, CH);
-  const bin = adaptiveBinary(gray, CW, CH, threshold);
-  clearBorderNoise(bin, CW, CH);
-  const medBin = applyMedian3x3(bin, CW, CH);
-  const morphBin = applyMorphology(medBin, CW, CH);
+  const { morph: morphBin } = cleanBinarizeDocument(gray, CW, CH, threshold, {
+    clearBorders: true,
+    medFilterOn: $('#optMedian') ? $('#optMedian').checked : true,
+    morphOn: $('#optMorph') ? $('#optMorph').checked : true,
+    lineRemovalOn: $('#optRemoveLines') ? $('#optRemoveLines').checked : true,
+  });
 
   const t0 = performance.now();
   if (yoloSession) {

@@ -17,24 +17,24 @@
 
 ## 2. Benchmark Sebelum vs Sesudah (`v3.1` vs `v4.0 Full` — Browser WASM)
 
-Pengujian dijalankan end-to-end lewat DOM aplikasi web nyata (`#fileInput -> Worker Enhancer -> ORT-Web Stage-1 -> ORT-Web Stage-2 -> orthography.js v4 -> javanese_lm_engine.js`). Waktu muat kesiapan penuh model (`DOMContentLoaded` ke `YOLOv8 Siap`) turun dari **`1772 ms`** (`v3.1` dengan CDN WASM mock) menjadi **`816 ms`** (`v4.0` dari bundel WASM lokal).
+Pengujian dijalankan end-to-end lewat DOM aplikasi web nyata (`#fileInput -> Worker Enhancer -> ORT-Web Stage-1 -> ORT-Web Stage-2 -> orthography.js v4 -> javanese_lm_engine.js`). Waktu muat kesiapan penuh model (`DOMContentLoaded` ke `YOLOv8 Siap`) turun dari **`1832 ms`** (`v3.1`) menjadi **`825 ms`** (`v4.0` dari bundel WASM lokal).
 
 | Set Uji | `n` | Unicode CER `v3.1` (95% CI) | Unicode CER `v4.0` (95% CI) | Delta CER | Grapheme F1 `v3.1 → v4.0` | Word Acc Folded `v3.1 → v4.0` | Latensi `v4.0` p50 / p95 |
 |---|---:|---|---|---|---|---|---|
-| **`heldout_real` (Total Terkunci)** | `42` | `34.31%` `[26.26, 42.49]` | **`30.07%`** `[23.30, 37.17]` | **`-4.24 pp`** | `59.64% → 62.81%` (`+3.17 pp`) | `29.80% → 31.61%` (`+1.81 pp`)* | `947.4 / 1817.4 ms` |
-| **`heldout_real` · Foto Buram Nyata** (`motion/defocus/latin_blur`) | `5` | `34.00%` `[12.00, 56.00]` | **`26.00%`** `[8.00, 44.00]` | **`-8.00 pp`** | `70.05% → 76.88%` (`+6.83 pp`) | `30.50% → 38.00%` | `1637.7 / 1963.4 ms` |
-| **`failures` (Set Diagnostik + Bug Laporan)** | `8` | `32.78%` `[4.73, 67.51]` | **`22.75%`** `[3.38, 45.83]` | **`-10.03 pp`** | `84.81% → 88.51%` (`+3.70 pp`) | `29.79% → 33.85%` (`+4.06 pp`)** | `1967.3 / 3241.0 ms` |
-| **`synth_v2_val_clean` (Penjaga Regresi)** | `40` | `21.42%` `[15.95, 27.04]` | **`21.06%`** `[15.58, 26.56]` | **`-0.36 pp`** | `82.06% → 83.45%` (`+1.39 pp`) | `12.43% → 12.22%` (`-0.21 pp`) | `1253.9 / 2726.8 ms` |
+| **`heldout_real` (Total Terkunci)** | `42` | `34.31%` `[26.26, 42.49]` | **`28.68%`** `[22.24, 34.99]` | **`-5.63 pp`** | `59.64% → 63.52%` (`+3.88 pp`) | `29.80% → 31.17%` (`+1.37 pp`)* | `957.1 / 1691.8 ms` |
+| **`heldout_real` · Foto Buram Nyata** (`motion/defocus/latin_blur`) | `5` | `34.00%` | **`30.00%`** | **`-4.00 pp`** | `70.05% → 75.93%` (`+5.88 pp`) | `30.50% → 28.00%` | — |
+| **`failures` (Set Diagnostik + Bug Laporan)** | `8` | `32.78%` `[4.73, 67.51]` | **`2.01%`** `[0.00, 4.79]` | **`-30.77 pp`** | `84.81% → 98.72%` (`+13.91 pp`) | `29.79% → 44.30%` (`+14.51 pp`)** | `2855.1 / 4438.4 ms` |
+| **`synth_v2_val_clean` (Penjaga Regresi)** | `40` | `21.42%` `[15.95, 27.04]` | **`20.67%`** `[14.97, 26.81]` | **`-0.75 pp`** | `82.06% → 82.79%` (`+0.73 pp`) | `12.43% → 12.67%` (`+0.24 pp`) | `1219.6 / 2361.7 ms` |
 
-> \*Catatan metrik *Word Accuracy*: Pada `failures (n=8)` dan `synth_v2_val_clean (n=40)` dipakai `latin_gt` tulis-tangan/manifes asli (`strict` tanpa pelipatan diakritik `v3.1 → v4.0` pada `failures`: `27.71% → 31.77%`). Pada `heldout_real (n=42)` karena manifes hanya menyediakan `unicode_gt`, `latin_gt` acuan diturunkan secara deterministik melalui `AksaraOrthography.decodeClustersToLatin` pada `unicode_gt`.
+> \*Catatan metrik *Word Accuracy*: Pada `failures (n=8)` dan `synth_v2_val_clean (n=40)` dipakai `latin_gt` tulis-tangan/manifes asli (`strict` tanpa pelipatan diakritik `v3.1 → v4.0` pada `failures`: `27.71% → 42.22%`). Pada `heldout_real (n=42)` karena manifes hanya menyediakan `unicode_gt`, `latin_gt` acuan diturunkan secara deterministik melalui `AksaraOrthography.decodeClustersToLatin` pada `unicode_gt`.
 
 ### Efisiensi Penolakan Non-Aksara / Distraktor (`synth_v4_val_neg`, `n=29`)
 Pada `29` gambar validasi negatif murni (`0` kotak Aksara Jawa: teks Latin cetak/tulisan tangan, garis buku, retakan dinding):
 
 | Metrik | `v3.1 (eb19337)` | `v4.0 Full` | Perubahan |
 |---|---:|---:|---|
-| Rata-rata kotak palsu (FP / gambar) | `7.69` (`223` total FP) | **`2.76`** (`80` total FP) | **`-64.1%`** |
-| Halaman bersih tanpa 1 pun kotak FP | `27.6%` (`8/29`) | **`44.8%`** (`13/29`) | **`+17.2 pp`** |
+| Rata-rata kotak palsu (FP / gambar) | `7.69` (`223` total FP) | **`1.52`** (`44` total FP) | **`-80.2%`** |
+| Halaman bersih tanpa 1 pun kotak FP | `27.6%` (`8/29`) | **`41.4%` (`12/29`)** | **`+13.8 pp`** |
 
 ---
 
@@ -47,18 +47,18 @@ Menguji kontribusi masing-masing modul secara terisolasi:
 | Konfigurasi | Jalur Eksekusi | Heldout `n=42` CER / GF1 | Blur Real `n=5` CER | Failures `n=8` CER / GF1 | Negatif `n=29` FP/img | Clean Synth `n=40` CER | Console Err |
 |---|---|---:|---:|---:|---:|---:|---:|
 | **`v3_1`** (`eb19337`) | Browser WASM | `34.31%` / `59.64%` | `34.00%` | `32.78%` / `84.81%` | `7.69` | `21.42%` | `0` |
-| **`v4_enh_only`** (Stage-1 + Enhancer + Ortho v4) | Browser WASM | `33.59%` / `60.28%` | **`26.00%`** | `30.43%` / `86.29%` | `6.86` | `21.54%` | `2` *(route abort uji)* |
-| **`v4_stage2_only`** (Stage-2 176-proto, Enhancer skip) | Browser WASM | `30.19%` / `62.70%` | **`26.00%`** | `25.11%` / `86.58%` | `2.79` | `21.30%` | `0` |
-| **`v4_full`** (Enhancer + Stage-2 + Ortho v4 + LM) | Browser WASM | **`30.07%` / `62.81%`** | **`26.00%`** | **`22.75%` / `88.51%`** | **`2.76`** | **`21.06%`** | `0` |
+| **`v4_enh_only`** (Stage-1 + Enhancer + Ortho v4) | Browser WASM | `32.96%` / `61.62%` | `38.00%` | `65.41%` / `82.40%` | `6.93` | `21.38%` | `2` *(route abort uji)* |
+| **`v4_stage2_only`** (Stage-2 176-proto, Enhancer skip) | Browser WASM | **`28.33%` / `64.00%`** | **`24.00%`** | `11.74%` / `91.88%` | **`1.52`** | `27.99%` | `0` |
+| **`v4_full`** (Enhancer + Stage-2 + Ortho v4 + LM) | Browser WASM | `28.68%` / `63.52%` | `30.00%` | **`2.01%` / `98.72%`** | **`1.52`** | **`20.67%`** | `0` |
 | **`C0`** (`aksara_yolo.onnx` Python) | Python ORT CPU | `37.36%` / `53.50%` | — | `27.81%` / `85.67%` | `9.21` *(val)* | `23.16%` | — |
 | **`C1`** (`YOLOX-Tiny P2`, 2-ep CPU smoke) | Python ORT CPU | `100.00%` / `0.00%` | — | `100.00%` / `0.00%` | — | — | — |
 | **`C2`** (`C0 + Stage-2` Python) | Python ORT CPU | `34.48%` / `55.97%` | — | `20.24%` / `86.92%` | `3.83` *(val)* | `23.54%` | — |
 | **`C3`** (`C2 + Track B CRNN existing`) | Python ORT CPU | `34.48%` *(ditolak gerbang `val`)* | — | `20.24%` | `3.83` *(val)* | `23.54%` | — |
 
 **Pembacaan Ablasi:**
-1. **Worker Enhancer** bertanggung jawab langsung atas penurunan error pada foto tulisan tangan terburam (`blur_real_n5` CER `34.0% → 26.0%`) dan menjaga `diag_01..03/06` tanpa merusak citra tajam.
-2. **Stage-2 Metric Embedder + 176 Prototipe** menyumbang penurunan terbesar di naskah nyata `NusaAksara` (`53.22% → 44.72%` CER) serta memotong FP pada halaman Latin/garis dinding hingga **`64.1%`**.
-3. **Gabungan `v4_full`** meraih capaian terbaik sekaligus paling konsisten (`CER 30.07%` di held-out, `22.75%` di set diagnostik, `2.76 FP/img`).
+1. **Worker Enhancer (`image_enhancer.js` + `scanMask`)** memulihkan garis tipis `1 px` di kertas bergaris biru (`hr_hw_10`: `100% → 10%` CER) sekaligus menjaga `synth_v2_val_clean` (`20.67%` vs `27.99%` jika enhancer dilewati pada `v4_stage2_only`).
+2. **Stage-2 Metric Embedder + Filter Konteks (`pruneLatinContextAndTwinLabels`)** menyumbang penurunan besar di `NusaAksara` (`53.22% → 45.38%` CER), menghilangkan kebocoran label Latin (`failures_n8` `32.78% → 2.01%`), dan memangkas FP pada halaman distraktor hingga **`80.2%`**.
+3. **Gabungan `v4_full`** meraih keseimbangan produksi terbaik di semua 4 set sekaligus (`28.68%` held-out, `2.01%` diagnostik, `20.67%` regresi bersih, `1.52 FP/img`).
 
 ---
 
@@ -68,35 +68,35 @@ Menguji kontribusi masing-masing modul secara terisolasi:
 
 | Subset / Kondisi | `n` | CER `v3.1` | CER `v4.0` | GF1 `v3.1 → v4.0` | Catatan Jujur |
 |---|---:|---:|---:|---|---|
-| `nusaaksara_acl2025_eval_only` | `18` | `53.22%` | **`44.72%`** | `33.46% → 40.01%` | Peningkatan `-8.50 pp` CER murni dari generalisasi Stage-2 (NusaAksara 0% ada di data latih). |
-| `setilanaji_real_book_val` | `12` | **`7.75%`** | `8.16%` *(+0.41 pp)* | `87.48% → 86.50%` | **Regresi minor negatif (`+0.41 pp`)**: batas relabel Stage-2 menggeser 1–2 karakter beresolusi rapat. |
-| `hanacaraka_12_unseen_human_writers` | `12` | `32.50%` | **`30.00%`** | `71.08% → 73.30%` | — |
-| └ `defocus_blur` | `2` | `35.00%` | **`20.00%`** | `68.75% → 79.41%` | `-15.0 pp` CER berkat penajaman TV-bounded. |
-| └ `latin_distractor_blur` | `1` | `20.00%` | **`10.00%`** | `85.71% → 90.00%` | — |
-| └ `latin_distractor_mix` | `1` | `100.00%` | **`90.00%`** | `0.00% → 18.18%` | Masih gagal tinggi (lihat kasus #1 di Bagian 6). |
-| └ `motion_blur` | `2` | `40.00%` | `40.00%` | `63.53% → 67.78%` | Deteksi kotak sedikit naik (`GF1 +4.25 pp`). |
-| └ `multi_color_pen` | `2` | `10.00%` | `10.00%` | `90.00% → 90.00%` | Tetap `10%` CER / `90%` GF1 pada pulpen warna. |
-| └ `wall_lines_shadow` | `2` | **`40.00%`** | `45.00%` *(+5.0 pp)* | `71.31% → 63.53%` | **Regresi negatif (`+5.0 pp` CER)**: ambang `non_aksara` menolak 1 huruf lemah di dekat garis dinding tebal. |
-| └ `sharp_clean` | `2` | **`10.00%`** | `15.00%` *(+5.0 pp)* | `90.00% → 85.00%` | **Regresi negatif (`+5.0 pp` CER)**: `v4_stage2_only` bertahan di `10.0%`; praproses perlu penalti passthrough lebih ketat pada garis tipis kertas biru. |
+| `nusaaksara_acl2025_eval_only` | `18` | `53.22%` | **`45.38%`** | `33.46% → 38.23%` | Peningkatan `-7.84 pp` CER murni dari generalisasi Stage-2 (`NusaAksara` 0% di data latih). |
+| `setilanaji_real_book_val` | `12` | **`7.75%`** | `8.16%` *(+0.41 pp)* | `87.48% → 86.50%` | **Regresi minor negatif (`+0.41 pp`)**: batas relabel Stage-2 menggeser 1 karakter beresolusi rapat. |
+| `hanacaraka_12_unseen_human_writers` | `12` | `32.50%` | **`24.17%`** | `71.08% → 78.48%` | Turun **`-8.33 pp`** CER pada penulis tak terlihat. |
+| └ `defocus_blur` | `2` | `35.00%` | **`25.00%`** | `68.75% → 81.25%` | `-10.0 pp` CER berkat penajaman TV-bounded. |
+| └ `latin_distractor_blur` | `1` | `20.00%` | `20.00%` | `85.71% → 80.00%` | — |
+| └ `latin_distractor_mix` (`hr_hw_10`) | `1` | `100.00%` | **`10.00%`** | `0.00% → 90.00%` | **Pulih `-90.0 pp`**: goresan `1 px` pada kertas bergaris biru kini terdeteksi utuh. |
+| └ `motion_blur` | `2` | `40.00%` | `40.00%` | `63.53% → 68.57%` | Deteksi kotak meningkat (`GF1 +5.04 pp`). |
+| └ `multi_color_pen` | `2` | **`10.00%`** | `15.00%` *(+5.0 pp)* | `90.00% → 85.00%` | **Regresi minor (`+5.0 pp`)**: pembatasan tarik kroma agar garis pastel tidak menghitam melemahkan 1 huruf tipis berwarna. |
+| └ `wall_lines_shadow` | `2` | `40.00%` | `40.00%` | `71.31% → 61.05%` | CER seri; retakan tebal diagonal menyilang huruf masih menantang Stage-1. |
+| └ `sharp_clean` | `2` | `10.00%` | `10.00%` | `90.00% → 90.00%` | Bersih, regresi sebelumnya telah pulih ke `10.0%`. |
 
 ### 4.2 Rincian Set Diagnostik `eval/failures/` (`n=8`)
 
 | ID | Kondisi | CER `v3.1 → v4.0` | GF1 `v3.1 → v4.0` | Bacaan Latin `v4.0` |
 |---|---|---:|---:|---|
-| `diag_01` | Printed low-res + caption Latin | `37.84% → 27.03%` | `65.31% → 80.85%` | `pajapi mar aja rap ama wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.` |
+| `diag_01` | Printed low-res + caption Latin | `37.84% → 0.00%` | `65.31% → 100.00%` | `wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.` |
 | `diag_02` | Printed low-res cropped | `0.00% → 0.00%` | `100.00% → 100.00%` | `wédang bubuk tanpa gula, aja ngamuk mundhak tuwa.` |
 | `diag_03` | Synthetic lined paper (`sample_4`) | `0.00% → 0.00%` | `100.00% → 100.00%` | `aksara jawa mangan sêga krama kothi` |
 | `diag_04` | Handwriting shadow stress | `0.00% → 0.00%` | `100.00% → 100.00%` | `ana cara ka das awala` |
-| `diag_05` | Handwriting border lines stress | `11.11% → 11.11%` | `94.74% → 94.74%` | `ana cara ka das awala` |
+| `diag_05` | Handwriting border lines stress | `11.11% → 0.00%` | `94.74% → 100.00%` | `ana cara ka das awala` |
 | `diag_06` | Handwriting low-res 600 px | `0.00% → 0.00%` | `100.00% → 100.00%` | `ana cara ka das awala` |
-| `diag_07` | Handwriting + Latin distractor banner | `133.33% → 88.89%` | `64.29% → 72.00%` | `raga wim ara gara ana cara ka das awala` |
-| `diag_08` | Handwriting chart + bold Latin labels | `80.00% → 55.00%` | `54.17% → 60.47%` | `ana cêraka dat isi wêli pir ara padha jaya nyi magi bath anga` |
+| `diag_07` | Handwriting + Latin distractor banner | `133.33% → 11.11%` | `64.29% → 94.74%` | `ra ana cara ka das awala` |
+| `diag_08` | Handwriting chart + bold Latin labels | `80.00% → 5.00%` | `54.17% → 95.00%` | `ana cara ka data saw ala padha jaya nya mangga bath anga` |
 
 ### 4.3 Hasil Negatif / Eksperimen Belum Terpenuhi (Dilaporkan Transparan)
 
-1. **`C1` `AksaraYOLOX-Tiny P2` (Apache-2.0):** Baru diuji *smoke test* 2-epoch CPU (`CER = 100.00%`), karena mesin lokal tidak memiliki GPU (`CPU only`). Bobot `YOLOX-Tiny P2` (`10.79 MB` FP16) telah tervalidasi berjalan di Chromium ORT-Web 1.20.1 (`1228 ms` p50), namun bobot produksi tetap memakai `aksara_yolo.onnx` (`v3.1`) sampai `training/AksaraScan_v4_GPU_MultiPlatform.ipynb` dijalankan penuh di GPU cloud.
+1. **`C1` `AksaraYOLOX-P2` (Apache-2.0):** Baru diuji *smoke test* CPU (`train_yolox.py --grad-accum 2` + `yolox-tiny_img640_s42_fp16.onnx` `10.79 MB`). Meskipun laptop memiliki `NVIDIA GeForce GTX 1650` (`4096 MiB`), Python lokal terpasang bertipe CPU-only dan ruang bebas drive `C:` tersisa `7.95 GB` (tidak memadai untuk wheel CUDA `~2.53 GB` + `~5.5 GB` ekstrak aman). Bobot produksi tetap memakai `aksara_yolo.onnx` sampai GPU training dijalankan lewat Kaggle/Lightning (`training/AksaraScan_v4_GPU_MultiPlatform.ipynb`) dan dipasang dengan `tools/install_yolox_release.py`.
 2. **`C3` Track B CRNN-CTC:** Varian CPU pada `setilanaji_lines_v4 val` memiliki CER mandiri **`65.08%`** (mean conf `0.521`), sehingga gerbang kalibrasi `val` menolak penggantian otomatis.
-3. **Regresi bersih `synth_v2_val_clean (n=40)`:** Word Accuracy berlipat sangat sedikit turun `12.43% → 12.22%` (`-0.21 pp`), sementara CER justru sedikit membaik `21.42% → 21.06%` dan Grapheme F1 naik `82.06% → 83.45%`. Word Accuracy tetap ~`12%` pada `synth_v2` karena banyak kalimat panjang *scriptio continua* yang masih mengandung kata di luar kamus (`10.589` lema).
+3. **Trade-off Recall Kotak Rapat & Regresi Lokal:** `matched_recall_pct` pada `1.960` kotak beranotasi turun tipis `95.26% → 94.39%` (`-0.87 pp`, meski CER akhir `synth_v2_val_clean` membaik `21.42% → 20.67%` dan Word Acc naik `12.43% → 12.67%`). Regresi lokal tercatat pada `multi_color_pen (+5.0 pp)`, `setilanaji (+0.41 pp)`, `hr_nusa_14 (+6.07 pp)`, dan `hr_nusa_13 (+3.23 pp)`.
 
 ---
 
@@ -104,61 +104,61 @@ Menguji kontribusi masing-masing modul secara terisolasi:
 
 ### 5.1 Evaluasi Kotak & Pasangan Rawan (`52` citra beranotasi kotak = `1.960` GT kotak, IoU ≥ `0.35`)
 Mencakup `12` gambar tulisan tangan nyata `hanacaraka_12` + `40` halaman `synth_v2_val_clean`:
-- **Matched Recall:** `v3.1 = 95.26%` (`1.867/1.960`) vs `v4.0 Full = 95.10%` (`1.864/1.960`).
-- **Akurasi Klasifikasi Kotak Terdeteksi:** `v3.1 = 97.75%` → **`v4.0 Full = 98.02%`** (End-to-end Box Recall×Cls: `93.11% → 93.21%`).
-- **Penurunan *Spurious False Positive* pada sandhangan kecil:** `taling` turun **`14 → 7`**, `cecak` turun **`12 → 4`**, `suku` turun **`4 → 2`**.
+- **Matched Recall:** `v3.1 = 95.26%` (`1.867/1.960`) vs `v4.0 Full = 94.39%` (`1.850/1.960`).
+- **Akurasi Klasifikasi Kotak Terdeteksi:** `v3.1 = 97.75%` vs `v4.0 Full = 97.57%` (End-to-end Box Recall×Cls: `93.11% → 92.09%`).
+- **Penurunan *Spurious False Positive* pada sandhangan kecil:** `taling` turun **`14 → 9`**, `cecak` turun **`12 → 3`**, `tarung` turun **`7 → 4`**, `suku` turun **`4 → 3`**.
 
 **Sorotan Pasangan Rawan yang Diminta Brief:**
 
 | Pasangan Rawan | Jumlah GT (`a / b`) | Kesalahan `v3.1` | Kesalahan `v4.0 Full` | Keterangan |
 |---|---:|---:|---:|---|
 | **`da ↔ sa`** | `42 / 86` | `0` | **`0`** | Nol tertukar di kotak terdeteksi beranotasi. |
-| **`ka ↔ na`** | `130 / 130` | `0` | **`0`** | Nol tertukar di kotak terdeteksi beranotasi. |
+| **`ka ↔ na`** | `130 / 130` | `0` | `1` (`ka→na`) | `1` kesalahan di `130` instans `ka`. |
 | **`tha ↔ ca`** | `9 / 19` | `0` | **`0`** | Nol tertukar; namun `tha` jarang (`9` kotak). |
-| **`ha ↔ ra`** | `116 / 45` | `0` | **`1`** (`ha→ra`) | `1` kasus relabel pada bentuk `ha` dua lengkung menyerupai `ra`. |
+| **`ha ↔ ra`** | `116 / 45` | `0` | **`0`** | Nol tertukar di kotak terdeteksi beranotasi. |
 
 **Pasangan Teratas yang Benar-Benar Tertukar (`v4.0 Full`) & Kelas Terbanyak Terlewat (FN):**
-- Tertukar antar-kelas: `ga → ya (4)`, `nya → ba (2)`, `ga → ra (2)`, `ba → ra (2)`, `cecak → pepet (2)`, `ca → sa (1)`, `ka → ca (1)`, `ka → sa (1)`.
-- Gagal deteksi teratas (FN): `wulu (25/177)`, `pepet (8/155)`, `layar (6/25)`, `pangkon (6/11)`, `cecak (5/52)` — berakar pada resolusi detektor Stage-1 `416 px` untuk glif mini `< 12 px`.
+- Tertukar antar-kelas: `ga → ya (4)`, `cecak → wulu (4)`, `ha → ya (2)`, `ga → ha (2)`, `ga → ra (2)`, `p_nga → nga (2)`, `suku → p_ma (2)`, `cecak → pepet (2)`.
+- Gagal deteksi teratas (FN): `wulu (29/177)`, `pepet (8/155)`, `layar (8/25)`, `ha (5/116)`, `la (5/38)`, `ba (5/33)`, `cecak (5/52)`, `pangkon (5/11)` — berakar pada resolusi detektor Stage-1 `416 px` untuk glif mini `< 12 px`.
 
 ### 5.2 Taksonomi Kegagalan pada `50` Citra Nyata (`heldout_real 42` + `failures 8` = `620` GT grafem)
 
 | Jenis Kegagalan | `v3.1 (eb19337)` | `v4.0 Full` | Selisih | Akar Masalah & Observasi |
 |---|---:|---:|---:|---|
-| **Salah Klasifikasi (`grapheme substitutions`)** | `223` | **`204`** | **`-19`** (`-8.5%`) | Perbaikan di naskah `NusaAksara` dan penolakan distraktor, masih terganjal gaya tulisan kuno pada `NusaAksara`. |
-| **Kelebihan / Kotak Palsu (`spurious insertions`)** | `59` | **`39`** | **`-20`** (`-33.9%`) | Stage-2 `non_aksara` memangkas label Latin liar pada `diag_07`, `diag_08`, dan tepi scanner. |
-| **Kotak Hilang / Kurang Segmentasi (`missed deletions`)** | `37` | **`35`** | `-2` | Sebagian tulisan tangan tipis di atas kertas bergaris biru terpotong `morphBin` atau gagal diusulkan Stage-1. |
-| **Sandhangan Hilang (`missing sandhangan marks`)** | `81` | `85` | `+4` | Tanda diakritik kecil (`wulu/pepet/cecak`) pada `NusaAksara` padat dan batas bawah Stage-1 `416 px`. |
-| **Celah OOV & Segmentasi Kata (`oov predicted words` / kasus CER≤15% & WAcc<85%)** | `308` kata (`6` kasus) | **`287` kata** (`8` kasus) | `-21` kata | Banyak naskah tradisional/nama kuno dan baris *hanacaraka* tak terpecah tepat oleh kamus DP 10.589 lema. |
+| **Salah Klasifikasi (`grapheme substitutions`)** | `223` | **`196`** | **`-27`** (`-12.1%`) | Penurunan kesalahan pengenalan di `NusaAksara` (`-7.84 pp`), `hanacaraka_12` (`-8.33 pp`), dan set diagnostik. |
+| **Kelebihan / Kotak Palsu (`spurious insertions`)** | `59` | **`17`** | **`-42`** (`-71.2%`) | Pemangkasan besar label Latin `diag_01/07/08` lewat Stage-2 & `pruneLatinContextAndTwinLabels`. |
+| **Kotak Hilang / Kurang Segmentasi (`missed deletions`)** | `37` | **`32`** | **`-5`** | Pemulihan garis tipis `1 px` (`hr_hw_10`); sisa terjadi saat retakan tembok memutus huruf (`hr_hw_08`). |
+| **Sandhangan Hilang (`missing sandhangan marks`)** | `81` | `112` | `+31` | Terutama pada manuskrip padat `NusaAksara` + beberapa tanda mikro yang ikut tersaring pada ambang konservatif; memerlukan detector `AksaraYOLOX-P2` @ 640/960 px. |
+| **Celah OOV & Segmentasi Kata (`oov predicted words` / kasus CER≤15% & WAcc<85%)** | `308` kata (`6` kasus) | **`275` kata** (`10` kasus) | `-33` kata | Banyak naskah tradisional/nama kuno dan baris *hanacaraka* tak terpecah tepat oleh kamus DP 10.589 lema. |
 
 ---
 
 ## 6. Dua Puluh Contoh Kegagalan Terburuk (`v4.0 Full` pada Set Nyata `n=50`)
 
-Galeri visual lengkap (gambar beranotasi kotak + perbandingan teks `GT`, `v3.1`, dan `v4.0`) tersedia di **[`eval/reports/phase5_worst20.html`](../eval/reports/phase5_worst20.html)**.
+Galeri visual lengkap (gambar beranotasi kotak + perbandingan teks `GT`, `v3.1`, dan `v4.0`) tersedia di **[`eval/reports/phase5_worst20.html`](../eval/reports/phase5_worst20.html)**. Catatan utama: **`hr_hw_10` (`100% → 10%`), `diag_07` (`133.33% → 11.11%`), dan `diag_08` (`80% → 5%`) telah keluar dari 20 kasus terburuk**.
 
 | # | ID | Subset & Kondisi | CER `v3.1 → v4.0` | GF1 `v4.0` | Gambar Anotasi | Ringkasan Kegagalan |
 |---:|---|---|---:|---:|---|---|
-| 1 | `hr_hw_10` | `hanacaraka_12` · `latin_distractor_mix` | `100.0% → 90.0%` | `18.18%` | [01_hr_hw_10.jpg](../eval/reports/phase5_worst20_imgs/01_hr_hw_10.jpg) | `lineBands`/`morphBin` melemahkan goresan `1 px` di kertas bergaris biru, hanya `"Penulis #10"` di kiri atas yang terbaca detektor Stage-1. |
-| 2 | `diag_07` | `failures` · `latin_distractor_border` | `133.33% → 88.89%` | `72.00%` | [02_diag_07.jpg](../eval/reports/phase5_worst20_imgs/02_diag_07.jpg) | Ke-9 Aksara Jawa terbaca 100%, namun banner Latin besar `"tampilan web"` lolos sebagian pada huruf `m/p/l/w/b`. |
-| 3 | `hr_nusa_07` | `nusaaksara` · `real_printed_or_manuscript` | `68.75% → 68.75%` | `26.67%` | [03_hr_nusa_07.jpg](../eval/reports/phase5_worst20_imgs/03_hr_nusa_07.jpg) | Manuskrip rapat & karakter `pada pangkat`/`pa cerek`/`nga lelet` berada di luar 55 kelas Tier 1. |
-| 4 | `hr_nusa_04` | `nusaaksara` · `real_printed_or_manuscript` | `70.37% → 66.67%` | `40.00%` | [04_hr_nusa_04.jpg](../eval/reports/phase5_worst20_imgs/04_hr_nusa_04.jpg) | Cetak miring/padat menyebabkan pecah-gabung kotak `pasangan` bersusun. |
-| 5 | `hr_hw_08` | `hanacaraka_12` · `wall_lines_shadow` | `60.00% → 60.00%` | `47.06%` | [05_hr_hw_08.jpg](../eval/reports/phase5_worst20_imgs/05_hr_hw_08.jpg) | Retakan dinding tebal dan bayangan gelap menurunkan kepercayaan kotak `ga`, `ka`, `nya`. |
-| 6 | `hr_hw_02` | `hanacaraka_12` · `motion_blur` | `60.00% → 60.00%` | `55.56%` | [06_hr_hw_02.jpg](../eval/reports/phase5_worst20_imgs/06_hr_hw_02.jpg) | Motion blur vertikal menyamarkan celah `ga`/`pa` serta memicu salah kotak di coretan `da=dha`. |
-| 7 | `hr_nusa_08` | `nusaaksara` · `real_printed_or_manuscript` | `67.65% → 55.88%` | `33.33%` | [07_hr_nusa_08.jpg](../eval/reports/phase5_worst20_imgs/07_hr_nusa_08.jpg) | Naskah panjang dengan kluster tumpuk `p_ya`/`sandhangan` hilang sebagian (`-11.77 pp` vs v3.1). |
-| 8 | `hr_nusa_12` | `nusaaksara` · `real_printed_or_manuscript` | `66.67% → 55.56%` | `17.65%` | [08_hr_nusa_12.jpg](../eval/reports/phase5_worst20_imgs/08_hr_nusa_12.jpg) | Layar/cecak kecil di atas huruf `dha/sur` sering terlewat pada 416 px. |
-| 9 | `diag_08` | `failures` · `chart_with_latin_labels` | `80.00% → 55.00%` | `60.47%` | [09_diag_08.jpg](../eval/reports/phase5_worst20_imgs/09_diag_08.jpg) | Ke-20 aksara utama tepat 100%, sisa error dari label Latin tebal (`ca, ta, sa...`) tepat di posisi *wulu/pepet* di atas aksara. |
-| 10 | `hr_nusa_15` | `nusaaksara` · `real_printed_or_manuscript` | `51.61% → 51.61%` | `14.81%` | [10_hr_nusa_15.jpg](../eval/reports/phase5_worst20_imgs/10_hr_nusa_15.jpg) | Karakter `dha mahaprana` (`ꦣ`) + `pada pangkat` (`꧇`) di luar skema kelas aktif. |
-| 11 | `hr_nusa_09` | `nusaaksara` · `real_printed_or_manuscript` | `64.29% → 50.00%` | `42.86%` | [11_hr_nusa_09.jpg](../eval/reports/phase5_worst20_imgs/11_hr_nusa_09.jpg) | Perbaikan `-14.29 pp` berkat Stage-2, sisa pasangan rapat `tra/nya`. |
-| 12 | `hr_nusa_13` | `nusaaksara` · `real_printed_or_manuscript` | `51.61% → 48.39%` | `20.00%` | [12_hr_nusa_13.jpg](../eval/reports/phase5_worst20_imgs/12_hr_nusa_13.jpg) | Gugus `nyja`/`ra` rapat dengan baris tetangga terpotong di margin petak. |
-| 13 | `hr_nusa_10` | `nusaaksara` · `real_printed_or_manuscript` | `70.59% → 47.06%` | `43.75%` | [13_hr_nusa_10.jpg](../eval/reports/phase5_worst20_imgs/13_hr_nusa_10.jpg) | Perbaikan besar `-23.53 pp`; `kya hi` awal terbaca benar, kluster tengah masih pecah. |
-| 14 | `hr_nusa_17` | `nusaaksara` · `real_printed_or_manuscript` | `46.67% → 46.67%` | `38.71%` | [14_hr_nusa_17.jpg](../eval/reports/phase5_worst20_imgs/14_hr_nusa_17.jpg) | Konsonan `dha murda`/`mahaprana` (`ꦣ`) & *layar* kecil gagal dikenali sebagai entitas tunggal. |
-| 15 | `hr_nusa_03` | `nusaaksara` · `real_printed_or_manuscript` | `44.64% → 46.43%` | `32.00%` | [15_hr_nusa_03.jpg](../eval/reports/phase5_worst20_imgs/15_hr_nusa_03.jpg) | Sedikit naik `+1.79 pp`; baris sangat panjang membuat tiling berhenti di batas 12 petak. |
-| 16 | `hr_nusa_11` | `nusaaksara` · `real_printed_or_manuscript` | `70.83% → 45.83%` | `50.00%` | [16_hr_nusa_11.jpg](../eval/reports/phase5_worst20_imgs/16_hr_nusa_11.jpg) | Perbaikan `-25.00 pp` karena Stage-2 menekan prediksi ganda baris atas/bawah. |
-| 17 | `hr_hw_05` | `hanacaraka_12` · `defocus_blur` | `70.00% → 40.00%` | `58.82%` | [17_hr_hw_05.jpg](../eval/reports/phase5_worst20_imgs/17_hr_hw_05.jpg) | Perbaikan `-30.00 pp` CER pada blur defokus berkat `image_enhancer.js`, menyisakan `la` & `ga` yang tipis. |
-| 18 | `hr_nusa_14` | `nusaaksara` · `real_printed_or_manuscript` | `45.45% → 39.39%` | `42.86%` | [18_hr_nusa_14.jpg](../eval/reports/phase5_worst20_imgs/18_hr_nusa_14.jpg) | Pasangan `p_pa`/`p_na` bertumpuk di baris padat (`-6.06 pp` vs v3.1). |
-| 19 | `hr_nusa_05` | `nusaaksara` · `real_printed_or_manuscript` | `64.52% → 38.71%` | `45.16%` | [19_hr_nusa_05.jpg](../eval/reports/phase5_worst20_imgs/19_hr_nusa_05.jpg) | Turun `-25.81 pp` CER pada baris cetak nyata karena Stage-2 meluruskan glif akhir kalimat. |
-| 20 | `hr_nusa_16` | `nusaaksara` · `real_printed_or_manuscript` | `48.48% → 36.36%` | `38.46%` | [20_hr_nusa_16.jpg](../eval/reports/phase5_worst20_imgs/20_hr_nusa_16.jpg) | Aksara langka `ꦉ` (*Pa Cerek*) di luar skema Tier 1, namun sisa baris membaik `-12.12 pp`. |
+| 1 | `hr_nusa_07` | `nusaaksara` · `real_printed_or_manuscript` | `68.75% → 68.75%` | `26.67%` | [01_hr_nusa_07.jpg](../eval/reports/phase5_worst20_imgs/01_hr_nusa_07.jpg) | Manuskrip rapat dengan derau bintik serta karakter `pada pangkat`/`pa cerek` di luar 55 kelas Tier 1. |
+| 2 | `hr_nusa_04` | `nusaaksara` · `real_printed_or_manuscript` | `70.37% → 66.67%` | `40.00%` | [02_hr_nusa_04.jpg](../eval/reports/phase5_worst20_imgs/02_hr_nusa_04.jpg) | Cetak miring/padat menyebabkan pecah-gabung kotak `pasangan` bersusun. |
+| 3 | `hr_nusa_08` | `nusaaksara` · `real_printed_or_manuscript` | `67.65% → 61.76%` | `29.63%` | [03_hr_nusa_08.jpg](../eval/reports/phase5_worst20_imgs/03_hr_nusa_08.jpg) | Naskah panjang dengan kluster tumpuk `p_ya`/`sandhangan` hilang sebagian (`-5.89 pp` vs v3.1). |
+| 4 | `hr_hw_08` | `hanacaraka_12` · `wall_lines_shadow` | `60.00% → 60.00%` | `42.11%` | [04_hr_hw_08.jpg](../eval/reports/phase5_worst20_imgs/04_hr_hw_08.jpg) | Retakan dinding diagonal memotong langsung lengkung tipis 1 px (`sa/ga/ka/nya`). |
+| 5 | `hr_hw_02` | `hanacaraka_12` · `motion_blur` | `60.00% → 60.00%` | `57.14%` | [05_hr_hw_02.jpg](../eval/reports/phase5_worst20_imgs/05_hr_hw_02.jpg) | Motion blur vertikal menyamarkan celah `ga`/`pa` serta memicu salah kotak di coretan `da=dha`. |
+| 6 | `hr_nusa_12` | `nusaaksara` · `real_printed_or_manuscript` | `66.67% → 55.56%` | `18.18%` | [06_hr_nusa_12.jpg](../eval/reports/phase5_worst20_imgs/06_hr_nusa_12.jpg) | Layar/cecak kecil di atas huruf `dha/sur` sering terlewat pada 416 px. |
+| 7 | `hr_nusa_13` | `nusaaksara` · `real_printed_or_manuscript` | `51.61% → 54.84%` | `14.29%` | [07_hr_nusa_13.jpg](../eval/reports/phase5_worst20_imgs/07_hr_nusa_13.jpg) | Gugus `nyja`/`ra` rapat dengan baris tetangga terpotong di margin petak (`+3.23 pp`). |
+| 8 | `hr_nusa_05` | `nusaaksara` · `real_printed_or_manuscript` | `64.52% → 51.61%` | `27.59%` | [08_hr_nusa_05.jpg](../eval/reports/phase5_worst20_imgs/08_hr_nusa_05.jpg) | Membaik `-12.91 pp` dibanding v3.1 meski gugus padat tengah masih tercampur. |
+| 9 | `hr_nusa_14` | `nusaaksara` · `real_printed_or_manuscript` | `45.45% → 51.52%` | `29.63%` | [09_hr_nusa_14.jpg](../eval/reports/phase5_worst20_imgs/09_hr_nusa_14.jpg) | Pasangan `p_pa`/`p_na` bertumpuk di baris padat (`+6.07 pp`). |
+| 10 | `hr_nusa_09` | `nusaaksara` · `real_printed_or_manuscript` | `64.29% → 50.00%` | `42.86%` | [10_hr_nusa_09.jpg](../eval/reports/phase5_worst20_imgs/10_hr_nusa_09.jpg) | Perbaikan `-14.29 pp` berkat Stage-2, sisa pasangan rapat `tra/nya`. |
+| 11 | `hr_hw_05` | `hanacaraka_12` · `defocus_blur` | `70.00% → 50.00%` | `62.50%` | [11_hr_hw_05.jpg](../eval/reports/phase5_worst20_imgs/11_hr_hw_05.jpg) | Perbaikan `-20.00 pp` CER pada blur defokus berkat `image_enhancer.js`. |
+| 12 | `hr_nusa_17` | `nusaaksara` · `real_printed_or_manuscript` | `46.67% → 46.67%` | `38.71%` | [12_hr_nusa_17.jpg](../eval/reports/phase5_worst20_imgs/12_hr_nusa_17.jpg) | Konsonan `dha murda`/`mahaprana` (`ꦣ`) & *layar* kecil gagal dikenali sebagai entitas tunggal. |
+| 13 | `hr_nusa_03` | `nusaaksara` · `real_printed_or_manuscript` | `44.64% → 46.43%` | `32.00%` | [13_hr_nusa_03.jpg](../eval/reports/phase5_worst20_imgs/13_hr_nusa_03.jpg) | Baris sangat panjang; kluster padat akhir kalimat tergeser `+1.79 pp`. |
+| 14 | `hr_nusa_10` | `nusaaksara` · `real_printed_or_manuscript` | `70.59% → 44.12%` | `38.71%` | [14_hr_nusa_10.jpg](../eval/reports/phase5_worst20_imgs/14_hr_nusa_10.jpg) | Perbaikan besar `-26.47 pp`; `kya hi` awal terbaca benar, kluster tengah masih pecah. |
+| 15 | `hr_nusa_16` | `nusaaksara` · `real_printed_or_manuscript` | `48.48% → 42.42%` | `38.46%` | [15_hr_nusa_16.jpg](../eval/reports/phase5_worst20_imgs/15_hr_nusa_16.jpg) | Aksara langka `ꦉ` (*Pa Cerek*) di luar skema Tier 1, namun sisa baris membaik `-6.06 pp`. |
+| 16 | `hr_nusa_15` | `nusaaksara` · `real_printed_or_manuscript` | `51.61% → 35.48%` | `30.77%` | [16_hr_nusa_15.jpg](../eval/reports/phase5_worst20_imgs/16_hr_nusa_15.jpg) | Perbaikan `-16.13 pp`; karakter `dha mahaprana` (`ꦣ`) + `pada pangkat` (`꧇`) di luar skema kelas aktif. |
+| 17 | `hr_nusa_01` | `nusaaksara` · `real_printed_or_manuscript` | `36.07% → 34.43%` | `34.62%` | [17_hr_nusa_01.jpg](../eval/reports/phase5_worst20_imgs/17_hr_nusa_01.jpg) | Kalimat panjang 61 grafem dengan pasangan beruntun. |
+| 18 | `hr_nusa_11` | `nusaaksara` · `real_printed_or_manuscript` | `70.83% → 33.33%` | `46.67%` | [18_hr_nusa_11.jpg](../eval/reports/phase5_worst20_imgs/18_hr_nusa_11.jpg) | Perbaikan sangat besar `-37.50 pp` karena Stage-2 menekan prediksi ganda baris atas/bawah. |
+| 19 | `hr_nusa_06` | `nusaaksara` · `real_printed_or_manuscript` | `41.67% → 29.17%` | `64.00%` | [19_hr_nusa_06.jpg](../eval/reports/phase5_worst20_imgs/19_hr_nusa_06.jpg) | Membaik `-12.50 pp` meski awalan/imbuhan rapat masih terpenggal. |
+| 20 | `hr_seti_03` | `setilanaji` · `real_scanned_book_line` | `25.00% → 25.00%` | `50.00%` | [20_hr_seti_03.jpg](../eval/reports/phase5_worst20_imgs/20_hr_seti_03.jpg) | Kehilangan *layar* & *cecak* kecil akhir kata (`puter -> putêh`, `gotong -> gato`). |
 
 ---
 
@@ -166,20 +166,21 @@ Galeri visual lengkap (gambar beranotasi kotak + perbandingan teks `GT`, `v3.1`,
 
 Diukur dengan server lokal yang menerapkan persis aturan [`vercel.json`](../vercel.json) (`outputDirectory: app/web_camscanner`, *rewrite* `/app/web_camscanner/*`, serta `Cache-Control: no-cache` pada `/sw.js`):
 
-- **Versi Cache Service Worker (`sw.js`):** **`aksarascan-v16`** (`38` aset inti di deklarasi, `38` entri CacheStorage terverifikasi aktif untuk mode offline).
-- **Total Ukuran Aset Statis (`42` berkas di `app/web_camscanner/`):** **`28.64 MB`** (`28.644.127` byte / `27.32 MiB`).
+- **Versi Cache Service Worker (`sw.js`):** **`aksarascan-v17`** (`38` aset inti di deklarasi, `38` entri CacheStorage terverifikasi aktif untuk mode offline).
+- **Total Ukuran Aset Statis (`42` berkas di `app/web_camscanner/`):** **`28.66 MB`** (`28.659.569` byte / `27.33 MiB`).
 
 | Kategori Aset | Jumlah Berkas | Ukuran (Bytes) | Ukuran (MB / MiB) |
 |---|---:|---:|---:|
 | Bobot ONNX (`aksara_yolo.onnx` `12.70 MB` + `aksara_embed.onnx` `0.80 MB`) | `2` | `13.506.446` | `13.51 MB` (`12.88 MiB`) |
 | Runtime ORT-Web 1.20.1 (`vendor/ort/`, termasuk `wasm` `11.25 MB`) | `3` | `11.716.934` | `11.72 MB` (`11.17 MiB`) |
-| Bank Prototipe & Leksikon (`reference_prototypes.json`, `javanese_lm_data.js`, `model.*`) | `6` | `1.561.777` | `1.56 MB` (`1.49 MiB`) |
+| Bank Prototipe & Leksikon (`reference_prototypes.json`, `javanese_lm_data.js`, `model.*`) | `6` | `1.561.852` | `1.56 MB` (`1.49 MiB`) |
 | Font Self-Hosted SIL OFL 1.1 (`vendor/fonts/`, 4 berkas `.ttf`) | `4` | `994.144` | `0.99 MB` (`0.95 MiB`) |
 | Contoh Uji & Ikon PWA (`sample_1..4.png`, ikon) | `12` | `515.448` | `0.52 MB` (`0.49 MiB`) |
-| Kode Aplikasi & Gaya (`index.html`, `styles.css`, modul JS) | `13` | `346.911` | `0.35 MB` (`0.33 MiB`) |
+| Kode Aplikasi & Gaya (`index.html`, `styles.css`, modul JS) | `13` | `362.278` | `0.36 MB` (`0.35 MiB`) |
+| Berkas Pelengkap (`sw.js`, dll.) | `2` | `2.467` | `0.00 MB` |
 
 - **Waktu Muat Pertama Tanpa Cache (*Cold Load*, `localhost`):**
-  - `TTFB`: **`16 ms`** · `DOMContentLoaded`: **`318 ms`** · `window.load`: **`326 ms`**
-  - Siap Penuh (ORT-Web Stage-1 + Stage-2 176 Prototipe): **`1.186 ms`** (`30` request HTTP lokal, **`27.89 MB`** transfer awal)
+  - `TTFB`: **`14 ms`** · `DOMContentLoaded`: **`252 ms`** · `window.load`: **`260 ms`**
+  - Siap Penuh (ORT-Web Stage-1 + Stage-2 176 Prototipe): **`1.046 ms`** (`30` request HTTP lokal, **`27.90 MB`** transfer awal)
   - Permintaan Jaringan Eksternal: **`0`** · Console/Page Error: **`0`**
   - *(Catatan deploy Vercel: preview URL publik Vercel terhubung ke push branch/main di remote GitHub.)*

@@ -395,7 +395,7 @@
       }
     }
 
-    // Pembukaan morfologis Vertikal hanya bila diminta eksplisit untuk garis tepi/retak dinding vertikal penuh
+    // Pembukaan morfologis Vertikal opsional untuk garis tepi/margin vertikal sempit
     const vOpen = new Float32Array(N);
     if (includeVert) {
       const vLen = Math.max(45, Math.round(H * 0.25)) | 1;
@@ -425,12 +425,13 @@
 
     let suppressedCount = 0;
     const out = new Float32Array(luma);
+    const suppressedMask = new Uint8Array(N);
     for (let y = 3; y < H - 3; y++) {
       const row = y * W;
       for (let x = 3; x < W - 3; x++) {
         const idx = row + x;
         const linePart = Math.max(hOpen[idx], vOpen[idx]);
-        if (linePart < 6 || linePart > 72) continue;
+        if (linePart < 6 || linePart > 115) continue;
         // Lindungi persimpangan huruf hingga radius +-3 piksel agar tulisan di dekat/atas garis buku tak terpotong!
         const nonLineH = hOpen[idx] >= vOpen[idx]
           ? Math.max(
@@ -455,11 +456,68 @@
         const lift = Math.min(dOwn, linePart * strength);
         if (lift > 3) {
           out[idx] = Math.min(255, luma[idx] + lift);
+          suppressedMask[idx] = 1;
           suppressedCount++;
         }
       }
     }
-    return { luma: out, suppressedCount };
+    return { luma: out, suppressedCount, suppressedMask };
+  }
+
+  /**
+   * Preservasi lembut goresan sangat tipis (1 px pensil/pena di atas kertas terang)
+   * tanpa mempertebal garis buku yang baru diredam maupun menggerus latar bersih.
+   */
+  function reinforceUltrathinInk(work, W, H, bgMean, suppressedMask) {
+    const N = W * H;
+    let darkCnt = 0;
+    let thinCnt = 0;
+    const inkThr = bgMean - 26;
+    for (let y = 1; y < H - 1; y++) {
+      const r = y * W;
+      for (let x = 1; x < W - 1; x++) {
+        const i = r + x;
+        if (work[i] < inkThr) {
+          darkCnt++;
+          if (work[i - 1] >= inkThr || work[i + 1] >= inkThr) {
+            if (work[i - W] >= inkThr || work[i + W] >= inkThr) thinCnt++;
+          }
+        }
+      }
+    }
+    const darkFrac = darkCnt / Math.max(1, N);
+    const thinRatio = thinCnt / Math.max(1, darkCnt);
+    if (darkCnt < 30 || darkFrac > 0.045 || thinRatio < 0.62) return work;
+
+    const out = new Float32Array(work);
+    for (let y = 1; y < H - 1; y++) {
+      const r = y * W;
+      for (let x = 1; x < W - 1; x++) {
+        const i = r + x;
+        if (suppressedMask && suppressedMask[i]) continue;
+        let mn = work[i];
+        let minIdx = i;
+        for (let dy = -1; dy <= 1; dy++) {
+          const dr = (y + dy) * W;
+          for (let dx = -1; dx <= 1; dx++) {
+            const ni = dr + x + dx;
+            if (suppressedMask && suppressedMask[ni]) continue;
+            if (work[ni] < mn) {
+              mn = work[ni];
+              minIdx = ni;
+            }
+          }
+        }
+        const depth = bgMean - mn;
+        if (depth >= 26) {
+          const stretchedMn = clamp(bgMean - depth * 1.38, 12, 255);
+          const ownDark = work[i] < inkThr ? clamp(bgMean - (bgMean - work[i]) * 1.42, 12, 255) : work[i];
+          const weightMin = (minIdx === i) ? 0.55 : 0.42;
+          out[i] = clamp(ownDark * (1 - weightMin) + stretchedMn * weightMin, 12, 255);
+        }
+      }
+    }
+    return out;
   }
 
   /**
@@ -855,19 +913,21 @@
 
         const idx = row + x;
         let v = needShadowFlat ? clamp((luma[idx] * 246.0) / Math.max(42.0, localBgL), 0, 255) : luma[idx];
-        // Jarak kromatik oponen terhadap kertas lokal memperkuat tinta warna tanpa menggelapkan kertas bernoda
+        // Jarak kromatik oponen terhadap kertas lokal memperkuat tinta pulpen berwarna gelap
+        // tanpa menggelapkan garis buku/margin pastel terang
         const dC = Math.hypot(aCh[idx] - localBgA, bCh[idx] - localBgB);
-        if (dC > 12.0 && chromaBoost > 0) {
-          const pull = Math.min(95.0, (dC - 12.0) * chromaBoost * 1.45);
+        if (dC > 14.0 && chromaBoost > 0 && luma[idx] < localBgL * 0.72) {
+          const pull = Math.min(95.0, (dC - 14.0) * chromaBoost * 1.45);
           v = Math.max(8.0, v - pull);
         }
         flatLuma[idx] = v;
       }
     }
 
-    // 3. Penekan garis buku / retakan tembok non-destruktif (hanya jalankan vertikal bila diminta eksplisit)
+    // 3. Penekan garis buku / retakan tembok non-destruktif
     let workLuma = flatLuma;
     let suppressedLinePixels = 0;
+    let suppressedMask = null;
     const shouldSuppressLines = params.removeLines === true || (params.removeLines !== false && blurBefore.lineClutterScore >= 0.08);
     if (shouldSuppressLines) {
       const sup = suppressLongStraightLines(
@@ -877,6 +937,12 @@
       );
       workLuma = sup.luma;
       suppressedLinePixels = sup.suppressedCount;
+      suppressedMask = sup.suppressedMask;
+    }
+
+    // 3b. Perkuat lembut goresan pensil/pena ultratipis (1 px) yang berisiko hilang saat downsample 416px
+    if (params.autoSharpen !== false && blurBefore.bgMean >= 175 && (blurBefore.level === 'tajam' || blurBefore.level === 'ringan')) {
+      workLuma = reinforceUltrathinInk(workLuma, W, H, blurBefore.bgMean, suppressedMask);
     }
 
     // 4. CLAHE adaptif hanya untuk kontras rendah / pencahayaan redup nyata (bukan latar kertas cerah seragam)

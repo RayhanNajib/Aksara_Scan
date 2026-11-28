@@ -55,6 +55,8 @@
   "w_cls": 0.65,
   "base_conf_min": 0.25,
   "recover_s2_min": 1.01,
+  "recover_sandhangan_min": 0.7,
+  "recover_sandhangan_proto_min": 0.56,
   "relabel_delta": 0.08,
   "relabel_s2_min": 0.45,
   "neg_reject_thr_lo": 0.48,

@@ -396,24 +396,32 @@ def train(args):
         model.export_onnx = False
         tr_loss_acc, tr_reg_acc, tr_obj_acc, tr_cls_acc = 0.0, 0.0, 0.0, 0.0
         n_tr_steps = 0
+        accum = max(1, int(getattr(args, "grad_accum", 1)))
+        optimizer.zero_grad()
         t0 = time.time()
         for step, (imgs, tgts) in enumerate(train_loader):
             imgs = imgs.to(device)
             tgts = [t.to(device) for t in tgts]
-            optimizer.zero_grad()
+            is_last_step = (args.max_steps_per_epoch > 0 and (step + 1) >= args.max_steps_per_epoch) or (step + 1 == len(train_loader))
+            do_step = ((step + 1) % accum == 0) or is_last_step
             with torch.amp.autocast("cuda", enabled=use_amp):
                 raw, grids, strides = model(imgs)
                 loss, parts = compute_yolox_loss(raw, grids, strides, tgts, num_classes=len(CLASSES_55), label_smoothing=0.03, class_weights=cls_w)
+                scaled_loss = loss / accum
             if use_amp and scaler is not None:
-                scaler.scale(loss).backward()
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
-                scaler.step(optimizer)
-                scaler.update()
+                scaler.scale(scaled_loss).backward()
+                if do_step:
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+                    scaler.step(optimizer)
+                    scaler.update()
+                    optimizer.zero_grad()
             else:
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
-                optimizer.step()
+                scaled_loss.backward()
+                if do_step:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+                    optimizer.step()
+                    optimizer.zero_grad()
             tr_loss_acc += float(loss.detach().cpu())
             tr_reg_acc += parts["reg"]
             tr_obj_acc += parts["obj"]
@@ -495,6 +503,7 @@ if __name__ == "__main__":
     p.add_argument("--epochs", type=int, default=100)
     p.add_argument("--close-mosaic", type=int, default=15)
     p.add_argument("--batch", type=int, default=8)
+    p.add_argument("--grad-accum", type=int, default=1, help="Akumulasi gradien untuk GPU VRAM kecil (mis. GTX 1650 4GB: --batch 8 --grad-accum 2)")
     p.add_argument("--lr0", type=float, default=0.001)
     p.add_argument("--mosaic", type=float, default=0.25)
     p.add_argument("--seed", type=int, default=42)

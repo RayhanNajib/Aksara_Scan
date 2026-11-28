@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-28T02:23:57.701Z",
+  "generatedAt": "2026-11-28T03:04:20.505Z",
   "vercelConfig": {
     "outputDirectory": "app/web_camscanner",
     "rewriteVerified": true,
@@ -7,15 +7,15 @@
     "note": "Uji pra-rilis lokal setara aturan vercel.json (Vercel live preview URL mengikuti push ke remote GitHub yang tertaut)."
   },
   "serviceWorker": {
-    "cacheName": "aksarascan-v16",
+    "cacheName": "aksarascan-v17",
     "declaredAssetsCount": 38,
     "verifiedOfflineCacheEntries": 38
   },
   "deployedAssets": {
     "totalFiles": 42,
-    "totalBytes": 28644127,
-    "totalMB_decimal": 28.64,
-    "totalMiB_binary": 27.32,
+    "totalBytes": 28659569,
+    "totalMB_decimal": 28.66,
+    "totalMiB_binary": 27.33,
     "byCategory": {
       "onnx_models": {
         "files": 2,
@@ -31,7 +31,7 @@
       },
       "prototypes_and_lm_data": {
         "files": 6,
-        "bytes": 1561777,
+        "bytes": 1561852,
         "mb_decimal": 1.56,
         "mib_binary": 1.49
       },
@@ -49,9 +49,9 @@
       },
       "app_code_styles": {
         "files": 13,
-        "bytes": 346911,
-        "mb_decimal": 0.35,
-        "mib_binary": 0.33
+        "bytes": 362278,
+        "mb_decimal": 0.36,
+        "mib_binary": 0.35
       },
       "misc_repo_files": {
         "files": 2,
@@ -104,14 +104,14 @@
     ]
   },
   "coldFirstLoad": {
-    "domContentLoadedMs": 318,
-    "loadEventMs": 326,
-    "ttfbMs": 16,
-    "windowLoadWallMs": 331,
-    "fullOnnxPlusStage2ReadyMs": 1186,
+    "domContentLoadedMs": 252,
+    "loadEventMs": 260,
+    "ttfbMs": 14,
+    "windowLoadWallMs": 271,
+    "fullOnnxPlusStage2ReadyMs": 1046,
     "httpRequestsObserved": 30,
-    "transferredBytesObserved": 27888687,
-    "transferredMB_decimal": 27.89,
+    "transferredBytesObserved": 27904129,
+    "transferredMB_decimal": 27.9,
     "externalRequestsCount": 0,
     "consoleErrorsCount": 0
   }
