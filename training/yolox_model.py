@@ -349,9 +349,17 @@ def ciou_loss(pred_boxes, target_boxes):
 
 def compute_yolox_loss(raw, grids, strides, targets_list, num_classes=55, label_smoothing=0.03, class_weights=None):
     """
-    Hitung loss YOLOX dengan SimOTA matching.
+    Hitung loss YOLOX dengan SimOTA matching (selalu dieksekusi dalam FP32 agar aman untuk CUDA AMP).
     targets_list: list len B dari tensor [M_i, 5] berisi (cid, cx_px, cy_px, w_px, h_px).
     """
+    with torch.amp.autocast(device_type=raw.device.type, enabled=False):
+        return _compute_yolox_loss_fp32(
+            raw.float(), grids.float(), strides.float(), targets_list,
+            num_classes=num_classes, label_smoothing=label_smoothing, class_weights=class_weights,
+        )
+
+
+def _compute_yolox_loss_fp32(raw, grids, strides, targets_list, num_classes=55, label_smoothing=0.03, class_weights=None):
     B, N, _ = raw.shape
     device = raw.device
     xy_pred = (raw[..., :2] + grids) * strides
@@ -405,6 +413,7 @@ def compute_yolox_loss(raw, grids, strides, targets_list, num_classes=55, label_
 
             gt_one_hot = F.one_hot(gt_cls, num_classes).float()  # [M, nc]
             p_cls_fg = (torch.sigmoid(cls_logits[b, fg_idx]) * torch.sigmoid(obj_logits[b, fg_idx])).sqrt()
+            p_cls_fg = torch.nan_to_num(p_cls_fg, nan=0.5, posinf=1.0 - 1e-5, neginf=1e-5)
             p_cls_fg = torch.clamp(p_cls_fg, 1e-5, 1.0 - 1e-5)
             cls_cost = F.binary_cross_entropy(
                 p_cls_fg.unsqueeze(0).expand(M, -1, -1),
