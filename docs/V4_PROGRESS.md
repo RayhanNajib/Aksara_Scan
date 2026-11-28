@@ -123,4 +123,34 @@
 - **Keputusan & Berikutnya (Gerbang 3):**
   - Seluruh praproses adaptif Worker, Stage-2 Verifier browser, aset ORT lokal, dan PWA offline telah lolos seluruh gerbang teknis. Berhenti di **Gerbang 3** untuk meminta persetujuan Rayhan sebelum memulai **Fase 4 (`v4/fase-4-ui`: Perombakan UI/UX Anti-Slop bergaya ScanRead + Inspector Referensi & Koreksi)**.
 
+---
+
+## Fase 4 — Perombakan UI/UX (ScanRead-Inspired + Anti-Slop) (Branch `v4/fase-4-ui`)
+- **Dikerjakan (ringkas):**
+  - **Self-Hosted Font SIL OFL (`app/web_camscanner/vendor/fonts/`):** Mengganti CDN Google Fonts dengan self-hosting lokal (`Newsreader-Regular.ttf`, `PlusJakartaSans-Regular.ttf`, `NotoSansJavanese.ttf`, `NotoSansJavanese-Bold.ttf`, total ~994 KB), memperbarui `sw.js` ke **`aksarascan-v15`** (`38` aset di cache), sehingga pemuatan halaman maupun pemindaian menghasilkan **`0` permintaan jaringan eksternal**.
+  - **Sistem Desain & Token WCAG AA+ (`DESIGN.md` v4.0.0 & `styles.css`):** Mempertahankan palet Malam Keraton (`dark`) & Kertas Dluwang (`light`), menaikkan keterbacaan teks sekunder & placeholder ke `>= 5.95:1` di kedua tema, serta men-temakan permukaan peramban (`::selection`, scrollbar, `:focus-visible`, `caret-color`, `tabular-nums`). Menghapus penuh `.wayang-corner`, *kicker* kapital, teks gradasi, kartu bertumpuk, dan border samping `> 1px`.
+  - **Arsitektur Progressive Disclosure & Split Workbench (`index.html`, `app.js`):**
+    - Topbar sticky 64 px (`Pemindai`, `Batch`, `Lab & Referensi`, `Tentang` + status engine + tombol `Pindai Baru` + pengalih tema) + footer 1 baris.
+    - Layar awal hanya menampilkan hero ringkas, dropzone luas (`PNG · JPG · WebP · Foto Buram · Tinta Warna · Mode Gelap`), 4 contoh uji, riwayat pindai lokal, dan 3 langkah proses nyata (tanpa kartu hasil kosong atau pengaturan terbuka).
+    - Setelah gambar masuk, beralih halus ke Split Workbench `52% / 48%` dengan micro-toolbar (*Kotak Deteksi*, *Bandingkan Asli/Ditajamkan Before/After*, *Biner*, *Putar 90°*, *Luruskan*, *Zoom*), panel kontrol *Praproses Citra* yang terhubung langsung ke `image_enhancer.js`, serta pesan pemulihan ramah untuk kanvas kosong/buram berat.
+  - **Fitur Terkendali (`v4_features.js` + `stage2_verifier.js`):**
+    - **Inspektor Referensi Stage-2**: klik kotak atau kartu glif menampilkan potongan pengguna, skor kemiripan acuan (`"Cocok Ref pepet · tulisan tangan (90%)"`), Top-3 kandidat lengkap dengan thumbnail `handwritten` & `printed_tps`, pencarian 55 kelas, dan riwayat koreksi lokalStorage.
+    - **Mode Batch Multi-Halaman**: antrean multi-gambar memakai fungsi inferensi bersama (`runYoloInferenceCore` / `processImageFileBatch`), ekspor `.txt`, `.md`, `.json`, dan `Salin Semua`.
+    - **Riwayat Pindai Lokal (`IndexedDB` `aksarascan_history_db`)**: menyimpan hingga 12 riwayat terakhir (termasuk pulihkan & hapus 1-klik).
+    - **Penjelajah Bank Prototipe (56 Kelas)** & **Tab Tentang (Mode Read)**: menampilkan 176 prototipe acuan per kelas serta atribusi dataset/font terbuka (`CC BY 4.0`, `CC BY-SA 4.0`, `Apache-2.0`, `MIT`, `SIL OFL 1.1`).
+
+- **Hasil terukur (Gerbang 4 — `eval/reports/phase4_verification.json` & tangkapan layar `eval/artifacts/fase4_screenshots/`):**
+  - **Matriks `1440 px` & `390 px` × `Dark` & `Light` (`eval/test_fase4_ui.mjs`):**
+    - Kontras minimum token: **`5.95:1`** (Dark) dan **`6.03:1`** (Light); kontras minimum elemen aktif live DOM: **`8.16:1`** (Dark) dan **`6.40:1`** (Light).
+    - Audit Anti-Slop di seluruh sel matriks: `.wayang-corner = 0`, `gradientText = 0`, `uppercaseHeaders = 0`, `nestedCards = 0`, `thickBorders = 0`.
+    - Overflow horizontal halaman `390 px` (termasuk setelah injeksi kata OOV 52 huruf): **`0 px`**, dan keempat pill navigasi muat bersih tanpa terpotong.
+    - Fungsional terverifikasi: progressive disclosure (`colRatio = 0.52`), slider Before/After compare + Zoom (`120%`), Inspektor Referensi Top-3 (`6` thumbnail), Bank Prototipe (`56` kelas), Batch `2/2` selesai + ekspor, IndexedDB history tersimpan & pulih, kasus ekstrem `blank.png` (`emptyRecovery`) dan `2600×1800` (`1500×1038 px · skala dari 2600×1800`), serta `Tab` keyboard focus (`outlineWidth = 2px solid`).
+  - **Regresi Pasca-Edit Akhir (`eval/test_e2e_assertions.mjs` + `eval/test_fase3_enhancer.mjs`):**
+    - `test_e2e_assertions.mjs`: **PASS** (`02_wedang_bubuk_crop.png` `1207 ms`, `sample_4.png` `1078 ms`, kontras tema konsisten, `0` console error, `0` request jaringan eksternal).
+    - `test_fase3_enhancer.mjs`: **PASS `[1/4]..[4/4]`** (Worker `418 ms` `0` long task, blur CER `15% -> 15%`, fallback Stage-2, mode offline penuh `sw.js aksarascan-v15` `38` entri cache `stage2Ms = 49`).
+  - **Tangkapan layar terinspeksi visual:** `01_landing_1440_dark.png`, `02_workbench_1440_dark.png`, `03_inspector_1440_dark.png`, `04_workbench_1440_light.png`, `05_landing_390_dark.png`, `06_workbench_390_dark.png`, `07_workbench_390_light.png`.
+
+- **Keputusan & Berikutnya (Gerbang 4):**
+  - Berhenti di **Gerbang 4** untuk mempresentasikan hasil perombakan UI/UX dan meminta persetujuan Rayhan sebelum memulai **Fase 5 (`v4/fase-5-eval`: Audit Otomatis, Benchmark Jujur v3.1 vs v4.0, Analisis Kesalahan, Regresi, & Pra-Rilis Vercel)**.
+
 

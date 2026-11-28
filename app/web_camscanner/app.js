@@ -185,31 +185,109 @@ async function initApp() {
   initSelection();
   initPasteAndDrop();
 
-  // Drag and drop
+  // Drag and drop & keyboard dropzone
   dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
   dropzone.addEventListener('dragleave', e => { e.preventDefault(); dropzone.classList.remove('dragover'); });
   dropzone.addEventListener('drop', e => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files[0]) handleImageUpload(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 1 && window.AksaraV4?.queueBatchFiles) {
+      switchMainView('batch');
+      window.AksaraV4.queueBatchFiles(e.dataTransfer.files);
+    } else if (e.dataTransfer.files[0]) {
+      handleImageUpload(e.dataTransfer.files[0]);
+    }
+  });
+  dropzone.addEventListener('click', e => {
+    if (!e.target.closest('button')) fileInput.click();
   });
 
-  // Tombol aksi
+  // Topbar Pindai Baru
+  if ($('#btnNewScan')) {
+    $('#btnNewScan').addEventListener('click', () => {
+      if (sourceImage) resetToLanding();
+      else {
+        switchMainView('scanner');
+        fileInput.click();
+      }
+    });
+  }
+
+  // Tombol aksi & toolbar kanvas
   btnRun.addEventListener('click', () => { clearSelection(); executePipeline(); });
   $('#showBoxes').addEventListener('change', redrawMainCanvas);
   $('#showBin').addEventListener('change', redrawMainCanvas);
+  if ($('#toggleCompare')) $('#toggleCompare').addEventListener('change', redrawMainCanvas);
+  if ($('#compareSplitRange')) $('#compareSplitRange').addEventListener('input', redrawMainCanvas);
+  if ($('#btnRotate90')) $('#btnRotate90').addEventListener('click', rotateSourceImage90);
+  if ($('#btnZoomIn')) $('#btnZoomIn').addEventListener('click', () => setCanvasZoom((window.__aksaraCanvasZoom || 1) + 0.2));
+  if ($('#btnZoomOut')) $('#btnZoomOut').addEventListener('click', () => setCanvasZoom((window.__aksaraCanvasZoom || 1) - 0.2));
+
+  // Pre-Scan Enhancer Controls terhubung langsung ke image_enhancer.js
+  const syncEnhanceFromUI = (rerun = true) => {
+    const autoSh = $('#enhAutoSharpen') ? $('#enhAutoSharpen').checked : true;
+    const flatSh = $('#enhFlattenShadow') ? $('#enhFlattenShadow').checked : true;
+    const remLine = $('#optRemoveLines') ? $('#optRemoveLines').checked : true;
+    const deskew = $('#btnAutoDeskew') ? $('#btnAutoDeskew').checked : false;
+    const shVal = $('#enhSharpenRange') ? parseFloat($('#enhSharpenRange').value) : -0.1;
+    const ctVal = $('#enhContrastRange') ? parseFloat($('#enhContrastRange').value) : 0;
+
+    if ($('#enhSharpenVal')) $('#enhSharpenVal').textContent = shVal < 0 ? 'Auto' : shVal.toFixed(2);
+    if ($('#enhContrastVal')) $('#enhContrastVal').textContent = `${ctVal >= 0 ? '+' : ''}${Math.round(ctVal * 100)}%`;
+
+    window.aksaraEnhanceParams = {
+      ...window.aksaraEnhanceParams,
+      autoSharpen: autoSh,
+      sharpen: shVal >= 0 ? shVal : undefined,
+      flattenShadow: flatSh ? undefined : false,
+      removeLines: remLine ? 'auto' : false,
+      autoDeskew: deskew,
+      contrast: ctVal,
+    };
+    if (rerun && sourceImage && activeEngine === 'yolo') executePipeline();
+  };
+
+  ['#enhAutoSharpen', '#enhFlattenShadow', '#optRemoveLines', '#btnAutoDeskew'].forEach(sel => {
+    if ($(sel)) $(sel).addEventListener('change', () => syncEnhanceFromUI(true));
+  });
+  ['#enhSharpenRange', '#enhContrastRange'].forEach(sel => {
+    if ($(sel)) {
+      $(sel).addEventListener('input', () => syncEnhanceFromUI(false));
+      $(sel).addEventListener('change', () => syncEnhanceFromUI(true));
+    }
+  });
+
+  if ($('#btnRecoverSharpen')) {
+    $('#btnRecoverSharpen').addEventListener('click', () => {
+      if ($('#enhAutoSharpen')) $('#enhAutoSharpen').checked = true;
+      if ($('#enhSharpenRange')) $('#enhSharpenRange').value = '0.65';
+      syncEnhanceFromUI(true);
+    });
+  }
+  if ($('#btnRecoverLowerConf')) {
+    $('#btnRecoverLowerConf').addEventListener('click', () => {
+      if ($('#optConfRange')) {
+        $('#optConfRange').value = '0.18';
+        if ($('#optConfVal')) $('#optConfVal').textContent = '0.18';
+      }
+      if (sourceImage) executePipeline();
+    });
+  }
+
   $('#btnCopyUnicode').addEventListener('click', () => copyToClipboard($('#outJavanese').textContent, 'Aksara Jawa disalin!'));
   $('#btnCopyLatin').addEventListener('click', () => {
     const sent = $('#outSentenceLatin')?.textContent;
     const raw = $('#outLatin').textContent;
     copyToClipboard(sent && sent !== '—' ? sent : raw, 'Kalimat Latin disalin!');
   });
+  if ($('#btnDownloadTxt')) $('#btnDownloadTxt').addEventListener('click', () => downloadTextFile(buildExportText('txt'), `AksaraScan_${Date.now()}.txt`));
+  if ($('#btnDownloadMd')) $('#btnDownloadMd').addEventListener('click', () => downloadTextFile(buildExportText('md'), `AksaraScan_${Date.now()}.md`, 'text/markdown;charset=utf-8'));
   $('#btnDownload').addEventListener('click', downloadJson);
 
-  // Klik langsung pada kanvas untuk mengoreksi karakter
+  // Klik langsung pada kanvas untuk membuka Inspektor Referensi
   mainCanvas.addEventListener('click', handleCanvasClick);
 
-  // Demo Card Coba 1-Klik (dukungan click dan touch)
+  // Demo Card Coba 1-Klik
   $$('.demo-card').forEach(card => {
     const trigger = (e) => {
       e.preventDefault();
@@ -219,7 +297,12 @@ async function initApp() {
     card.addEventListener('click', trigger);
   });
 
-  // Setup Kamus Aksara & Modal
+  // Sub-tab dalam Lab & Referensi
+  $$('[data-labtab]').forEach(btn => {
+    btn.addEventListener('click', () => switchLabSubTab(btn.dataset.labtab));
+  });
+
+  // Setup Kamus Aksara & Inspektor Referensi Modal
   renderDictionary();
   setupCorrectionModal();
 }
@@ -237,23 +320,38 @@ function toggleTheme() {
   applyTheme(current === 'light' ? 'dark' : 'light');
 }
 
-function switchMainView(viewKey) {
-  const views = {
-    scanner: $('#viewScanner'),
-    lab: $('#viewLab'),
-    kamus: $('#viewKamus'),
-    about: $('#viewAbout')
-  };
-  if (!views[viewKey]) return;
-  Object.entries(views).forEach(([k, el]) => {
-    if (el) el.hidden = (k !== viewKey);
-  });
-  $$('.nav-pill').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.nav === viewKey);
-  });
-  if (viewKey === 'lab') {
+function switchLabSubTab(subKey) {
+  const target = subKey || 'pcd';
+  $$('[data-labtab]').forEach(b => b.classList.toggle('active', b.dataset.labtab === target));
+  $$('[data-labpanel]').forEach(p => { p.hidden = (p.dataset.labpanel !== target); });
+  if (target === 'pcd') {
     const activeStage = document.querySelector('.lab-stage-btn.active')?.dataset.stage || 'otsu';
     renderLabStage(activeStage);
+  } else if (target === 'proto' && window.AksaraV4?.renderProtoBank) {
+    window.AksaraV4.renderProtoBank();
+  }
+}
+
+function switchMainView(viewKey) {
+  let effectiveView = viewKey;
+  if (viewKey === 'kamus') {
+    effectiveView = 'lab';
+  }
+  const views = {
+    scanner: $('#viewScanner'),
+    batch: $('#viewBatch'),
+    lab: $('#viewLab'),
+    about: $('#viewAbout')
+  };
+  if (!views[effectiveView]) return;
+  Object.entries(views).forEach(([k, el]) => {
+    if (el) el.hidden = (k !== effectiveView);
+  });
+  $$('.nav-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.nav === effectiveView);
+  });
+  if (effectiveView === 'lab') {
+    switchLabSubTab(viewKey === 'kamus' ? 'kamus' : (document.querySelector('[data-labtab].active')?.dataset.labtab || 'pcd'));
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -363,28 +461,79 @@ function handleCanvasClick(e) {
   }
 }
 
+function setCanvasZoom(z) {
+  const zClamped = Math.max(0.6, Math.min(2.4, Math.round(z * 10) / 10));
+  window.__aksaraCanvasZoom = zClamped;
+  mainCanvas.style.width = `${Math.round(zClamped * 100)}%`;
+  mainCanvas.style.maxHeight = zClamped > 1 ? 'none' : '440px';
+  const badge = $('#zoomBadge');
+  if (badge) badge.textContent = `${Math.round(zClamped * 100)}%`;
+}
+
+function resetToLanding() {
+  switchMainView('scanner');
+  clearSelection();
+  sourceImage = null;
+  currentDetections = [];
+  window.__aksaraLastEnhancedCanvas = null;
+  if ($('#workbenchWrap')) $('#workbenchWrap').hidden = true;
+  if ($('#scannerEmptyWrap')) $('#scannerEmptyWrap').hidden = false;
+  if (dropzone) dropzone.hidden = false;
+  if ($('#btnReplaceImg')) $('#btnReplaceImg').hidden = true;
+  if ($('#scanEmptyAlert')) $('#scanEmptyAlert').hidden = true;
+  btnRun.disabled = true;
+  resetResults();
+}
+
+function rotateSourceImage90() {
+  if (!sourceImage) return;
+  const sw = sourceImage.naturalWidth || sourceImage.width;
+  const sh = sourceImage.naturalHeight || sourceImage.height;
+  const rc = document.createElement('canvas');
+  rc.width = sh;
+  rc.height = sw;
+  const rctx = rc.getContext('2d');
+  rctx.translate(sh, 0);
+  rctx.rotate(Math.PI / 2);
+  rctx.drawImage(sourceImage, 0, 0, sw, sh);
+  const im = new Image();
+  im.onload = () => loadImageElement(im, lastSourceName || 'diputar');
+  im.src = rc.toDataURL('image/png');
+}
+
 function loadImageElement(img, label) {
   sourceImage = img;
   manualThreshold = null;
+  window.__aksaraLastEnhancedCanvas = null;
   lastSourceName = typeof label === 'string' ? label : String(label || 'gambar');
   const maxDim = 1500;
-  const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
-  mainCanvas.width = Math.round(img.naturalWidth * scale);
-  mainCanvas.height = Math.round(img.naturalHeight * scale);
+  const nw = img.naturalWidth || img.width;
+  const nh = img.naturalHeight || img.height;
+  const scale = Math.min(1, maxDim / Math.max(nw, nh));
+  mainCanvas.width = Math.round(nw * scale);
+  mainCanvas.height = Math.round(nh * scale);
   mainCtx.drawImage(img, 0, 0, mainCanvas.width, mainCanvas.height);
 
+  if ($('#scannerEmptyWrap')) $('#scannerEmptyWrap').hidden = true;
+  if ($('#workbenchWrap')) $('#workbenchWrap').hidden = false;
   dropzone.hidden = true;
   stageWrap.hidden = false;
   if ($('#btnReplaceImg')) $('#btnReplaceImg').hidden = false;
+  if ($('#toggleCompare')) $('#toggleCompare').checked = false;
+  if ($('#compareDivider')) $('#compareDivider').hidden = true;
+  if ($('#compareSplitRange')) $('#compareSplitRange').hidden = true;
+  if ($('#scanEmptyAlert')) $('#scanEmptyAlert').hidden = true;
+  setCanvasZoom(1.0);
   clearSelection();
-  $('#srcDim').textContent = `${mainCanvas.width}×${mainCanvas.height} px (${label})`;
+
+  const scaledNote = scale < 1 ? ` · skala dari ${nw}×${nh}` : '';
+  $('#srcDim').textContent = `${mainCanvas.width}×${mainCanvas.height} px${scaledNote}`;
   btnRun.disabled = false;
   currentDetections = [];
   resetResults();
-  // Auto-deteksi: begitu gambar masuk (upload/paste/drop/kamera) langsung scan,
-  // persis aplikasi scanner modern. Model belum siap -> tunggu lalu jalan sendiri.
+  // Auto-deteksi: begitu gambar masuk langsung scan. Model belum siap -> tunggu lalu jalan sendiri.
   if (model || yoloSession) {
-    setTimeout(() => { if (sourceImage === img) executePipeline(); }, 120);
+    setTimeout(() => { if (sourceImage === img) executePipeline(); }, 100);
   } else {
     const wait = setInterval(() => {
       if (model || yoloSession) { clearInterval(wait); if (sourceImage === img) executePipeline(); }
@@ -398,6 +547,7 @@ function resetResults() {
   if ($('#outSentenceLatin')) $('#outSentenceLatin').textContent = '—';
   if ($('#outIndonesian')) $('#outIndonesian').textContent = '—';
   if ($('#glyphCountBadge')) $('#glyphCountBadge').textContent = '0';
+  if ($('#stage2Summary')) $('#stage2Summary').textContent = '';
   const meterVal = $('#meterVal');
   if (meterVal) meterVal.textContent = '0%';
   const meterFill = $('#meterFill');
@@ -676,7 +826,18 @@ function runEnhancerWorker(imageData, params) {
  * perata pencahayaan Sauvola, pemisah tinta warna CIELAB, penekan garis buku/tembok,
  * serta penajaman sadar-blur + Richardson-Lucy ringan anti-ringing.
  */
-async function prepareYoloInputCanvas(srcEl, CW, CH, customParams) {
+function formatEnhanceTelemetry(report) {
+  if (!report || !report.blurBefore) return 'Siap';
+  const b = report.blurBefore;
+  const parts = [`Blur: ${b.level}`];
+  if (report.usedRL) parts.push('RL');
+  if (report.usedClahe) parts.push('CLAHE');
+  if (report.suppressedLinePixels > 0) parts.push(`Garis diredam`);
+  if (Number.isFinite(report.elapsedMs)) parts.push(`${report.elapsedMs} ms`);
+  return parts.join(' · ');
+}
+
+async function prepareYoloInputCanvas(srcEl, CW, CH, customParams, opts = {}) {
   try {
     const c = document.createElement('canvas');
     c.width = CW;
@@ -686,7 +847,6 @@ async function prepareYoloInputCanvas(srcEl, CW, CH, customParams) {
     const img = ctx.getImageData(0, 0, CW, CH);
     const params = customParams || window.aksaraEnhanceParams || {};
     const { imageData: outData, report } = await runEnhancerWorker(img, params);
-    window.__aksaraLastEnhanceReport = report;
 
     if (outData.width !== CW || outData.height !== CH) {
       c.width = outData.width;
@@ -695,15 +855,25 @@ async function prepareYoloInputCanvas(srcEl, CW, CH, customParams) {
     const targetImg = ctx.createImageData(outData.width, outData.height);
     targetImg.data.set(outData.data);
     ctx.putImageData(targetImg, 0, 0);
+
+    if (!opts.silent) {
+      window.__aksaraLastEnhanceReport = report;
+      window.__aksaraLastEnhancedCanvas = c;
+      const pill = $('#enhTelemetryPill');
+      if (pill) pill.textContent = formatEnhanceTelemetry(report);
+    }
+    c.__aksaraEnhanceReport = report;
     return c;
   } catch (_e) {
     return srcEl;
   }
 }
 
-async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInputEl) {
+async function runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInputEl, opts = {}) {
+  const silent = Boolean(opts.silent);
   const rawSrcEl = yoloInputEl || sourceImage;
-  const srcEl = await prepareYoloInputCanvas(rawSrcEl, CW, CH, window.aksaraEnhanceParams);
+  const srcEl = await prepareYoloInputCanvas(rawSrcEl, CW, CH, window.aksaraEnhanceParams, { silent });
+  const enhanceReport = srcEl.__aksaraEnhanceReport || window.__aksaraLastEnhanceReport || null;
   const srcW = srcEl.naturalWidth || srcEl.width || CW;
   const srcH = srcEl.naturalHeight || srcEl.height || CH;
   const imgsz = yoloMeta.imgsz || 416;
@@ -853,7 +1023,7 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInpu
   for (let tIdx = 0; tIdx < tiles.length; tIdx++) {
     const [tx0, ty0, tx1, ty1] = tiles[tIdx];
     const tw = Math.max(1, tx1 - tx0), th = Math.max(1, ty1 - ty0);
-    updateProgress(6, `Tahap 6 · Inferensi YOLOv8 ONNX (${tIdx + 1}/${tiles.length})…`);
+    if (!silent) updateProgress(6, `Tahap 6 · Inferensi YOLOv8 ONNX (${tIdx + 1}/${tiles.length})…`);
 
     octx.fillStyle = tiles.length === 1 ? padBgCss : 'rgb(114, 114, 114)';
     octx.fillRect(0, 0, imgsz, imgsz);
@@ -939,19 +1109,19 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInpu
   }
 
   let kept = yoloNms(cands, 0.42, 0.72);
+  let stage2Stats = null;
   if (window.AksaraStage2 && window.AksaraStage2.getStatus().ready) {
-    updateProgress(7, 'Tahap 7 · Verifikasi Stage-2 & Prototipe…');
+    if (!silent) updateProgress(7, 'Tahap 7 · Verifikasi Stage-2 & Prototipe…');
     const s2Out = await window.AksaraStage2.verifyDetections(kept, srcEl, CW, CH, yoloMeta);
     kept = yoloNms(s2Out.detections, 0.42, 0.72);
-    window.__aksaraLastStage2Stats = s2Out.stats;
+    stage2Stats = s2Out.stats;
   } else {
     kept.forEach((d) => { delete d.detVec; });
-    window.__aksaraLastStage2Stats = {
+    stage2Stats = {
       active: false,
       fallbackReason: window.AksaraStage2 ? window.AksaraStage2.getStatus().fallbackReason : 'unavailable',
     };
   }
-  window.__aksaraLastKeptDetections = kept;
   kept.sort((a, b) => (a.box[1] - b.box[1]) || (a.box[0] - b.box[0]));
 
   kept.forEach((det, idx) => {
@@ -973,13 +1143,22 @@ async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInpu
     det.normCanvas = norm;
   });
 
-  currentDetections = kept;
-  if (window.AksaraOrthography) {
-    yoloReconstructed = window.AksaraOrthography.reconstructJavaneseText(kept);
-  } else {
-    yoloReconstructed = null;
+  const reconstructed = window.AksaraOrthography
+    ? window.AksaraOrthography.reconstructJavaneseText(kept)
+    : null;
+
+  if (!silent) {
+    window.__aksaraLastStage2Stats = stage2Stats;
+    window.__aksaraLastKeptDetections = kept;
+    currentDetections = kept;
+    yoloReconstructed = reconstructed;
+    cacheSvmMontage(kept, model ? model.size : 96);
   }
-  cacheSvmMontage(kept, model ? model.size : 96);
+  return { kept, reconstructed, enhanceReport, stage2Stats };
+}
+
+async function executeYoloPipeline(CW, CH, rx, ry, w, h, sel, morphBin, yoloInputEl) {
+  return runYoloInferenceCore(CW, CH, rx, ry, w, h, sel, morphBin, yoloInputEl, { silent: false });
 }
 
 function executePipeline(roi) {
@@ -1147,7 +1326,10 @@ function executePipeline(roi) {
       }
     } catch (err) {
       console.error(err);
-      alert(`Terjadi kesalahan pemrosesan: ${err.message}`);
+      const alertEl = $('#scanEmptyAlert');
+      const msgEl = $('#scanEmptyMsg');
+      if (msgEl) msgEl.textContent = `Pemrosesan gagal: ${err.message}. Coba unggah ulang gambar atau segarkan halaman.`;
+      if (alertEl) alertEl.hidden = false;
       progressBox.hidden = true;
       hideScanFx();
     } finally {
@@ -1257,8 +1439,14 @@ function initPasteAndDrop() {
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => {
     e.preventDefault();
-    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f && f.type.startsWith('image/')) handleImageUpload(f);
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || !files.length) return;
+    if (files.length > 1 && window.AksaraV4?.queueBatchFiles) {
+      switchMainView('batch');
+      window.AksaraV4.queueBatchFiles(files);
+    } else if (files[0] && files[0].type.startsWith('image/')) {
+      handleImageUpload(files[0]);
+    }
   });
 }
 
@@ -1779,7 +1967,16 @@ function redrawMainCanvas() {
   const w = mainCanvas.width;
   const h = mainCanvas.height;
 
-  if ($('#showBin').checked && labStages.binary) {
+  const cmpChk = $('#toggleCompare');
+  const cmpDivider = $('#compareDivider');
+  const cmpRange = $('#compareSplitRange');
+  const enhC = window.__aksaraLastEnhancedCanvas;
+  const compareActive = Boolean(cmpChk && cmpChk.checked && enhC);
+
+  if (cmpDivider) cmpDivider.hidden = !compareActive;
+  if (cmpRange) cmpRange.hidden = !compareActive;
+
+  if ($('#showBin')?.checked && labStages.binary) {
     const imgData = mainCtx.createImageData(w, h);
     const bin = labStages.binary;
     for (let i = 0, p = 0; i < bin.length; i++, p += 4) {
@@ -1790,12 +1987,33 @@ function redrawMainCanvas() {
       imgData.data[p + 3] = 255;
     }
     mainCtx.putImageData(imgData, 0, 0);
+  } else if (compareActive) {
+    const pct = clampPercent(parseFloat(cmpRange?.value || '50'));
+    const splitX = Math.round((pct / 100) * w);
+    if (cmpDivider) cmpDivider.style.left = `${pct}%`;
+
+    mainCtx.clearRect(0, 0, w, h);
+    // Kiri: citra asli sebelum enhancer
+    mainCtx.save();
+    mainCtx.beginPath();
+    mainCtx.rect(0, 0, splitX, h);
+    mainCtx.clip();
+    mainCtx.drawImage(sourceImage, 0, 0, w, h);
+    mainCtx.restore();
+
+    // Kanan: citra setelah praproses Worker
+    mainCtx.save();
+    mainCtx.beginPath();
+    mainCtx.rect(splitX, 0, Math.max(0, w - splitX), h);
+    mainCtx.clip();
+    mainCtx.drawImage(enhC, 0, 0, w, h);
+    mainCtx.restore();
   } else {
     mainCtx.drawImage(sourceImage, 0, 0, w, h);
   }
 
   // Overlay Kotak Deteksi Karakter (Berwarna per Kategori)
-  if ($('#showBoxes').checked && currentDetections.length) {
+  if ($('#showBoxes')?.checked && currentDetections.length) {
     mainCtx.lineWidth = Math.max(1.5, w / 600);
     mainCtx.font = `bold ${Math.max(11, Math.round(w / 80))}px 'Plus Jakarta Sans', sans-serif`;
 
@@ -1833,11 +2051,38 @@ function redrawMainCanvas() {
   }
 }
 
+function clampPercent(v) {
+  if (!Number.isFinite(v)) return 50;
+  return Math.max(5, Math.min(95, v));
+}
+
+function updateEmptyRecoveryNotice(hasDetections) {
+  const alertEl = $('#scanEmptyAlert');
+  if (!alertEl) return;
+  if (hasDetections) {
+    alertEl.hidden = true;
+    return;
+  }
+  const rep = window.__aksaraLastEnhanceReport;
+  const blurLv = rep?.blurBefore?.level || '';
+  const msgEl = $('#scanEmptyMsg');
+  if (msgEl) {
+    if (blurLv === 'berat' || blurLv === 'sedang') {
+      msgEl.textContent = 'Foto terlalu buram atau rendah kontras sehingga aksara belum terbaca. Coba foto ulang lebih dekat dengan cahaya merata, aktifkan Tajamkan Foto Blur, atau turunkan ambang ke 0.18.';
+    } else {
+      msgEl.textContent = 'Tidak ada aksara Jawa yang terdeteksi pada gambar ini. Pastikan gambar memuat teks aksara Jawa yang jelas, atau coba turunkan ambang keyakinan.';
+    }
+  }
+  alertEl.hidden = false;
+}
+
 function renderOutputs() {
   if (!currentDetections.length) {
     resetResults();
+    updateEmptyRecoveryNotice(false);
     return;
   }
+  updateEmptyRecoveryNotice(true);
 
   let javaneseText = '';
   let latinText = '';
@@ -1879,6 +2124,16 @@ function renderOutputs() {
   if (meterWrap) meterWrap.hidden = false;
   if ($('#glyphCountBadge')) $('#glyphCountBadge').textContent = String(currentDetections.length);
 
+  const s2St = window.__aksaraLastStage2Stats;
+  const s2El = $('#stage2Summary');
+  if (s2El) {
+    if (s2St && s2St.active) {
+      s2El.textContent = `Stage-2: ${s2St.verified || 0} diperiksa · ${s2St.rejectedNonAksara || 0} non-aksara ditolak`;
+    } else {
+      s2El.textContent = activeEngine === 'yolo' ? 'Mode Detektor Tahap-1' : 'Pipeline Klasik SVM';
+    }
+  }
+
   // Grid Karakter Glif
   const grid = $('#glyphsGrid');
   grid.replaceChildren();
@@ -1887,7 +2142,7 @@ function renderOutputs() {
   currentDetections.forEach((det, idx) => {
     const card = document.createElement('div');
     card.className = `glyph-card ${det.isUncertain ? 'uncertain' : ''}`;
-    card.title = `Ketuk untuk mengoreksi aksara #${idx + 1}`;
+    card.title = `Ketuk untuk inspeksi referensi #${idx + 1}`;
     if (det.category === 'pasangan') card.style.borderColor = '#5c8df6';
     else if (det.category === 'sandhangan') card.style.borderColor = '#e88c30';
     else if (det.category === 'pada') card.style.borderColor = '#3fa97a';
@@ -1919,6 +2174,19 @@ function renderOutputs() {
     card.addEventListener('click', () => openCorrectionModal(idx));
     grid.append(card);
   });
+
+  window.dispatchEvent(new CustomEvent('aksara:scancomplete', {
+    detail: {
+      fileName: lastSourceName || 'Pindaian',
+      unicodeText: javaneseText,
+      sentenceLatin,
+      sentenceIndonesian,
+      avgConf,
+      engine: activeEngine,
+      blurLevel: window.__aksaraLastEnhanceReport?.blurBefore?.level || '—',
+      detectionsCount: currentDetections.length,
+    }
+  }));
 }
 
 // Modal Koreksi Manual (20 Nglegena di mode SVM; 52 Kelas di mode YOLOv8)
@@ -1945,17 +2213,21 @@ function setupCorrectionModal() {
 
   items.forEach(a => {
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'correction-btn';
+    btn.dataset.label = a.latin.toLowerCase();
     if (a.category === 'pasangan') btn.style.borderColor = 'rgba(92,141,246,0.45)';
     else if (a.category === 'sandhangan') btn.style.borderColor = 'rgba(232,140,48,0.45)';
     btn.innerHTML = `<span class="aksara-glyph">${a.unicode}</span><span class="aksara-name">${a.latin}</span>`;
     btn.addEventListener('click', () => {
       if (selectedGlyphIndex >= 0 && selectedGlyphIndex < currentDetections.length) {
+        const prev = currentDetections[selectedGlyphIndex].label;
         currentDetections[selectedGlyphIndex].label = a.latin;
         currentDetections[selectedGlyphIndex].unicode = a.unicode;
         currentDetections[selectedGlyphIndex].category = a.category;
         currentDetections[selectedGlyphIndex].confidence = 1.0;
         currentDetections[selectedGlyphIndex].isUncertain = false;
+        window.dispatchEvent(new CustomEvent('aksara:correction', { detail: { type: 'manual_glyph', from: prev, to: a.latin, index: selectedGlyphIndex } }));
         if (activeEngine === 'yolo' && window.AksaraOrthography) {
           yoloReconstructed = window.AksaraOrthography.reconstructJavaneseText(currentDetections);
         }
@@ -1984,7 +2256,10 @@ function closeCorrectionModal() {
 function openCorrectionModal(index) {
   selectedGlyphIndex = index;
   const det = currentDetections[index];
-  $('#modalTargetLabel').textContent = `Koreksi Aksara #${index + 1} (Saat ini: ${det.label} / ${det.unicode})`;
+  $('#modalTargetLabel').textContent = `Inspektor Referensi · Aksara #${index + 1} (${det.label} / ${det.unicode})`;
+  if (window.AksaraV4 && window.AksaraV4.renderInspector) {
+    window.AksaraV4.renderInspector(det, index, sourceImage, window.__aksaraLastEnhancedCanvas || null);
+  }
   const modal = $('#correctionModal');
   modal.hidden = false;
   modal.classList.remove('is-hidden');
@@ -2219,15 +2494,34 @@ function renderDictionary() {
 
 // Utilitas Clipboard & Unduh
 // Ekspor hasil deteksi sebagai JSON (PRD: Salin Unicode, Salin Latin, Unduh JSON).
+function buildExportText(kind) {
+  const unicode = $('#outJavanese')?.textContent || '—';
+  const latin = $('#outSentenceLatin')?.textContent || $('#outLatin')?.textContent || '—';
+  const indo = $('#outIndonesian')?.textContent || '—';
+  if (kind === 'md') {
+    return `# Hasil Pemindaian AksaraScan\n\n- **Sumber:** ${lastSourceName || 'Unggahan pengguna'}\n\n## Aksara Jawa (Unicode)\n\n${unicode}\n\n## Bacaan Latin\n\n${latin}\n\n## Arti Bahasa Indonesia\n\n${indo}\n`;
+  }
+  return `Aksara Jawa (Unicode):\n${unicode}\n\nBacaan Latin:\n${latin}\n\nArti Bahasa Indonesia:\n${indo}\n`;
+}
+
+function downloadTextFile(content, filename, mime = 'text/plain;charset=utf-8') {
+  const blob = new Blob([content], { type: mime });
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
 function downloadJson() {
   if (!currentDetections.length) return;
   const isYolo = (activeEngine === 'yolo' && yoloMeta);
   const payload = {
     aplikasi: 'AksaraScan',
-    versi: '2.0.0',
+    versi: '4.0.0',
     sumber: lastSourceName || null,
     model: isYolo
-      ? { algoritma: 'YOLOv8-Nano ONNX', jumlahKelas: yoloMeta.classes.length, mAP50: yoloMeta.metrics?.map50 ?? null }
+      ? { algoritma: 'YOLOv8-Nano ONNX + Stage-2', jumlahKelas: yoloMeta.classes.length, mAP50: yoloMeta.metrics?.map50 ?? null }
       : { algoritma: 'SVM Linear OvR', jumlahKelas: model.classes.length, akurasiUji: model.accuracy },
     rataRataKeyakinan: currentDetections.reduce((a, b) => a + b.confidence, 0) / currentDetections.length,
     teksUnicode: $('#outJavanese').textContent,
@@ -2244,20 +2538,144 @@ function downloadJson() {
       kotak: d.box
     }))
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const link = document.createElement('a');
-  link.download = `AksaraScan_${Date.now()}.json`;
-  link.href = URL.createObjectURL(blob);
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  downloadTextFile(JSON.stringify(payload, null, 2), `AksaraScan_${Date.now()}.json`, 'application/json');
 }
 
 function copyToClipboard(text, msg) {
   if (!text || text === '—') return;
-  navigator.clipboard.writeText(text).then(() => {
-    alert(msg);
-  });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
 }
+
+async function processImageFileBatch(file) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error(`Gagal memuat ${file.name}`));
+    im.src = url;
+  });
+  URL.revokeObjectURL(url);
+
+  const maxDim = 1500;
+  const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+  const CW = Math.max(1, Math.round(img.naturalWidth * scale));
+  const CH = Math.max(1, Math.round(img.naturalHeight * scale));
+  const c = document.createElement('canvas');
+  c.width = CW; c.height = CH;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, CW, CH);
+
+  // Buat thumbnail ringkas untuk preview antrean
+  const thC = document.createElement('canvas');
+  const ts = Math.min(1, 140 / Math.max(CW, CH));
+  thC.width = Math.max(1, Math.round(CW * ts));
+  thC.height = Math.max(1, Math.round(CH * ts));
+  thC.getContext('2d').drawImage(c, 0, 0, thC.width, thC.height);
+  const thumbDataUrl = thC.toDataURL('image/jpeg', 0.72);
+
+  const imgData = ctx.getImageData(0, 0, CW, CH);
+  const data = imgData.data;
+  const gray = new Uint8Array(CW * CH);
+  const histLum = new Uint32Array(256);
+  for (let i = 0, p = 0; i < gray.length; i++, p += 4) {
+    const v = Math.round(0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2]);
+    gray[i] = v;
+    histLum[v]++;
+  }
+  let cum = 0, med = 255;
+  const half = gray.length >> 1;
+  for (let b = 0; b < 256; b++) { cum += histLum[b]; if (cum >= half) { med = b; break; } }
+  let yoloIn = c;
+  if (med < 112) {
+    for (let k = 0; k < gray.length; k++) gray[k] = 255 - gray[k];
+    const invC = document.createElement('canvas');
+    invC.width = CW; invC.height = CH;
+    const ictx = invC.getContext('2d', { willReadFrequently: true });
+    const invImg = ictx.createImageData(CW, CH);
+    for (let p = 0; p < data.length; p += 4) {
+      invImg.data[p] = 255 - data[p];
+      invImg.data[p + 1] = 255 - data[p + 1];
+      invImg.data[p + 2] = 255 - data[p + 2];
+      invImg.data[p + 3] = 255;
+    }
+    ictx.putImageData(invImg, 0, 0);
+    yoloIn = invC;
+  }
+
+  const { threshold } = calculateOtsu(gray, CW, CH);
+  const bin = adaptiveBinary(gray, CW, CH, threshold);
+  clearBorderNoise(bin, CW, CH);
+  const medBin = applyMedian3x3(bin, CW, CH);
+  const morphBin = applyMorphology(medBin, CW, CH);
+
+  const t0 = performance.now();
+  if (yoloSession) {
+    const res = await runYoloInferenceCore(CW, CH, 0, 0, CW, CH, null, morphBin, yoloIn, { silent: true });
+    const avgConf = res.kept.length ? Math.round((res.kept.reduce((s, d) => s + d.confidence, 0) / res.kept.length) * 100) : 0;
+    return {
+      fileName: file.name,
+      width: CW,
+      height: CH,
+      thumbDataUrl,
+      unicodeText: res.reconstructed ? res.reconstructed.unicodeText : res.kept.map(d => d.unicode).join(' '),
+      sentenceLatin: res.reconstructed ? res.reconstructed.sentenceLatin : res.kept.map(d => d.label).join(' '),
+      sentenceIndonesian: res.reconstructed ? res.reconstructed.sentenceIndonesian : '—',
+      detectionsCount: res.kept.length,
+      avgConf,
+      blurLevel: res.enhanceReport?.blurBefore?.level || '—',
+      latencyMs: Math.round(performance.now() - t0),
+    };
+  }
+  return {
+    fileName: file.name,
+    width: CW,
+    height: CH,
+    thumbDataUrl,
+    unicodeText: '—',
+    sentenceLatin: 'Model YOLOv8 belum aktif',
+    sentenceIndonesian: '—',
+    detectionsCount: 0,
+    avgConf: 0,
+    blurLevel: '—',
+    latencyMs: Math.round(performance.now() - t0),
+  };
+}
+
+window.AksaraApp = {
+  switchMainView,
+  openCorrectionModal,
+  closeCorrectionModal,
+  redrawMainCanvas,
+  renderOutputs,
+  processImageFileBatch,
+  applyCandidateCorrection(idx, cand) {
+    if (idx < 0 || idx >= currentDetections.length || !cand) return;
+    currentDetections[idx].label = cand.label;
+    currentDetections[idx].unicode = (yoloMeta && yoloMeta.unicode[cand.label]) || UNICODE_MAP[cand.label] || cand.unicode || '';
+    currentDetections[idx].category = cand.category || currentDetections[idx].category;
+    currentDetections[idx].confidence = Math.max(0.85, cand.prob || 0.85);
+    currentDetections[idx].isUncertain = false;
+    if (activeEngine === 'yolo' && window.AksaraOrthography) {
+      yoloReconstructed = window.AksaraOrthography.reconstructJavaneseText(currentDetections);
+    }
+    renderOutputs();
+    redrawMainCanvas();
+  },
+  getStateSnapshot() {
+    return {
+      sourceImage,
+      enhancedCanvas: window.__aksaraLastEnhancedCanvas || null,
+      detections: currentDetections,
+      reconstructed: yoloReconstructed,
+      enhanceReport: window.__aksaraLastEnhanceReport || null,
+      stage2Stats: window.__aksaraLastStage2Stats || null,
+      lastSourceName,
+      activeEngine,
+    };
+  },
+};
 
 // Inisialisasi saat DOM siap
 document.addEventListener('DOMContentLoaded', initApp);

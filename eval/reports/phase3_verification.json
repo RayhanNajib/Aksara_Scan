@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T08:50:40.096Z",
+  "generatedAt": "2026-11-28T01:58:02.559Z",
   "unit": {
     "blurMonotonic": true,
     "sharpMae": 0,
@@ -19,7 +19,7 @@
   },
   "browser": {
     "workerPerf": {
-      "totalMs": 393,
+      "totalMs": 418,
       "longTasks": []
     },
     "blurComparison": {
@@ -62,7 +62,7 @@
     },
     "fallbackVerified": true,
     "offlineVerified": {
-      "cacheCount": 33,
+      "cacheCount": 38,
       "latin": "wédang bubuk tanpa gula, aja ngamuk mundhak tuwa."
     }
   }

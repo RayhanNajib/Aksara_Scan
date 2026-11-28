@@ -446,7 +446,7 @@ async function runBrowserSuite() {
     await ctxFb.close();
 
     // --- TEST C: Full Offline PWA Mode via Service Worker ---
-    console.log('\n=== [4/4] Uji Mode Offline Penuh (Service Worker aksarascan-v14) ===');
+    console.log('\n=== [4/4] Uji Mode Offline Penuh (Service Worker aksarascan-v15) ===');
     const ctxOff = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     const pageOff = await ctxOff.newPage();
     await pageOff.route('**/*', (route) => {
@@ -457,16 +457,16 @@ async function runBrowserSuite() {
     });
     await pageOff.goto(`${url}/index.html`, { waitUntil: 'load' });
     await pageOff.waitForFunction(() => (document.querySelector('#engineStatus')?.textContent || '').includes('Stage-2'), null, { timeout: 45000 });
-    // Pastikan cache aksarascan-v14 sudah penuh di Service Worker CacheStorage sebelum memutus jaringan!
+    // Pastikan cache aksarascan-v15 sudah penuh di Service Worker CacheStorage sebelum memutus jaringan!
     const swReady = await pageOff.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return { ok: false, reason: 'no SW' };
       const reg = await navigator.serviceWorker.ready;
-      const cache = await caches.open('aksarascan-v14');
+      const cache = await caches.open('aksarascan-v15');
       const keys = await cache.keys();
       return { ok: Boolean(reg && reg.active && keys.length >= 25), cacheCount: keys.length };
     });
     console.log('  SW cache pre-offline:', swReady);
-    assert.ok(swReady.ok, `Service worker & cache aksarascan-v14 harus terisi (${JSON.stringify(swReady)})`);
+    assert.ok(swReady.ok, `Service worker & cache aksarascan-v15 harus terisi (${JSON.stringify(swReady)})`);
 
     await ctxOff.setOffline(true);
     await pageOff.reload({ waitUntil: 'domcontentloaded' });

@@ -421,9 +421,14 @@
     };
   }
 
+  function getBank() {
+    return state.bank;
+  }
+
   global.AksaraStage2 = {
     init,
     verifyDetections,
     getStatus,
+    getBank,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

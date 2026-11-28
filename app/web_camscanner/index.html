@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AksaraScan</title>
-  <meta name="description" content="AksaraScan — Pemindai Aksara Jawa Berbasis Web dengan Dual Engine YOLOv8 ONNX & PCD Klasik SVM">
+  <title>AksaraScan — Pemindai Aksara Jawa Lokal</title>
+  <meta name="description" content="Pindai foto aksara Jawa menjadi Unicode, bacaan Latin, dan arti Indonesia langsung di perangkat Anda tanpa mengunggah gambar ke server.">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="alternate icon" type="image/png" href="./favicon.png">
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
@@ -15,149 +15,252 @@
 </head>
 <body>
 
-  <!-- Topbar Navigasi Tunggal -->
+  <!-- Topbar Navigasi Sticky 64px -->
   <header class="topbar">
-    <a href="#pemindai" class="brand" data-nav="scanner">
-      <div class="brand__emblem" aria-hidden="true">ꦲ</div>
-      <div class="brand__title">Aksara<b>Scan</b></div>
-    </a>
+    <div class="topbar__inner">
+      <a href="#pemindai" class="brand" data-nav="scanner">
+        <span class="brand__emblem" aria-hidden="true">ꦲ</span>
+        <span class="brand__title"><i>Aksara</i><b>Scan</b></span>
+      </a>
 
-    <nav class="topnav" aria-label="Navigasi Utama">
-      <button type="button" class="nav-pill active" data-nav="scanner">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="12" x2="17" y2="12"></line></svg>
-        <span>Pemindai</span>
-      </button>
-      <button type="button" class="nav-pill" data-nav="lab">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-        <span>Lab Citra</span>
-      </button>
-      <button type="button" class="nav-pill" data-nav="kamus">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-        <span>Kamus</span>
-      </button>
-      <button type="button" class="nav-pill" data-nav="about">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        <span>Tentang</span>
-      </button>
-    </nav>
+      <nav class="topnav" aria-label="Navigasi Utama">
+        <button type="button" class="nav-pill active" data-nav="scanner">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="12" x2="17" y2="12"></line></svg>
+          <span>Pemindai</span>
+        </button>
+        <button type="button" class="nav-pill" data-nav="batch">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M5 16H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"></path></svg>
+          <span>Batch</span>
+        </button>
+        <button type="button" class="nav-pill" data-nav="lab">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>Lab &amp; Referensi</span>
+        </button>
+        <button type="button" class="nav-pill" data-nav="about">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <span>Tentang</span>
+        </button>
+      </nav>
 
-    <div class="topbar__actions">
-      <div class="model-badge" id="modelBadge">Memuat Model…</div>
-      <button type="button" class="theme-toggle" id="themeToggle" title="Ganti Tema Terang / Gelap" aria-label="Ganti Tema">
-        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-        </svg>
-        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-      </button>
+      <div class="topbar__actions">
+        <span class="engine-status-pill" id="engineStatus" title="Status mesin deteksi lokal">Memuat model…</span>
+        <span class="model-badge" id="modelBadge" hidden>Memuat Model…</span>
+        <button type="button" class="btn btn--accent btn--pill btn--sm" id="btnNewScan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Pindai Baru</span>
+        </button>
+        <button type="button" class="theme-toggle" id="themeToggle" title="Ganti Tema Terang / Gelap" aria-label="Ganti Tema Terang atau Gelap">
+          <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
 
   <main>
+    <input type="file" id="fileInput" accept="image/*" hidden>
+    <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+
     <!-- ======================================================================
-         VIEW 1: PEMINDAI UTAMA (Split Studio)
+         VIEW 1: PEMINDAI UTAMA (Progressive Disclosure: Dropzone -> Split Workbench)
          ====================================================================== -->
     <section id="viewScanner" data-view="scanner">
-      <div class="scanner-intro">
-        <div>
+      <!-- Tahap A: Unggah Bebas Friksi (Tampil sebelum gambar masuk) -->
+      <div class="scanner-landing" id="scannerEmptyWrap">
+        <div class="landing-head">
           <h1 class="page-title">Pemindai Aksara Jawa</h1>
-          <p class="page-sub">Unggah atau tempel foto aksara Jawa (<code>Ctrl+V</code>) untuk membaca Unicode, ejaan Latin, dan arti bahasa Indonesia secara lokal di perangkat Anda.</p>
+          <p class="page-sub">Baca naskah cetak maupun tulisan tangan menjadi Unicode, ejaan Latin, dan arti bahasa Indonesia langsung di peramban Anda tanpa mengirim berkas keluar perangkat.</p>
         </div>
-        <div class="sample-strip" aria-label="Contoh Cepat 1-Klik">
-          <span class="sample-strip__label">Sampel Uji:</span>
+
+        <div class="dropzone" id="dropzone" tabindex="0" role="region" aria-label="Area unggah gambar aksara Jawa">
+          <div class="dropzone__glyph" aria-hidden="true">ꦲꦤꦕꦫꦏ</div>
+          <p class="dropzone__title">Letakkan foto aksara Jawa di sini, atau tempel dengan <code>Ctrl+V</code></p>
+          <div class="format-chips" aria-label="Format yang didukung">
+            <span class="chip">PNG</span>
+            <span class="chip">JPG</span>
+            <span class="chip">WebP</span>
+            <span class="chip">Foto Buram</span>
+            <span class="chip">Tinta Warna</span>
+            <span class="chip">Mode Gelap</span>
+          </div>
+          <div class="btn-group">
+            <button type="button" class="btn btn--accent btn--pill" id="btnFile">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Pilih Berkas</span>
+            </button>
+            <button type="button" class="btn btn--pill" id="btnCam">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span>Ambil dari Kamera</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="sample-strip" aria-label="Contoh Uji 1-Klik">
+          <span class="sample-strip__label">Atau uji cepat dengan contoh bawaan</span>
           <div class="sample-pills">
             <button type="button" class="demo-card sample-pill" data-src="./sample_1.png">
-              <img class="demo-card__thumb" src="./sample_1.png" alt="Sampel 1">
+              <img class="demo-card__thumb" src="./sample_1.png" alt="Naskah polos">
               <span>Naskah Polos</span>
             </button>
             <button type="button" class="demo-card sample-pill" data-src="./sample_2.png">
-              <img class="demo-card__thumb" src="./sample_2.png" alt="Sampel 2">
+              <img class="demo-card__thumb" src="./sample_2.png" alt="Kisi 20 Aksara">
               <span>Kisi 20 Aksara</span>
             </button>
             <button type="button" class="demo-card sample-pill" data-src="./sample_3.png">
-              <img class="demo-card__thumb" src="./sample_3.png" alt="Sampel 3">
+              <img class="demo-card__thumb" src="./sample_3.png" alt="Tulisan tangan">
               <span>Tulisan Tangan</span>
             </button>
             <button type="button" class="demo-card sample-pill" data-src="./sample_4.png">
-              <img class="demo-card__thumb" src="./sample_4.png" alt="Sampel 4">
+              <img class="demo-card__thumb" src="./sample_4.png" alt="Kalimat berpasangan">
               <span>Kalimat Berpasangan</span>
             </button>
           </div>
         </div>
+
+        <!-- Riwayat Pindai Lokal (muncul hanya jika ada data di IndexedDB) -->
+        <div class="recent-scans" id="recentScansWrap" hidden>
+          <div class="recent-scans__head">
+            <span class="recent-scans__title">Riwayat pindai lokal</span>
+            <button type="button" class="btn-link" id="btnClearHistory">Bersihkan riwayat</button>
+          </div>
+          <div class="recent-scans__list" id="recentScansList"></div>
+        </div>
+
+        <!-- Alur proses nyata 3 langkah -->
+        <div class="process-steps" aria-label="Alur pemrosesan">
+          <div class="process-step">
+            <span class="process-step__num">1</span>
+            <div>
+              <strong>Unggah atau Tempel</strong>
+              <p>Foto dokumen, catatan buku bergaris, pulpen biru, maupun tangkapan layar mode gelap.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <span class="process-step__num">2</span>
+            <div>
+              <strong>Tajamkan &amp; Deteksi Lokal</strong>
+              <p>Praproses di Web Worker memisahkan tinta warna dan meredam blur sebelum verifikasi Stage-2.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <span class="process-step__num">3</span>
+            <div>
+              <strong>Baca, Inspeksi, &amp; Koreksi</strong>
+              <p>Ketuk aksara mana pun untuk membandingkan kemiripan prototipe tulisan tangan &amp; koreksi 1-klik.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="workspace">
-        <!-- Panel Kiri: Citra Masukan & Pengendali -->
-        <div class="panel panel--input">
-          <div class="panel__header">
-            <h2 class="panel__title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-              Citra Sumber
-            </h2>
-            <div class="panel__header-right">
-              <span class="panel__badge" id="srcDim">Menunggu gambar</span>
-              <button type="button" class="btn-mini" id="btnReplaceImg" hidden title="Unggah foto baru">Ganti Foto</button>
+      <!-- Tahap B: Split Workbench Asimetris (52% / 48%) setelah gambar masuk -->
+      <div class="workbench" id="workbenchWrap" hidden>
+        <!-- Kolom Kiri (52%): Kanvas Dokumen, Micro-Toolbar & Pre-Scan Enhancer -->
+        <div class="workbench-col workbench-col--input">
+          <div class="col-header">
+            <div class="col-header__left">
+              <h2 class="section-heading">Citra Dokumen</h2>
+              <span class="telemetry-mono" id="srcDim">—</span>
             </div>
-          </div>
-
-          <input type="file" id="fileInput" accept="image/*" hidden>
-          <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
-
-          <!-- Dropzone Upload -->
-          <div class="dropzone" id="dropzone">
-            <div class="dropzone__glyph" aria-hidden="true">ꦲꦤꦕꦫꦏ</div>
-            <p class="dropzone__title">Letakkan gambar aksara Jawa di sini</p>
-            <p class="dropzone__desc">Mendukung PNG, JPG, WebP · Screenshot terang maupun gelap (Dark Mode) · Paste <code>Ctrl+V</code></p>
-            <div class="btn-group">
-              <button type="button" class="btn btn--primary" id="btnCam">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                Kamera
-              </button>
-              <button type="button" class="btn" id="btnFile">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                Pilih Berkas
+            <div class="col-header__right">
+              <button type="button" class="btn btn--sm" id="btnReplaceImg" title="Unggah foto lain">Ganti Foto</button>
+              <button type="button" class="btn btn--sm btn--accent" id="btnRun" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>Pindai Ulang</span>
               </button>
             </div>
           </div>
 
-          <!-- Stage Kanvas Hasil -->
-          <div class="stage" id="stageWrap" hidden>
-            <div class="wayang-corner wayang-corner--tl"></div>
-            <div class="wayang-corner wayang-corner--tr"></div>
-            <div class="wayang-corner wayang-corner--bl"></div>
-            <div class="wayang-corner wayang-corner--br"></div>
-
-            <canvas id="mainCanvas"></canvas>
-            <div id="scanFx" hidden>
-              <div class="scanfx__ring" id="scanfxRing"></div>
-              <div class="scanfx__label" id="scanfxLabel">Menganalisis…</div>
+          <div class="stage" id="stageWrap">
+            <div class="stage__viewport" id="stageViewport">
+              <canvas id="mainCanvas"></canvas>
+              <div class="compare-divider" id="compareDivider" hidden>
+                <span class="compare-tag compare-tag--left">Asli</span>
+                <span class="compare-tag compare-tag--right">Ditajamkan</span>
+              </div>
+              <input type="range" class="compare-range" id="compareSplitRange" min="5" max="95" value="50" hidden aria-label="Geser perbandingan Asli dan Ditajamkan">
+              <div id="scanFx" hidden>
+                <div class="scanfx__ring" id="scanfxRing"></div>
+                <div class="scanfx__label" id="scanfxLabel">Menganalisis…</div>
+              </div>
+              <div id="selOverlay" hidden></div>
+              <button type="button" class="btn btn--accent btn--sm" id="btnRescanSel" hidden>Pindai Area Pilihan</button>
             </div>
-            <div id="selOverlay" hidden></div>
-            <button type="button" class="btn btn--accent" id="btnRescanSel" hidden>Pindai Area Pilihan</button>
 
-            <div class="stage__toolbar">
-              <label class="toggle-label">
+            <!-- Micro-Toolbar Tipis (scrollable horizontal di mobile) -->
+            <div class="stage__toolbar" role="toolbar" aria-label="Alat kanvas dan penyesuaian gambar">
+              <label class="toggle-chip">
                 <input type="checkbox" id="showBoxes" checked>
                 <span>Kotak Deteksi</span>
               </label>
-              <label class="toggle-label">
-                <input type="checkbox" id="showBin">
-                <span>Hitam Putih</span>
+              <label class="toggle-chip" title="Geser perbandingan gambar asli vs hasil enhancer">
+                <input type="checkbox" id="toggleCompare">
+                <span>Bandingkan</span>
               </label>
-              <span class="stage__hint">Seret area di gambar untuk fokus wilayah</span>
+              <label class="toggle-chip">
+                <input type="checkbox" id="showBin">
+                <span>Biner</span>
+              </label>
+              <button type="button" class="tool-btn" id="btnRotate90" title="Putar dokumen 90 derajat searah jarum jam">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                <span>Putar 90°</span>
+              </button>
+              <label class="toggle-chip" title="Luruskan otomatis kemiringan baris tulisan">
+                <input type="checkbox" id="btnAutoDeskew">
+                <span>Luruskan</span>
+              </label>
+              <div class="zoom-group" aria-label="Perbesaran kanvas">
+                <button type="button" class="tool-btn tool-btn--icon" id="btnZoomOut" aria-label="Perkecil kanvas">−</button>
+                <span class="telemetry-mono zoom-val" id="zoomBadge">100%</span>
+                <button type="button" class="tool-btn tool-btn--icon" id="btnZoomIn" aria-label="Perbesar kanvas">+</button>
+              </div>
             </div>
           </div>
 
-          <!-- Pengalih Mesin Deteksi -->
+          <!-- Pre-Scan Enhancer & Telemetri -->
+          <div class="enhancer-strip" id="enhancerStrip">
+            <div class="enhancer-strip__top">
+              <span class="enhancer-strip__title">Praproses Citra</span>
+              <span class="telemetry-mono enhancer-telemetry" id="enhTelemetryPill">Menunggu pemindaian…</span>
+            </div>
+            <div class="enhancer-strip__toggles">
+              <label class="toggle-label">
+                <input type="checkbox" id="enhAutoSharpen" checked>
+                <span>Tajamkan Foto Blur</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" id="enhFlattenShadow" checked>
+                <span>Hapus Bayangan Kertas</span>
+              </label>
+              <label class="toggle-label">
+                <input type="checkbox" id="optRemoveLines" checked>
+                <span>Redam Garis Buku</span>
+              </label>
+            </div>
+            <div class="enhancer-strip__sliders">
+              <label class="slider-pair" for="enhSharpenRange">
+                <span>Ketajaman <b class="telemetry-mono" id="enhSharpenVal">Auto</b></span>
+                <input type="range" id="enhSharpenRange" min="-0.1" max="1.4" step="0.05" value="-0.1">
+              </label>
+              <label class="slider-pair" for="enhContrastRange">
+                <span>Kontras <b class="telemetry-mono" id="enhContrastVal">0%</b></span>
+                <input type="range" id="enhContrastRange" min="-0.3" max="0.6" step="0.05" value="0">
+              </label>
+            </div>
+          </div>
+
+          <!-- Pengalih Mesin & Opsi Lanjutan -->
           <div class="engine-bar" id="engineBar">
             <div class="engine-bar__label">
               <span>Mesin Deteksi</span>
-              <span id="engineStatus" class="engine-status-pill">Memeriksa ONNX…</span>
+              <span class="telemetry-mono stage__hint">Seret area di gambar untuk memindai sebagian</span>
             </div>
             <div class="engine-switch">
               <button type="button" class="engine-btn" id="btnEngineYolo" data-engine="yolo">
@@ -178,40 +281,30 @@
             </div>
           </div>
 
-          <!-- Parameter Praproses & Sensitivitas (Lipat) -->
           <details class="adv-accordion" id="pipelineOptions">
-            <summary>Pengaturan Praproses &amp; Sensitivitas</summary>
+            <summary>Pengaturan Lanjutan &amp; Ambang Keyakinan</summary>
             <div class="adv-accordion__body">
               <div class="adv-checks">
                 <label class="toggle-label">
-                  <input type="checkbox" id="optRemoveLines" checked>
-                  <span>Hapus Garis Buku</span>
-                </label>
-                <label class="toggle-label">
                   <input type="checkbox" id="optMedian" checked>
-                  <span>Bersihkan Noise</span>
+                  <span>Bersihkan Bintik (Median 3×3)</span>
                 </label>
                 <label class="toggle-label">
                   <input type="checkbox" id="optMorph" checked>
-                  <span>Sambungkan Goresan</span>
+                  <span>Sambungkan Goresan (SVM)</span>
                 </label>
               </div>
               <div class="conf-slider-row">
-                <label for="optConfRange">Ambang Keyakinan Model: <b id="optConfVal">0.25</b></label>
+                <label for="optConfRange">Ambang Keyakinan Model: <b class="telemetry-mono" id="optConfVal">0.25</b></label>
                 <input type="range" id="optConfRange" min="0.14" max="0.45" step="0.01" value="0.25">
               </div>
             </div>
           </details>
 
-          <button type="button" class="btn btn--accent btn--block" id="btnRun" disabled>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            Kenali Aksara Jawa
-          </button>
-
           <div class="progress-timeline" id="progressBox" hidden>
             <div class="progress-timeline__head">
               <span id="progressText">Memulai pemrosesan…</span>
-              <span id="progressPercent">Proses</span>
+              <span class="telemetry-mono" id="progressPercent">Proses</span>
             </div>
             <div class="progress-bar">
               <div class="progress-bar__fill" id="progressFill"></div>
@@ -219,62 +312,74 @@
           </div>
         </div>
 
-        <!-- Panel Kanan: Hasil Transliterasi & Terjemahan -->
-        <div class="panel panel--output" id="tabResult">
-          <div class="panel__header">
-            <h2 class="panel__title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-              Hasil Pembacaan
-            </h2>
+        <!-- Kolom Kanan (48%): Hasil Transliterasi, Terjemahan, & Inspeksi Glif -->
+        <div class="workbench-col workbench-col--output" id="tabResult">
+          <div class="col-header">
+            <h2 class="section-heading">Hasil Pembacaan</h2>
             <div class="btn-group btn-group--compact">
               <button type="button" class="btn btn--sm btn--primary" id="btnCopyUnicode">Salin Aksara</button>
               <button type="button" class="btn btn--sm" id="btnCopyLatin">Salin Latin</button>
-              <button type="button" class="btn btn--sm" id="btnDownload" title="Unduh JSON hasil">JSON</button>
+              <button type="button" class="btn btn--sm" id="btnDownloadTxt" title="Unduh berkas teks .txt">.txt</button>
+              <button type="button" class="btn btn--sm" id="btnDownloadMd" title="Unduh berkas Markdown .md">.md</button>
+              <button type="button" class="btn btn--sm" id="btnDownload" title="Unduh JSON terstruktur">.json</button>
             </div>
           </div>
 
-          <!-- Kartu Utama 1: Aksara Jawa -->
-          <div class="output-card output-card--hero">
-            <div class="output-label">
-              <span>Aksara Jawa (Unicode)</span>
-              <small>Noto Sans Javanese</small>
+          <!-- Peringatan ramah & dapat dipulihkan jika 0 aksara / blur berat -->
+          <div class="recovery-notice" id="scanEmptyAlert" hidden>
+            <p class="recovery-notice__msg" id="scanEmptyMsg">Tidak ada aksara Jawa yang terbaca jelas pada foto ini. Pastikan tulisan berjarak cukup dan pencahayaan merata, atau aktifkan penajaman.</p>
+            <div class="recovery-notice__actions">
+              <button type="button" class="btn btn--sm btn--accent" id="btnRecoverSharpen">Tajamkan Foto &amp; Coba Lagi</button>
+              <button type="button" class="btn btn--sm" id="btnRecoverLowerConf">Turunkan Ambang ke 0.18</button>
             </div>
-            <div class="output-text--aksara" id="outJavanese">—</div>
           </div>
 
-          <!-- Kartu Utama 2: Bacaan & Terjemahan -->
-          <div class="output-card">
-            <div class="output-section">
+          <!-- Permukaan Hasil Tunggal (Tanpa kartu bertumpuk) -->
+          <div class="output-sheet">
+            <div class="output-block output-block--aksara">
+              <div class="output-label">
+                <span>Aksara Jawa (Unicode)</span>
+                <small>Noto Sans Javanese</small>
+              </div>
+              <div class="output-text--aksara" id="outJavanese">—</div>
+            </div>
+
+            <div class="output-divider"></div>
+
+            <div class="output-block">
               <div class="output-label">
                 <span>Bacaan Latin</span>
-                <small>Klik kata bergaris putus untuk koreksi</small>
+                <small>Klik kata bergaris putus untuk inspeksi</small>
               </div>
               <div class="output-text--latin" id="outSentenceLatin">—</div>
             </div>
+
             <div class="output-divider"></div>
-            <div class="output-section">
+
+            <div class="output-block">
               <div class="output-label">
                 <span>Arti Bahasa Indonesia</span>
-                <small>Terjemahan Kalimat</small>
+                <small>Leksikon &amp; Konteks Lokal</small>
               </div>
               <div class="output-text--meaning" id="outIndonesian">—</div>
             </div>
           </div>
 
-          <!-- Keyakinan Meter -->
+          <!-- Meter Keyakinan & Telemetri Stage-2 -->
           <div class="confidence-meter" id="meterWrap" hidden>
             <div class="confidence-meter__header">
-              <span>Rata-rata Keyakinan Kotak</span>
-              <b id="meterVal">0%</b>
+              <span>Rata-rata Keyakinan</span>
+              <span class="telemetry-mono" id="stage2Summary"></span>
+              <b class="telemetry-mono" id="meterVal">0%</b>
             </div>
             <div class="confidence-meter__track">
               <div class="confidence-meter__fill" id="meterFill"></div>
             </div>
           </div>
 
-          <!-- Suku Kata Fonetik & Glif -->
+          <!-- Rincian Glif Interaktif (Ketuk untuk membuka Inspektor Referensi Stage-2) -->
           <details class="adv-accordion" open>
-            <summary><span>Rincian Glif &amp; Ejaan Fonetik (<b id="glyphCountBadge">0</b>)</span></summary>
+            <summary><span>Inspeksi Glif &amp; Ejaan Fonetik (<b class="telemetry-mono" id="glyphCountBadge">0</b>)</span></summary>
             <div class="adv-accordion__body">
               <div class="phonetic-line" id="outLatin">—</div>
               <div class="glyphs-grid" id="glyphsGrid"></div>
@@ -285,19 +390,55 @@
     </section>
 
     <!-- ======================================================================
-         VIEW 2: LAB CITRA DIGITAL (8 Tahap PCD Interaktif)
+         VIEW 2: MODE BATCH MULTI-HALAMAN
+         ====================================================================== -->
+    <section id="viewBatch" data-view="batch" hidden>
+      <div class="view-header">
+        <div>
+          <h1 class="page-title">Pemrosesan Batch Multi-Halaman</h1>
+          <p class="page-sub">Pilih beberapa foto naskah sekaligus untuk dipindai berurutan di perangkat Anda lalu ekspor gabungannya.</p>
+        </div>
+        <div class="btn-group btn-group--compact">
+          <button type="button" class="btn btn--sm btn--accent" id="btnBatchPick">Tambah Berkas</button>
+          <button type="button" class="btn btn--sm btn--primary" id="btnBatchCopyAll" disabled>Salin Semua</button>
+          <button type="button" class="btn btn--sm" id="btnBatchTxt" disabled>.txt</button>
+          <button type="button" class="btn btn--sm" id="btnBatchMd" disabled>.md</button>
+          <button type="button" class="btn btn--sm" id="btnBatchJson" disabled>.json</button>
+          <button type="button" class="btn btn--sm" id="btnBatchClear" disabled>Kosongkan</button>
+        </div>
+      </div>
+
+      <input type="file" id="batchInput" accept="image/*" multiple hidden>
+
+      <div class="dropzone dropzone--compact" id="batchDropzone" tabindex="0">
+        <p class="dropzone__title">Pilih atau jatuhkan banyak gambar ke antrean batch</p>
+        <p class="dropzone__desc">Semua halaman diproses lokal memakai YOLOv8 ONNX, praproses Worker, dan Verifier Stage-2.</p>
+        <button type="button" class="btn btn--accent btn--pill btn--sm" id="btnBatchBrowse">Pilih Banyak Gambar…</button>
+      </div>
+
+      <div class="batch-status-bar telemetry-mono" id="batchSummary">Belum ada berkas dalam antrean.</div>
+      <div class="batch-list" id="batchList"></div>
+    </section>
+
+    <!-- ======================================================================
+         VIEW 3: LAB & REFERENSI (Lab Citra + Bank Prototipe 56 Kelas + Kamus)
          ====================================================================== -->
     <section id="viewLab" data-view="lab" hidden>
       <div class="view-header">
         <div>
-          <h1 class="page-title">Laboratorium Pengolahan Citra</h1>
-          <p class="page-sub">Inspeksi visual tiap tahapan pra-pemrosesan sebelum ekstraksi aksara dan atur ambang Otsu secara langsung.</p>
+          <h1 class="page-title">Lab Citra &amp; Bank Referensi</h1>
+          <p class="page-sub">Periksa tahapan binerisasi citra, telusuri 176 prototipe acuan Stage-2, dan pelajari daftar huruf Jawa.</p>
         </div>
-        <button type="button" class="btn btn--sm" data-nav="scanner">← Kembali ke Pemindai</button>
+        <div class="subnav-pills" role="tablist" aria-label="Submenu Lab dan Referensi">
+          <button type="button" class="subnav-pill active" data-labtab="pcd">Lab Citra PCD</button>
+          <button type="button" class="subnav-pill" data-labtab="proto">Bank Prototipe (56 Kelas)</button>
+          <button type="button" class="subnav-pill" data-labtab="kamus">Kamus Aksara</button>
+        </div>
       </div>
 
-      <div id="tabLab" class="lab-workbench">
-        <div class="panel">
+      <!-- Sub-tab A: Lab Citra PCD (8 Tahap + Otsu) -->
+      <div id="tabLab" class="lab-workbench" data-labpanel="pcd">
+        <div class="surface-block">
           <div class="lab-stage-tabs">
             <button type="button" class="lab-stage-btn" data-stage="grayscale">1. Grayscale</button>
             <button type="button" class="lab-stage-btn active" data-stage="otsu">2. Otsu Biner</button>
@@ -312,10 +453,10 @@
           </div>
         </div>
 
-        <div class="panel lab-sidebar">
-          <div class="panel__header">
-            <h2 class="panel__title">Histogram &amp; Kalibrasi Otsu</h2>
-            <span id="otsuValueDisplay" class="panel__badge accent-num">128</span>
+        <aside class="surface-block lab-sidebar">
+          <div class="col-header">
+            <h2 class="section-heading">Histogram &amp; Kalibrasi Otsu</h2>
+            <span id="otsuValueDisplay" class="telemetry-mono accent-num">128</span>
           </div>
           <div id="labHistogramBox" class="lab-hist-wrap"></div>
           <div class="lab-controls">
@@ -326,110 +467,145 @@
             <button type="button" class="btn btn--primary btn--block" id="btnReapplyLab">Terapkan Ulang Binerisasi</button>
             <button type="button" class="btn btn--block" id="btnResetThreshold">Kembalikan Otsu Otomatis</button>
           </div>
+        </aside>
+      </div>
+
+      <!-- Sub-tab B: Penjelajah Bank Prototipe Stage-2 -->
+      <div id="labProtoWrap" data-labpanel="proto" hidden>
+        <div class="proto-toolbar">
+          <input type="search" id="protoSearchInput" class="search-input" placeholder="Cari kelas aksara (contoh: ha, wulu, p_na, non_aksara)…">
+          <div class="kamus-tabs" role="group" aria-label="Filter kategori prototipe">
+            <button type="button" class="proto-filter-pill active" data-pcat="all">Semua (56)</button>
+            <button type="button" class="proto-filter-pill" data-pcat="nglegena">Nglegena</button>
+            <button type="button" class="proto-filter-pill" data-pcat="pasangan">Pasangan</button>
+            <button type="button" class="proto-filter-pill" data-pcat="sandhangan">Sandhangan &amp; Pada</button>
+            <button type="button" class="proto-filter-pill" data-pcat="non_aksara">Non-Aksara (#55)</button>
+          </div>
+        </div>
+        <p class="proto-note" id="protoStatusNote">Memuat bank prototipe acuan dari <code>reference_prototypes.json</code> (100% dari split train)…</p>
+        <div class="proto-grid" id="protoBankGrid"></div>
+      </div>
+
+      <!-- Sub-tab C: Kamus Aksara (menggantikan viewKamus lama dengan ID tetap terjaga) -->
+      <div id="viewKamus" data-labpanel="kamus" hidden>
+        <div class="kamus-bar">
+          <div class="kamus-tabs">
+            <button type="button" class="kamus-pill active" data-kcat="nglegena">Nglegena (20)</button>
+            <button type="button" class="kamus-pill" data-kcat="pasangan">Pasangan (20)</button>
+            <button type="button" class="kamus-pill" data-kcat="sandhangan">Sandhangan &amp; Pada (15)</button>
+          </div>
+        </div>
+        <div id="kamusNglegenaWrap">
+          <div class="dictionary-grid" id="dictionaryGrid"></div>
+        </div>
+        <div id="kamusPasanganWrap" hidden>
+          <div class="info-callout">Pasangan menghilangkan bunyi <i>-a</i> pada aksara induk. Pasangan <code>p_ha</code>, <code>p_sa</code>, dan <code>p_pa</code> ditulis sejajar di kanan; lainnya ditulis di bawah aksara induk.</div>
+          <div class="dictionary-grid" id="pasanganDictGrid"></div>
+        </div>
+        <div id="kamusSandhanganWrap" hidden>
+          <div class="info-callout">Sandhangan mengubah bunyi vokal (<i>wulu/i, suku/u, pepet/ê, taling/é, taling-tarung/o</i>), menyisipkan konsonan tengah (<i>cakra, keret, pengkal</i>), atau mengakhiri suku kata (<i>layar, cecak, wignyan, pangkon</i>).</div>
+          <div class="dictionary-grid" id="sandhanganDictGrid"></div>
         </div>
       </div>
     </section>
 
     <!-- ======================================================================
-         VIEW 3: KAMUS & PANDUAN AKSARA JAWA
-         ====================================================================== -->
-    <section id="viewKamus" data-view="kamus" hidden>
-      <div class="view-header">
-        <div>
-          <h1 class="page-title">Kamus &amp; Panduan Aksara Jawa</h1>
-          <p class="page-sub">Daftar 20 Aksara Nglegena, 20 Pasangan pemati vokal, serta 12 Sandhangan dan tanda baca Pada.</p>
-        </div>
-        <div class="kamus-tabs">
-          <button type="button" class="kamus-pill active" data-kcat="nglegena">Nglegena (20)</button>
-          <button type="button" class="kamus-pill" data-kcat="pasangan">Pasangan (20)</button>
-          <button type="button" class="kamus-pill" data-kcat="sandhangan">Sandhangan &amp; Pada (15)</button>
-        </div>
-      </div>
-
-      <div id="kamusNglegenaWrap">
-        <div class="dictionary-grid" id="dictionaryGrid"></div>
-      </div>
-      <div id="kamusPasanganWrap" hidden>
-        <div class="info-callout">Pasangan menghilangkan bunyi <i>-a</i> pada aksara sebelumnya. Pasangan <code>p_ha</code>, <code>p_sa</code>, dan <code>p_pa</code> ditulis sejajar di sebelah kanan; lainnya ditulis di bawah aksara induk.</div>
-        <div class="dictionary-grid" id="pasanganDictGrid"></div>
-      </div>
-      <div id="kamusSandhanganWrap" hidden>
-        <div class="info-callout">Sandhangan mengubah bunyi vokal (<i>wulu/i, suku/u, pepet/ê, taling/é, taling-tarung/o</i>), menyisipkan konsonan tengah (<i>cakra, keret, pengkal</i>), atau mengakhiri suku kata (<i>layar, cecak, wignyan, pangkon</i>).</div>
-        <div class="dictionary-grid" id="sandhanganDictGrid"></div>
-      </div>
-    </section>
-
-    <!-- ======================================================================
-         VIEW 4: TENTANG, TIM & BATASAN TEKNIS
+         VIEW 4: TENTANG, TIM, BENCHMARK & LISENSI (Mode Read)
          ====================================================================== -->
     <section id="viewAbout" data-view="about" hidden>
-      <div class="about-stack">
-        <div class="panel about-hero">
-          <div class="about-hero__badge">Profil Proyek &amp; Pengembang</div>
-          <h1 class="about-hero__title">AksaraScan v2.0 — Pemindai Aksara Jawa (PCD Klasik + YOLOv8-Nano ONNX)</h1>
-          <p class="about-hero__desc">Dilengkapi penyusun ortografi Unicode (<code>U+A980..U+A9DF</code>), model bahasa Jawa 10.589 lema, dan terjemahan bahasa Indonesia yang dijalankan 100% di sisi klien (browser) tanpa mengunggah foto Anda ke server luar.</p>
-        </div>
+      <article class="about-read">
+        <header class="about-read__head">
+          <h1 class="page-title">Tentang AksaraScan v4.0</h1>
+          <p class="about-read__lead">Pemindai Aksara Jawa berbasis WebAssembly lokal yang memadukan praproses adaptif Worker, detektor objek YOLOv8-Nano ONNX (55 kelas), pemverifikasi Stage-2 berbasis 176 prototipe acuan, penyusun ortografi Unicode (<code>U+A980..U+A9DF</code>), dan model bahasa Jawa 10.589 lema.</p>
+        </header>
 
-        <div class="about-grid">
-          <div class="panel">
-            <div class="panel__header">
-              <h2 class="panel__title">Tim Penyusun</h2>
-              <span class="panel__badge">Kelompok 4</span>
+        <section class="about-section">
+          <h2 class="section-heading">Tim Penyusun &amp; Afiliasi</h2>
+          <div class="team-list">
+            <div class="team-item">
+              <span>Anggota 1</span>
+              <b>Muhammad Rayhan Najib · <code>NIM 240533600012</code></b>
             </div>
-            <div class="team-list">
-              <div class="team-item">
-                <b>Muhammad Rayhan Najib</b>
-                <code>NIM 240533600012</code>
-              </div>
-              <div class="team-item">
-                <b>M. Ikhsan Ridho A.</b>
-                <code>NIM 240533609185</code>
-              </div>
-              <div class="team-divider"></div>
-              <div class="team-item">
-                <span>Dosen Pengampu</span>
-                <b>Mahfud Jiono, S.Pd., M.Eng.</b>
-              </div>
-              <div class="team-item">
-                <span>Institusi</span>
-                <b>Universitas Negeri Malang</b>
-              </div>
+            <div class="team-item">
+              <span>Anggota 2</span>
+              <b>M. Ikhsan Ridho A. · <code>NIM 240533609185</code></b>
+            </div>
+            <div class="team-item">
+              <span>Dosen Pengampu</span>
+              <b>Mahfud Jiono, S.Pd., M.Eng.</b>
+            </div>
+            <div class="team-item">
+              <span>Institusi</span>
+              <b>Universitas Negeri Malang (Kelompok 4 · PCD)</b>
             </div>
           </div>
+        </section>
 
-          <div class="panel">
-            <div class="panel__header">
-              <h2 class="panel__title">Catatan Akurasi &amp; Cakupan Model</h2>
-              <span class="panel__badge">55 Kelas Aktif</span>
-            </div>
-            <ul class="tech-notes">
-              <li><b>Cakupan Penuh:</b> 20 Aksara Nglegena, 20 Pasangan, 12 Sandhangan, dan 3 Pada (<code>pada_adeg, lingsa, lungsi</code>).</li>
-              <li><b>Dukungan Otomatis Dark Mode:</b> Gambar bertuliskan putih di latar gelap otomatis dibalik ke polaritas kertas terang sebelum deteksi.</li>
-              <li><b>Karakter Belum Tercakup:</b> Aksara Murda, Aksara Swara mandiri, <i>Pa Cerek</i> (ꦉ), <i>Nga Lelet</i> (ꦊ), <i>Cecak Telu</i> (꦳), dan Angka Jawa (꧐–꧙) belum masuk dalam 55 kelas model ONNX saat ini.</li>
-              <li><b>Tips Gambar Acak / Foto Buram:</b> Pastikan huruf cukup jelas (&ge; 24 px) atau turunkan penggeser <i>Ambang Keyakinan</i> pada pengaturan di panel Pemindai.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+        <section class="about-section">
+          <h2 class="section-heading">Ringkasan Arsitektur &amp; Hasil Evaluasi Jujur</h2>
+          <ul class="tech-notes">
+            <li><b>100% Lokal &amp; Offline-First:</b> Tidak ada foto atau teks yang dikirim ke server eksternal selama pemindaian (<code class="telemetry-mono">0</code> permintaan jaringan inferensi; terjemahan daring baku mati).</li>
+            <li><b>Verifikasi Prototipe Stage-2 (<code class="telemetry-mono">aksara_embed.onnx</code>, 0.77 MB):</b> Mencapai akurasi validasi tulisan tangan nyata <code class="telemetry-mono">90.51%</code> dan <code class="telemetry-mono">non_aksara_f1 = 92.62%</code>, memangkas <i>false positive</i> di halaman non-aksara/Latin sebesar <code class="telemetry-mono">58.4%</code> pada split validasi.</li>
+            <li><b>Evaluasi Uji Terkunci (<code class="telemetry-mono">eval/heldout_real/</code>, 42 foto multi-penulis):</b> Stage-2 + bank prototipe menurunkan Character Error Rate dari <code class="telemetry-mono">37.36%</code> (baseline v3.1) menjadi <code class="telemetry-mono">34.48%</code>, dan Grapheme F1 naik dari <code class="telemetry-mono">53.50%</code> menjadi <code class="telemetry-mono">55.97%</code>; set diagnostik <i>failures</i> turun CER dari <code class="telemetry-mono">27.81%</code> menjadi <code class="telemetry-mono">20.24%</code>.</li>
+            <li><b>Batasan Saat Ini:</b> Karakter Aksara Murda, Swara mandiri, Pa Cerek (<span class="aksara-inline">ꦉ</span>), Nga Lelet (<span class="aksara-inline">ꦊ</span>), Cecak Telu (<span class="aksara-inline">꦳</span>), serta Angka Jawa (<span class="aksara-inline">꧐–꧙</span>) masih berstatus tunda hingga tersedia anotasi nyata multi-penulis yang cukup.</li>
+          </ul>
+        </section>
+
+        <section class="about-section">
+          <h2 class="section-heading">Atribusi Dataset, Font, &amp; Lisensi Terbuka</h2>
+          <ul class="tech-notes">
+            <li><b>Dataset Latih &amp; Evaluasi:</b> <code>HANACARAKA</code> / Mendeley Data <code>vfj32bpjsf/1</code> (<b>CC BY 4.0</b>), <code>setilanaji/aksara-jawa-ocr</code> (<b>Apache-2.0</b>), <code>hermansh-id/Aksara-Jawa-OCR</code> (<b>MIT</b>), dan <code>NusaAksara</code> (<b>CC BY-SA 4.0</b>, dipakai khusus sebagai set evaluasi bersekat).</li>
+            <li><b>Font Aksara &amp; UI Lokal (<i>Self-Hosted</i>):</b> Seluruh font antarmuka dan aksara termasuk <code>Noto Sans Javanese</code>, <code>Plus Jakarta Sans</code>, <code>Newsreader</code>, serta koleksi 12 font Aksara Jawa sintetis berlisensi <b>SIL Open Font License 1.1</b> dan <b>Apache-2.0</b>.</li>
+            <li><b>Runtime Inferensi:</b> ONNX Runtime Web <code>1.20.1</code> (<b>MIT</b>) berjalan lokal melalui WebAssembly tanpa ketergantungan CDN saat pemindaian.</li>
+          </ul>
+        </section>
+      </article>
     </section>
   </main>
 
-  <!-- Modal Koreksi Karakter -->
-  <div class="modal-overlay is-hidden" id="correctionModal" hidden>
-    <div class="modal-content">
+  <!-- Laci Inspektor Referensi & Koreksi 1-Klik -->
+  <div class="modal-overlay is-hidden" id="correctionModal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTargetLabel">
+    <div class="modal-content modal-content--inspector">
       <div class="modal-header">
-        <h3 id="modalTargetLabel">Koreksi Aksara</h3>
-        <button type="button" class="btn-icon" id="closeModal" aria-label="Tutup">&times;</button>
+        <div>
+          <h3 id="modalTargetLabel">Inspektor Referensi &amp; Koreksi Aksara</h3>
+          <p class="modal-sub" id="inspSubMeta">Bandingkan potongan citra Anda dengan referensi tulisan tangan dan kanonik Stage-2.</p>
+        </div>
+        <button type="button" class="btn-icon" id="closeModal" aria-label="Tutup inspektor">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
       </div>
-      <p class="modal-sub">Pilih karakter pengganti untuk memperbarui hasil bacaan:</p>
+
+      <!-- Ringkasan Potongan Pengguna & Top-3 Kandidat Referensi -->
+      <div class="inspector-top" id="inspectorTopWrap">
+        <div class="inspector-crop-box">
+          <canvas id="inspUserCrop" width="96" height="96"></canvas>
+          <span class="telemetry-mono" id="inspCropMatchBadge">Potongan citra Anda</span>
+        </div>
+        <div class="inspector-cands">
+          <div class="inspector-cands__title">Kandidat teratas &amp; kecocokan referensi</div>
+          <div class="inspector-cands__list" id="inspTop3List"></div>
+        </div>
+      </div>
+
+      <div class="inspector-divider"></div>
+
+      <div class="inspector-manual-head">
+        <span>Pilih kelas lain (55 kelas)</span>
+        <div class="inspector-manual-tools">
+          <input type="search" id="inspClassFilter" class="search-input search-input--sm" placeholder="Saring kelas…">
+          <button type="button" class="btn btn--sm" id="btnViewCorrHistory">Riwayat Koreksi</button>
+        </div>
+      </div>
       <div class="correction-grid" id="correctionGrid"></div>
+      <div class="corr-history-panel" id="corrHistoryPanel" hidden></div>
     </div>
   </div>
 
-  <!-- Footer Minimalis -->
+  <!-- Footer Minimalis 1-Baris -->
   <footer class="footer-minimal">
     <span>&copy; 2026 <b>AksaraScan</b> · Universitas Negeri Malang</span>
-    <button type="button" class="footer-link" data-nav="about">Tim &amp; Informasi Model</button>
+    <button type="button" class="footer-link" data-nav="about">Tim &amp; Lisensi</button>
   </footer>
 
   <script src="./vendor/ort/ort.min.js"></script>
@@ -442,5 +618,6 @@
   <script src="./orthography.js"></script>
   <script src="./app.js"></script>
   <script src="./v3_ui_enhancer.js"></script>
+  <script src="./v4_features.js"></script>
 </body>
 </html>
