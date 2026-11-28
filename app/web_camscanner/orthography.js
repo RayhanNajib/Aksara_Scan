@@ -50,7 +50,7 @@
     '\uA9A5': 'pa', '\uA99D': 'dha', '\uA997': 'ja', '\uA9AA': 'ya', '\uA99A': 'nya',
     '\uA9A9': 'ma', '\uA992': 'ga', '\uA9A7': 'ba', '\uA99B': 'tha', '\uA994': 'nga',
     '\uA991': 'ka', '\uA993': 'ga', '\uA996': 'ca', '\uA998': 'ja',
-    '\uA99F': 'da', '\uA9A1': 'ta', '\uA9A3': 'dha', '\uA9A6': 'pa', '\uA9A8': 'ba', '\uA9AF': 'sa',
+    '\uA99F': 'na', '\uA9A1': 'ta', '\uA9A3': 'dha', '\uA9A6': 'pa', '\uA9A8': 'ba', '\uA9AF': 'sa',
   };
   const CHAR_TO_CONS = {};
   Object.keys(BASE_CHARS).forEach((ch) => {
@@ -596,27 +596,50 @@
       const pas = cl.pasangan ? [cl.pasangan.label] : [];
       const mods = cl.sandhangans.map((s) => s.label);
 
-      // Kumpulkan variasi lokal yang ketat untuk kluster i (termasuk pasangan i..i+1 jika pepet/cecak)
+      // Kumpulkan variasi lokal di atas kisi kandidat (topK + Stage-2 prototype + pasangan konfusi terkalibrasi)
       const localVariants = [];
       mods.forEach((ml, mi) => {
+        const modDet = cl.sandhangans[mi];
+        const seenModAlt = new Set([ml]);
+        if (Array.isArray(modDet.topK)) {
+          for (const tk of modDet.topK.slice(1, 4)) {
+            if (tk.prob >= 0.12 && tk.category === 'sandhangan' && !seenModAlt.has(tk.label)) {
+              seenModAlt.add(tk.label);
+              const m2 = [...mods];
+              m2[mi] = tk.label;
+              localVariants.push({ clIdx: i, mods: m2, cost: Math.max(0.8, 1.8 - tk.prob), tag: `lat:${ml}->${tk.label}` });
+            }
+          }
+        }
         for (const alt of (CONFUSABLE_MODS[ml] || [])) {
+          if (seenModAlt.has(alt)) continue;
+          seenModAlt.add(alt);
           const m2 = [...mods];
           m2[mi] = alt;
           localVariants.push({ clIdx: i, mods: m2, cost: 1.5, tag: `swap:${ml}->${alt}` });
         }
         // Cek juga penghapusan modifier hanya jika keyakinan detektor sangat rendah (< 0.48)
-        const conf = cl.sandhangans[mi].confidence || 1.0;
+        const conf = modDet.confidence || 1.0;
         if (conf < 0.48) {
           const mDrop = mods.filter((_, k) => k !== mi);
           localVariants.push({ clIdx: i, mods: mDrop, cost: 2.2, tag: `drop:${ml}` });
         }
       });
 
-      // Cek variasi topK kelas basis jika keyakinan < 0.72
-      if ((cl.base.confidence || 1.0) < 0.72 && Array.isArray(cl.base.topK)) {
-        for (const tk of cl.base.topK.slice(1, 3)) {
-          if (tk.prob >= 0.16 && tk.category === 'nglegena' && tk.label !== cl.base.label) {
-            localVariants.push({ clIdx: i, baseOverride: tk.label, mods, cost: 1.8, tag: `base:${tk.label}` });
+      // Cek variasi topK kelas basis (nglegena) jika keyakinan gabungan < 0.72 atau ditandai ragu
+      if (((cl.base.confidence || 1.0) < 0.72 || cl.base.isUncertain) && Array.isArray(cl.base.topK)) {
+        for (const tk of cl.base.topK.slice(1, 4)) {
+          if (tk.prob >= 0.14 && tk.category === 'nglegena' && tk.label !== cl.base.label) {
+            localVariants.push({ clIdx: i, baseOverride: tk.label, mods, cost: Math.max(0.9, 2.0 - tk.prob), tag: `base:${tk.label}` });
+          }
+        }
+      }
+
+      // Cek variasi topK pasangan jika tersedia dan berkeyakinan < 0.70
+      if (cl.pasangan && (cl.pasangan.confidence || 1.0) < 0.70 && Array.isArray(cl.pasangan.topK)) {
+        for (const tk of cl.pasangan.topK.slice(1, 3)) {
+          if (tk.prob >= 0.15 && tk.category === 'pasangan' && tk.label !== cl.pasangan.label) {
+            localVariants.push({ clIdx: i, pasOverride: tk.label, mods, cost: Math.max(1.0, 2.0 - tk.prob), tag: `pas:${tk.label}` });
           }
         }
       }
@@ -664,7 +687,7 @@
         for (const step of plan) {
           const targetCl = lineClusters[step.clIdx];
           const bLbl = step.baseOverride || targetCl.base.label;
-          const pLbl = targetCl.pasangan ? [targetCl.pasangan.label] : [];
+          const pLbl = step.pasOverride ? [step.pasOverride] : (targetCl.pasangan ? [targetCl.pasangan.label] : []);
           const u = buildClusterUnicode(bLbl, pLbl, step.mods);
           const v = validateJavaneseUnicode(u);
           if (!v.valid) {
@@ -822,6 +845,9 @@
           ? (JAVANESE_UNICODE[cl.base.label] || '')
           : buildClusterUnicode(cl.base.label, cl.pasangan ? [cl.pasangan.label] : [], cl.sandhangans.map((s) => s.label)),
         confidence: cl.base.confidence,
+        isUncertain: Boolean(cl.base.isUncertain),
+        topK: cl.base.topK || [],
+        referenceMatches: cl.base.referenceMatches || [],
         box: cl.base.box,
       })),
       wordDetails: allWordMeta,

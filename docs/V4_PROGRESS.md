@@ -94,3 +94,33 @@
 - **Keputusan & Berikutnya (Gerbang 2):**
   - Berhenti di **Gerbang 2** untuk melaporkan hasil kepada Rayhan, menyerahkan paket notebook GPU alternatif non-Colab, dan meminta konfirmasi target metrik perbaikan sebelum integrasi penuh JS/enhancer **Fase 3 (`v4/fase-3-enhancer`)**.
 
+---
+
+## Fase 3 — Adaptive Enhancer Worker, Stage-2 Verifier Browser, ORT Lokal, & Mode Offline (Branch `v4/fase-3-enhancer`)
+- **Dikerjakan (ringkas):**
+  - **Kemandirian Aset Offline (Zero-CDN Runtime):** Memindah-bundel ONNX Runtime Web `1.20.1` ke lokal `app/web_camscanner/vendor/ort/` (`ort.min.js`, `ort-wasm-simd-threaded.mjs`, `ort-wasm-simd-threaded.wasm`), memperbarui `index.html` memakai aset lokal saja, mengatur `ort.env.wasm.wasmPaths = new URL('./vendor/ort/', window.location.href).href`, serta meningkatkan Service Worker `sw.js` ke cache **`aksarascan-v14`** (`33` aset inti + bobot ONNX + prototipe referensi di-precache).
+  - **Engine Praproses Adaptif Off-Thread (`image_enhancer.js` + `enhancer_worker.js` + `app.js`):**
+    - `estimateBlur` berbasis lereng gradien kontras-ternormalisasi + lebar transisi tepi kontigu Marziliano dwi-sumbu X/Y + simetri aksial, pemisahan tinta warna oponen CIELAB (`coloredInkRatio`), detektor garis lurus tipis berkesinambungan `>= 55%` lebar (`lineClutterScore`, anti salah-picu bayangan lebar), dan kuantil tinta tipis `0.2%` (`p002`) untuk naskah jarang.
+    - `enhance`: *passthrough* nir-destruktif pada foto tajam & bersih (`mode: 'passthrough_sharp'`, `MAE = 0`); perata pencahayaan lokal (`flattenShadow`); penekan garis buku horizontal (`suppressLongStraightLines` dengan perlindungan persimpangan `±3 px` & opsi `removeVertLines`); CLAHE adaptif terbatas pada latar redup/kontras rendah; serta penajaman TV-bounded `[locMin, locMax]` dengan *noise coring*, perlindungan inti goresan adaptif (`inkProtectThr`), pembobotan penggelapan asimetris inti tinta, dan pembatasan Richardson-Lucy pada blur berat simetris (`berat`). Berjalan via `enhancer_worker.js` (*Transferable* `ArrayBuffer`) dengan pelindung `try/catch` fallback sinkron di `app.js`.
+  - **Stage-2 Browser Verifier (`stage2_verifier.js`) & Upgrade `orthography.js`:**
+    - Memuat `app/web_camscanner/aksara_embed.onnx`, `app/web_camscanner/reference_prototypes.json` (`176` prototipe), dan `app/web_camscanner/stage2_calibration.json` secara aman dengan *fallback* otomatis ke mode detektor Tahap-1 saja bila salah satu berkas gagal dimuat.
+    - `orthography.js` memperbaiki pemetaan `'\uA99F'` (Na Murda) ke `'na'`, memutakhirkan `refineLineWithConservativeBeam` untuk memakai lattice `topK` + `pasOverride` + `isUncertain`, serta mengekspos `isUncertain`, `topK`, dan `referenceMatches` pada tiap cluster.
+
+- **Hasil terukur (Gerbang 3 — `eval/reports/phase3_verification.json`):**
+  - **Uji Unit `image_enhancer.js` (`node eval/test_fase3_enhancer.mjs [1/4]`):**
+    - Progresi `estimateBlur` Gaussian (`tajam 1.0 > sigma 1.0 ringan 0.5916 > sigma 1.8 sedang 0.2634 > sigma 3.0 berat 0.0188`) dan Motion (`k5 sedang 0.2559 > k9 berat 0.1784`) monoton.
+    - Foto tajam: `mode: 'passthrough_sharp'`, `MAE = 0`.
+    - Kontinuitas goresan tipis buram (`sigma = 1.2`): komponen terhubung `12 -> 12`, `inkPixels = 1820 -> 1820`, `ridgeCount = 720 -> 720`, ketajaman naik (`blurAfter.sharpnessScore > blurBefore.sharpnessScore`).
+    - Pulpen biru + garis buku sintetis: `suppressedPx = 630`, `coloredInkRatio = 0.0589`.
+  - **Uji Browser Chromium (`[2/4]..[4/4]` + `eval/test_e2e_assertions.mjs`):**
+    - Web Worker `1200×900` (`useRL: true`): selesai dalam `393 ms` dengan **`0` main-thread long task >= 100 ms** (`longTasks: []`).
+    - Komparasi blur (`raw` vs `enhanced`): mean CER stabil `15% -> 15%` (`hr_hw_04_defocus_blur`: `0% -> 0%`, `diag_04_shadow`: `0% -> 0%`, `diag_06_lowres600`: `0% -> 0%`, `hr_hw_02_motion_blur`: `60% -> 60%` — tidak memburuk pada *motion blur* nyata sekaligus bebas amplifikasi noise).
+    - Fallback Stage-2 gagal muat (`serviceWorkers: 'block'` + abort `aksara_embed.onnx`/`reference_prototypes.json`): status tampil `Stage-1 Fallback (Stage-2 tidak tersedia)`, `stage2Stats.active = false`, `sample_4.png` tetap terbaca `"aksara jawa mangan sêga krama kothi"`.
+    - Mode Offline PWA penuh (`sw.js aksarascan-v14`, `33` entri di cache, `setOffline(true)` + reload): status `YOLOv8 Siap · 92.18% mAP50 + Stage-2 (176 prototipe)`, inferensi `02_wedang_bubuk_crop.png` berhasil 100% offline (`"wédang bubuk tanpa gula, aja ngamuk mundhak tuwa."`).
+    - E2E Assertions (`eval/test_e2e_assertions.mjs`): **`0` console error, `0` request jaringan eksternal saat inferensi**, latensi `02_wedang_bubuk_crop.png = 1205 ms`, `sample_4.png = 1178 ms`.
+  - **Lock integritas held-out:** `eval/heldout_real/SHA256SUMS.lock` **`43` berkas diverifikasi, `mismatches=0`**.
+
+- **Keputusan & Berikutnya (Gerbang 3):**
+  - Seluruh praproses adaptif Worker, Stage-2 Verifier browser, aset ORT lokal, dan PWA offline telah lolos seluruh gerbang teknis. Berhenti di **Gerbang 3** untuk meminta persetujuan Rayhan sebelum memulai **Fase 4 (`v4/fase-4-ui`: Perombakan UI/UX Anti-Slop bergaya ScanRead + Inspector Referensi & Koreksi)**.
+
+
